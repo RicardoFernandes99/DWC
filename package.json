@@ -1,0 +1,37 @@
+{
+  "name": "dwc",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.15.0 <25",
+    "pnpm": "11.25.0"
+  },
+  "scripts": {
+    "setup:local": "node scripts/setup-local.ts",
+    "infra:up": "docker compose up -d --wait && pnpm --filter @dwc/api storage:init",
+    "infra:down": "docker compose down",
+    "dev": "concurrently -k -n api,web -c blue,green \"pnpm --filter @dwc/api dev\" \"pnpm --filter @dwc/web dev\"",
+    "build": "pnpm -r build",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc -p tsconfig.tools.json --noEmit && pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "smoke": "pnpm --filter @dwc/api smoke"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "^24.0.0",
+    "concurrently": "10.0.6",
+    "eslint": "10.13.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "^6.0.0",
+    "typescript-eslint": "8.71.2",
+    "jiti": "^2.6.0"
+  },
+  "type": "module"
+}
