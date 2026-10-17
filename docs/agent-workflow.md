@@ -52,5 +52,5 @@ this environment, so the accessible official GitHub sources were used.
 - [React Compiler installation source](https://github.com/reactjs/react.dev/blob/main/src/content/learn/react-compiler/installation.md).
 - [shadcn Vite installation](https://github.com/shadcn-ui/ui/blob/main/apps/v4/content/docs/installation/vite.mdx)
   and [ReUI registry configuration](https://github.com/keenthemes/reui/blob/main/components.json).
-- [MinIO maintenance/distribution notice](https://github.com/minio/minio)
-  and [RustFS container instructions](https://github.com/rustfs/rustfs).
+- [Floci Docker setup](https://github.com/floci-io/floci/blob/2.3.0/docs/configuration/docker-compose.md)
+  and [storage modes](https://github.com/floci-io/floci/blob/2.3.0/docs/configuration/storage.md).

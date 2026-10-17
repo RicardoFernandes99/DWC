@@ -13,8 +13,8 @@ from the assignment should be recorded in the final report.
   with Rules of React and compiler diagnostics enforced. Manual memoization is
   exceptional, not the default development style.
 - shadcn/ui, ReUI and Tailwind; no Bootstrap/SASS requirement in this implementation.
-- Docker MongoDB and local S3-compatible storage. RustFS replaces the originally
-  suggested MinIO because MinIO's community repository is no longer maintained.
+- Docker MongoDB and Floci for local S3 emulation, replacing the earlier
+  RustFS/MinIO storage choice at the user's request.
 - Local HTTP development. HTTPS is undecided and not part of initial setup.
 - No cloud deployment or separate prototype deliverable.
 

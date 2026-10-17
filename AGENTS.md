@@ -14,7 +14,7 @@
 
 - pnpm workspaces: `apps/web` (`@dwc/web`), `apps/api` (`@dwc/api`).
 - Node 24 LTS; pnpm is pinned in `package.json`. Commit `pnpm-lock.yaml`.
-- Local Docker MongoDB + S3-compatible RustFS; no cloud deployment required.
+- Local Docker MongoDB + Floci's S3 emulation; no cloud deployment required.
 - Laravel backoffice is planned, not yet implemented. Do not replace it with
   a React admin application or add a PHP app incidentally.
 - Prefer existing scripts and libraries. Add shared packages only when there

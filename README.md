@@ -1,7 +1,7 @@
 # Do Campo à Mesa
 
 Local producers, orders, and live auctions. A pnpm monorepo with a React web app
-and NestJS API. MongoDB and S3-compatible object storage run locally in Docker.
+and NestJS API. MongoDB and Floci's S3 emulator run locally in Docker.
 
 ## Quick start
 
@@ -20,7 +20,7 @@ when it does not exist. It never overwrites an existing environment file.
 The API loads this file; Compose uses the same settings.
 
 Local services: Web on port 5173, API on 3000, Swagger at `/api-docs` on the API,
-MongoDB on 27017, S3 on 9000, and the storage console on 9001.
+MongoDB on 27017, and Floci's S3 endpoint on 4566.
 Vite proxies `/api` and `/api-docs` to NestJS. All services use HTTP locally.
 
 ```sh
@@ -34,6 +34,16 @@ pnpm --filter @dwc/api dev
 `infra:up` also creates the private product-images bucket idempotently.
 MongoDB runs as a single-node replica set for future transactional work.
 Infrastructure ports bind to loopback; this is a development setup.
+
+Floci uses persistent storage in the `floci-data` volume. The container's built-in
+health check gates startup. Its optional web-console sidecar is disabled; no
+Docker socket is needed for S3. Existing SDK credentials work as local emulator
+credentials; Floci accepts any non-empty credentials by default.
+
+When upgrading from the earlier RustFS setup, change `S3_ENDPOINT` in your
+existing `.env` to `http://127.0.0.1:4566` and restart the API. `setup:local`
+preserves existing files. Previous `storage-data` and `storage-logs` volumes are
+left intact; objects are not migrated automatically to Floci.
 
 ## Layout
 

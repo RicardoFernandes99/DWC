@@ -18,15 +18,24 @@ flow and PHP tooling when scaffolding that app.
 
 ## Local services
 
-Docker Compose retains MongoDB and RustFS in named volumes. The Node apps run
+Docker Compose retains MongoDB and Floci state in named volumes. The Node apps run
 on the host for fast iteration. MongoDB runs one replica set member; the host
 connection uses `directConnection=true` to avoid container DNS discovery issues.
 This supports atomic updates now and transactions when the domain needs them.
 
-RustFS exposes S3 and a console. The AWS SDK uses endpoint configuration and
+Floci 2.3.0 emulates S3 on port 4566. The AWS SDK uses endpoint configuration and
 path-style requests, so the application can work with another compatible S3
-provider later. The product-images bucket is private. A setup script creates it
-idempotently; image authorization and upload endpoints are future work.
+provider later. A setup script creates the product-images bucket idempotently
+without a public ACL; image authorization and upload endpoints are future work.
+Floci accepts non-empty development credentials by default, so emulator success
+does not verify production access control.
+
+The container uses `FLOCI_STORAGE_MODE=persistent` with its own `floci-data`
+volume at `/app/data` and the image's built-in readiness probe. Its optional
+console sidecar is disabled; S3 does not need the Docker socket. Earlier RustFS
+data/log volumes are preserved but not mounted into Floci or automatically
+migrated, since the storage formats differ. Existing `.env` files need their
+S3 endpoint changed from port 9000 to 4566 when upgrading.
 
 Root `.env` is shared by Compose and the API; Vite reads only API_PORT for its
 server-side proxy. No browser-side S3 credentials are injected. Infrastructure
