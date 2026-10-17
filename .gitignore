@@ -1,8 +1,11 @@
 # Nestjs specific
-/dist
-/node_modules
-/build
-/tmp
+dist/
+node_modules/
+build/
+/tmp/
+coverage/
+.vite/
+*.tsbuildinfo
 
 # Logs
 logs
@@ -18,6 +21,15 @@ lerna-debug.log*
 .env.development
 .env.test
 .env.production
+.env.*
+!.env.example
+
+# Agent and editor local state
+.claude/settings.local.json
+CLAUDE.local.md
+AGENTS.override.md
+.DS_Store
+.idea/
 
 # temp directory
 .temp

@@ -1,0 +1,32 @@
+{
+  "name": "@dwc/api",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && tsc -p tsconfig.test.json --noEmit && node --test test/*.test.ts",
+    "storage:init": "node --env-file=../../.env scripts/storage-init.ts",
+    "smoke": "node --env-file=../../.env scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1152.0",
+    "@nestjs/common": "12.1.3",
+    "@nestjs/config": "12.0.1",
+    "@nestjs/core": "12.1.3",
+    "@nestjs/mongoose": "12.0.0",
+    "@nestjs/platform-express": "12.1.3",
+    "@nestjs/swagger": "12.0.2",
+    "class-transformer": "0.5.1",
+    "class-validator": "0.15.1",
+    "mongoose": "9.11.2",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "12.0.8"
+  },
+  "type": "module"
+}

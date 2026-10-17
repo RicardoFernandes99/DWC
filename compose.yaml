@@ -1,0 +1,45 @@
+name: dwc
+
+services:
+  mongodb:
+    image: mongo:8.0@sha256:4a4ab5d4834207389e0d7270fac988e21ffedccecba77991a552f755df229907
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '127.0.0.1:27017:27017'
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - "try { if (rs.status().myState !== 1) quit(1); } catch { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}); quit(1); }"
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  storage:
+    image: rustfs/rustfs:1.0.2@sha256:7e948dad4748bda48f8985fda7195f8cf2e4259427011f6120acc2c9acf51587
+    ports:
+      - '127.0.0.1:9000:9000'
+      - '127.0.0.1:9001:9001'
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY_ID:?Run pnpm setup:local}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_ACCESS_KEY:?Run pnpm setup:local}
+      RUSTFS_CONSOLE_ENABLE: 'true'
+    volumes:
+      - storage-data:/data
+      - storage-logs:/logs
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/health']
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+volumes:
+  mongodb-data:
+  storage-data:
+  storage-logs:

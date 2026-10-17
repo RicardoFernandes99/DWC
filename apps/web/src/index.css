@@ -1,0 +1,78 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(0.985 0.006 90);
+  --foreground: oklch(0.24 0.025 145);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
+  --primary: oklch(0.43 0.09 145);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.94 0.015 90);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.95 0.01 90);
+  --muted-foreground: oklch(0.48 0.02 145);
+  --accent: var(--secondary);
+  --accent-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --destructive: oklch(0.58 0.2 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --info: oklch(0.55 0.15 250);
+  --info-foreground: oklch(0.99 0 0);
+  --success: var(--primary);
+  --success-foreground: var(--primary-foreground);
+  --warning: oklch(0.8 0.15 85);
+  --warning-foreground: oklch(0.24 0.025 85);
+  --invert: var(--foreground);
+  --invert-foreground: var(--background);
+  --border: oklch(0.88 0.015 90);
+  --input: var(--border);
+  --ring: var(--primary);
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-invert: var(--invert);
+  --color-invert-foreground: var(--invert-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+  }
+  * {
+    border-color: var(--border);
+  }
+}
