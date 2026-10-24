@@ -35,8 +35,7 @@ AGENTS.override.md
 .temp
 .tmp
 
-# Local plans and generated demo media
-.agents/work/
+# Generated local demo media
 demos/takes/
 demos/**/*.webm
 demos/**/*.mp4

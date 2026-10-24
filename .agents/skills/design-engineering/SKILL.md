@@ -14,4 +14,6 @@ components before adding new ones. Work within the existing tokens and primitive
 - [Motion and loading](references/motion-and-loading.md): stable layout and feedback.
 
 Build the smallest component that supports the interaction; stock, totals and bid
-outcomes remain server-authoritative. Use `web-feature` for implementation checks.
+outcomes remain server-authoritative. Use `animate` when motion itself is the task
+and `web-feature` for implementation checks. These are focused references, not
+mandatory workflow stages.

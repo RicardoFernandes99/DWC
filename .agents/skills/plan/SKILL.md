@@ -1,19 +1,26 @@
 ---
 name: plan
-description: Break a substantial DWC feature or refactor into a short plan with scope, decisions, and verifiable phases.
+description: Outline a DWC change as short implementation bullets in chat, identifying scope, useful checks, and only the open decisions that need the user.
 ---
 
-# Plan a change
+# Plan in chat
 
-Read scope, architecture, affected app guidance and relevant code. Small changes
-need only an inline plan. For work spanning sessions write
-`.agents/work/<slug>/PLAN.md` with the observable outcome, expected files/boundaries,
-real dependencies, assumptions and a few phases with checks.
+Read the task, prior decisions, scope and relevant code. Show a short bullet list
+in the conversation: intended behavior, the few implementation steps, and the
+checks that will establish it works. Mention affected areas or dependencies only
+when they help explain the work. Tiny fixes do not need a separate planning step.
 
-Resolve uncertain domain behavior and consistency before UI polish. Use existing
-commands and avoid speculative packages, deployment or formal process. Delegation
-is optional and needs session authorization. Preserve unrelated changes.
+Answer codebase questions by inspecting code. For meaningful unresolved product
+or architecture choices, use `grill-me`: one question at a time, with a concrete
+recommendation. Keep assumptions distinct from agreed decisions. Do not turn
+routine choices into blockers or repeat questions already answered.
 
-When implementation is already authorized, continue with `execute`; writing a
-plan is not another approval gate. Keep plans local by default. Durable decisions
-can update existing scope/architecture docs without an ADR process.
+After questions are settled, update the bullets in chat. If implementation is
+already authorized, continue directly; if the user only asked to plan, finish
+with the plan. No `execute`, `verify`, `finalize`, build/delivery orchestration or
+separate approval ceremony is required. Implementation includes sensible checks
+and a brief report of what changed and what actually ran.
+
+Do not generate PLAN.md, STATE.md, workflow folders, tickets or ADRs. Save a plan
+only when the user explicitly requests a file, using the chosen location. Possible
+future Markdown tickets are not part of the current workflow.

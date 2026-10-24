@@ -11,8 +11,9 @@ identifies the following skills as MIT-licensed:
   guidance with its own focused references.
 - `record-demo`: Pixelmatters, version 1.6.0.
 - `produce-demo`: Pixelmatters, version 1.1.0.
-- `plan`, `execute`, `finalize`, `verify`, `scaffold-slice`: Agensight, with lightweight
-  DWC-specific instructions. No upstream planning renderer is included.
+- `plan`, `grill-me`, `scaffold-slice`: Agensight-inspired, rewritten as lightweight
+  chat planning, question resolution and feature guidance. No upstream planning
+  renderer, ticket integration or ADR process is included.
 
 The demo engines (including their tests), overlay, and shared HTML helper are
 vendored here. DWC adapts three runtime files to generate local video/poster links
@@ -21,6 +22,15 @@ hashes for adapted files.
 DWC's TypeScript adapters, configuration and rewritten guides are maintained here.
 Names/domains in unmodified upstream test fixtures or optional driver diagnostics
 are test data/unused capabilities, not DWC integration requirements.
+
+## Animation skill
+
+`animate` adapts [Emil Kowalski’s animate skill](https://github.com/emilkowalski/skills/tree/2d228630ba1446365f614a108cb8252f1feda202/skills/animate)
+from `emilkowalski/skills` at revision `2d228630ba1446365f614a108cb8252f1feda202`.
+Copyright (c) 2026 Emil Kowalski, MIT licensed; the full upstream notice is retained
+in `animate/LICENSE`. DWC adds a short entry point and adapts the principles and
+recipes for React Compiler, existing shadcn/ReUI primitives, accessibility, and
+CSS-first motion. No unrelated animation/review/library-picker skills are required.
 
 ## MIT license notice
 

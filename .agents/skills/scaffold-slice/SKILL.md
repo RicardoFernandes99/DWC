@@ -1,25 +1,26 @@
 ---
 name: scaffold-slice
-description: Build a DWC feature across its MongoDB model, NestJS API contract and rules, React flow, and meaningful verification.
+description: Build a small complete DWC feature from its MongoDB model and NestJS API through the React UI, using existing patterns and proportionate checks.
 ---
 
-# Build a vertical slice
+# Build a complete feature
 
-Read scope and app guidance. Pick the smallest complete user outcome and name its
-roles, ownership, success and refusal cases. Inspect real code; the current scaffold
-is not a complete business-feature template.
+Read scope, affected app guidance and nearby code. State the user outcome and
+important refusals; use a few inline `plan` bullets if the change is substantial.
+Use `grill-me` only for a meaningful open decision, not routine scaffolding.
 
-1. Define DTO/OpenAPI requests, responses and failure statuses.
-2. Design the Mongoose model, indexes, embedding/references and atomic writes.
-   Snapshot order prices/names and establish stock/bid invariants before UI work.
-3. Implement a feature module, thin controller and domain service. Add repositories
-   where substantial queries/session handling justify them. Enforce real identity.
-4. Build the React flow with chosen libraries and existing components, including
-   accessible forms and loading/empty/error/success states.
-5. Exercise the real API-to-UI path and refusals. Prove concurrency with MongoDB
-   and keep related docs accurate.
+- Define the needed model/DTO/OpenAPI boundary and ownership rules. Choose
+  embedding, references and indexes from actual queries; establish atomic
+  stock/bid rules before making UI promises.
+- Implement the Nest endpoint and domain behavior using `api-feature`. Add a
+  repository only where queries/session handling justify it.
+- Build the corresponding React flow using `web-feature` and existing components.
+  Add routing/forms/query dependencies only with a real consumer. Include useful
+  loading, empty and error states; show success only after the API accepts it.
+- Exercise the complete path and a meaningful refusal. Use real MongoDB for
+  concurrency guarantees, and update the relevant existing docs when needed.
 
-Use `api-feature`, `web-feature`, `nestjs-best-practices`, `design-engineering`
-and `verify` for detail. Install preferred libraries with their first consumer.
-Keep Laravel administration for its own requested feature. Don't generate empty
-layers/endpoints/pages just to complete a directory tree.
+Follow working examples in this repo; the health scaffold is not a full business
+feature template. Create only files the feature uses. No generic CRUD generator,
+empty future layers, ticket system, plan files, phase handoffs or separate review/
+verification/delivery skills. Summarize the result and checks briefly.

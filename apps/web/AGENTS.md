@@ -20,7 +20,8 @@ Read root `AGENTS.md` and `docs/project-scope.md`. Package: `@dwc/web`.
 
 Preferred choices do not imply integrations already exist. Add them with their
 first consumer. Avoid parallel routing, server-state, form or component frameworks.
-Read `design-engineering` for UI details and `web-feature` for implementation.
+Read `design-engineering` for UI details, `animate` for deliberate motion, and
+`web-feature` for implementation.
 
 ## React and components
 
@@ -72,5 +73,6 @@ Read `design-engineering` for UI details and `web-feature` for implementation.
 
 Run web `typecheck`, `test` and `build` via `pnpm --filter @dwc/web`, plus root lint
 and formatting checks. The build verifies compiler output. Exercise changed flows
-in a browser when useful; mocks prove only client behavior. See `verify` and the
-demo skills for repeatable evidence saved under root `demos/`.
+in a browser when useful; mocks prove only client behavior. Checks are part of
+implementation, not a separate workflow stage. Use the demo skills when visual
+evidence is wanted, saving results under root `demos/`.
