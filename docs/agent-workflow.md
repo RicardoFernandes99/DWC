@@ -1,39 +1,85 @@
-# Codex and Claude Code
+# Working with Codex and Claude Code
 
-## Shared guidance
+DWC is a personal project. Keep the working loop short:
 
-The canonical policy is `AGENTS.md`, with narrow app-specific instructions.
-Read each affected app's instructions even when working from the root: scoped
-discovery varies with tool version and current directory. `CLAUDE.md` files
-import the corresponding `AGENTS.md` with `@AGENTS.md`; instructions are not
-maintained twice. Current Claude releases also support AGENTS.md fallback, but
-the imports retain compatibility with releases that expect CLAUDE.md.
+- Understand the request and read the relevant code/guidance.
+- For a larger change, show a few implementation bullets in chat with `plan`.
+  Use `grill-me` to settle meaningful open questions, one at a time.
+- Implement the feature, run appropriate checks, and briefly explain the result.
 
-Portable skills live in `.agents/skills/<name>/SKILL.md`. Each uses only the
-shared `name` and `description` frontmatter fields and focused Markdown steps.
-`.claude/skills` is a relative symlink to `../.agents/skills`, so the same source
-is available through Claude's project skill discovery path.
+Planning stays in the conversation. No PLAN.md/STATE.md artifacts, workflow
+folders, tickets, ADRs, or separate execution/review/verification/delivery stages
+are required. Save Markdown only when asked. A later Markdown ticket workflow can
+be added when requested; it is not scaffolded now.
 
-On Windows, use a Git checkout with symlink support (for example WSL). If a
-checkout turns the symlink into a plain text file, repair it before expecting
-Claude skill discovery to work. Do not maintain two independently edited copies.
+## Shared guidance and skills
 
-## Usage
+Root and app `AGENTS.md` files are canonical. Each `CLAUDE.md` imports its matching
+file with `@AGENTS.md`. Skills live in `.agents/skills/`; `.claude/skills` links to
+the same directory so both tools use one copy. On Windows use a checkout with
+symlink support, such as WSL; do not maintain separately edited skill copies.
 
-Launch either CLI from the repository root. Ask Codex to use `$web-feature`,
-`$api-feature`, `$local-development`, or `$review-change`. Claude exposes the
-same skills as `/web-feature`, `/api-feature`, `/local-development`, and
-`/review-change`. Descriptions also allow automatic matching. Skills added
-mid-session may require refreshing/restarting the client before discovery.
+Start the CLI at the repository root. Codex uses `$plan`, `$grill-me`, `$animate`,
+etc.; Claude exposes the same skills as `/plan`, `/grill-me`, `/animate`, etc.
+Skill descriptions also allow automatic matching. New skills should be available
+on the next turn; refresh/restart the client if its discovery cache needs it.
+The project does not install/authenticate agent CLIs or auto-enable MCP servers.
 
-The repository does not install agent CLIs, supply their authentication,
-auto-enable MCP servers, bypass permissions, or require a vendor subscription.
-No background agent jobs or remote message workflows are configured. Add hooks,
-MCP servers or tool-specific subagents only when a concrete workflow needs them.
-`pnpm check` and `pnpm smoke` are the shared verification interface.
+| Skill                         | Use                                                            |
+| ----------------------------- | -------------------------------------------------------------- |
+| `plan`                        | Short implementation bullets in chat                           |
+| `grill-me`                    | Clarify scope and solve open decisions one question at a time  |
+| `local-development`           | Install, start and troubleshoot local services                 |
+| `web-feature`, `api-feature`  | Implement the affected app and check its behavior              |
+| `scaffold-slice`              | A short checklist for a complete model/API/UI feature          |
+| `nestjs-best-practices`       | Feature modules, DI, Mongoose and API boundaries               |
+| `design-engineering`          | Composition, forms, accessibility and UI polish                |
+| `animate`                     | Emil Kowalski-inspired motion, easing, timing and interruption |
+| `record-demo`, `produce-demo` | Record and render local demonstration videos                   |
 
-The current setup verifies instruction imports and skill links on disk. Actual
-client discovery still depends on the installed CLI and its trust/settings.
+`grill-me` checks code before asking, gives a recommended answer, and keeps
+confirmed decisions separate from assumptions and deferred questions. It stops
+when there is enough clarity to implement or when the user wants to stop. It
+feeds the inline plan without creating another approval step.
+
+App guides distinguish installed libraries from preferred future choices. Add
+TanStack/MSW tools with their first actual feature, not as planning scaffolding.
+`animate` reuses shadcn/ReUI and existing tokens, prefers CSS, and does not install
+Motion. Its principles/recipes and upstream MIT notice are included.
+
+## Checks and local demos
+
+Use focused app checks for ordinary changes. `pnpm check` covers formatting,
+lint, types, tests and builds; `pnpm smoke` checks the running API/MongoDB/S3
+integration. Do not call a skipped check a pass. Visual demos are optional
+when useful, not a release gate for every change.
+
+```sh
+pnpm demo:install
+pnpm demo:record doctor
+pnpm demo:produce doctor
+pnpm demo:test
+```
+
+Playwright is a root dev dependency; `demo:install` puts Chromium under ignored
+`node_modules/.cache/ms-playwright`. MP4 production needs FFmpeg/libx264.
+Recording needs a local app and display (or Xvfb) and OS capture permission.
+
+All recordings, logs, screenshots, drafts, finished renders, posters and reviews
+stay in root `demos/`; there is no upload step. Generated media is ignored.
+Useful TypeScript take scripts and storyboards can be committed. See
+[demos/README.md](../demos/README.md) and the two demo skills.
+
+Recorder/producer settings live in `.agents/record-demo.ts` and
+`.agents/produce-demo.ts`. No fake login hook is supplied; use real demo accounts
+once authentication exists. Keep the live clock for auction demonstrations.
+Draft and final filenames differ, and the producer enforces the five-minute limit.
+
+Demo engines are attributed upstream JavaScript/Shell utilities. Their hashes and
+local-delivery adaptations are in `.agents/skills/upstream.json`, with credits in
+`.agents/skills/NOTICE.md`. Only those vendor files bypass authored lint/format
+checks; DWC TypeScript adapters are checked normally. `demo:test` runs the renderer
+tests. Other skills are guidance, not extra mandatory stages.
 
 ## Research sources
 

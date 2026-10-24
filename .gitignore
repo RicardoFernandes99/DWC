@@ -34,3 +34,12 @@ AGENTS.override.md
 # temp directory
 .temp
 .tmp
+
+# Generated local demo media
+demos/takes/
+demos/**/*.webm
+demos/**/*.mp4
+demos/**/*.wav
+demos/**/*.record-demo/
+demos/**/*.produce-demo/
+demos/**/*.review/

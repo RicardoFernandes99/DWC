@@ -46,6 +46,15 @@
 - Keep API documentation, setup instructions, and scope decisions current.
 - Report what changed, checks actually run, and any remaining limitations.
 
+## Working style
+
+For a personal-project change, keep the loop short: understand the request, use a
+few chat bullets if planning helps, implement, and run proportionate checks.
+Use `grill-me` for open decisions that need the user. Do not generate plan/state
+files, tickets or ADRs unless requested, and do not impose separate execution,
+review, verification or delivery stages. Checks and scoped cleanup are part of
+the implementation, followed by a brief account of the result and limitations.
+
 ## Skills
 
 Shared task instructions live in `.agents/skills/<name>/SKILL.md`:
@@ -53,7 +62,19 @@ Shared task instructions live in `.agents/skills/<name>/SKILL.md`:
 - `local-development`: install, start, and diagnose this workspace.
 - `web-feature`: implement accessible React UI with the compiler and design system.
 - `api-feature`: implement validated NestJS endpoints and persistence.
-- `review-change`: review correctness, permissions, concurrency, and validation.
+- `nestjs-best-practices`: feature modules, injection, Mongoose and API boundaries.
+- `design-engineering`: React composition, forms, accessibility and UI polish.
+- `animate`: purposeful motion, timing, easing and interruption.
+- `plan`: short implementation bullets in chat.
+- `grill-me`: resolve meaningful open questions before implementation.
+- `scaffold-slice`: a small complete model/API/React feature.
+- `record-demo` / `produce-demo`: record and render local videos under `demos/`.
+
+Demo utilities listed in `.agents/skills/upstream.json` are vendored code kept in
+its original JavaScript/Shell form, outside authored-code lint/format checks.
+DWC adapters and configuration use TypeScript. Preserve attribution and use the
+TypeScript entry points (`pnpm demo:record`, `pnpm demo:produce`). Do not upload
+recordings; all demo artifacts stay in this project's `demos/` folder.
 
 Read the relevant skill when the task matches. Skills are instructions to
 follow, not proof that a command has run. Claude sees the same files through

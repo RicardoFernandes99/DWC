@@ -5,7 +5,15 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default [
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      '.agents/skills/**/*.mjs',
+      '.agents/skills/record-demo/assets/overlay.js',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
