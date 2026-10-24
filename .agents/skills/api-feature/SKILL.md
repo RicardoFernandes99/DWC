@@ -7,7 +7,8 @@ description: Implement or modify NestJS REST endpoints, DTOs, MongoDB models, S3
 
 1. Read root/API instructions, scope, and architecture. Establish resource
    ownership, allowed roles, request/response shape, and failure cases.
-2. Implement modules, thin controllers, validated DTOs and domain services.
+2. Read `nestjs-best-practices` for module, persistence and boundary guidance.
+   Implement modules, thin controllers, validated DTOs and domain services.
    Reject unexpected input and use appropriate HTTP status codes.
 3. Choose embedding/references intentionally. Snapshot order item names and
    prices when order models are introduced. Add indexes based on real queries.

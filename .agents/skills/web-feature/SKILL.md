@@ -7,7 +7,8 @@ description: Implement or change React screens, components, forms, and client be
 
 1. Read root/web instructions and `docs/project-scope.md`. Identify the user
    flow, server contract, and acceptance criteria before implementing.
-2. Inspect existing components first. Prefer semantic Tailwind tokens and
+2. Read `design-engineering` for component, form, accessibility and interaction
+   guidance. Inspect existing components first. Prefer semantic Tailwind tokens and
    shadcn/ReUI primitives. Check registry source and compatibility before adding
    generated code. Do not introduce another styling framework.
 3. Write pure components, immutable state updates, and properly scoped effects.

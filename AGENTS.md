@@ -54,6 +54,18 @@ Shared task instructions live in `.agents/skills/<name>/SKILL.md`:
 - `web-feature`: implement accessible React UI with the compiler and design system.
 - `api-feature`: implement validated NestJS endpoints and persistence.
 - `review-change`: review correctness, permissions, concurrency, and validation.
+- `nestjs-best-practices`: feature modules, injection, Mongoose and API boundaries.
+- `design-engineering`: React composition, forms, accessibility and UI polish.
+- `plan` / `execute`: lightweight phased work and resumable progress.
+- `verify` / `finalize`: exercise behavior and tidy the current change.
+- `scaffold-slice`: build a complete model/API/React feature.
+- `record-demo` / `produce-demo`: record and render local videos under `demos/`.
+
+Demo utilities listed in `.agents/skills/upstream.json` are vendored code kept in
+its original JavaScript/Shell form, outside authored-code lint/format checks.
+DWC adapters and configuration use TypeScript. Preserve attribution and use the
+TypeScript entry points (`pnpm demo:record`, `pnpm demo:produce`). Do not upload
+recordings; all demo artifacts stay in this project's `demos/` folder.
 
 Read the relevant skill when the task matches. Skills are instructions to
 follow, not proof that a command has run. Claude sees the same files through

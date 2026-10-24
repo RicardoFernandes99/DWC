@@ -1,0 +1,120 @@
+{
+  "source": "Pixelmatters/agensight",
+  "revision": "ac0faa2dc",
+  "files": [
+    {
+      "path": ".agents/skills/record-demo/scripts/record-demo.sh",
+      "sha256": "b34e7a68ec74304510806568564ead6bfc270af621e7be3d31cefce430821a42",
+      "upstreamSha256": "fc147a3abbe9aab9de69a68245a39333b909d0aa772047b251abcd958a9da587",
+      "adaptation": "DWC local video/poster links; no upload placeholders."
+    },
+    {
+      "path": ".agents/skills/record-demo/scripts/doctor.sh",
+      "sha256": "792d0953b0ad97eb51577aebfb5ffb0ac7fa9753e5e956760ccca0de0161d618"
+    },
+    {
+      "path": ".agents/skills/record-demo/scripts/driver.mjs",
+      "sha256": "8bb977934be4976b29ad7bdd75e538b67ddc1e7178336007e25b927376dd2119",
+      "upstreamSha256": "088fe05c970c1b42d96f575d0f306c54c31f31185e46b7e099310c7f56ab74b5",
+      "adaptation": "DWC local video/poster links; no upload placeholders."
+    },
+    {
+      "path": ".agents/skills/record-demo/assets/overlay.js",
+      "sha256": "7eeac9d317df94b4d43dc8f9bf3c89359ef20834e63814648e9e8c579905e8e7"
+    },
+    {
+      "path": ".agents/skills/record-demo/assets/cursors/hand@2x.png",
+      "sha256": "152a83723d5cb61434cdcbbe91cb565a6c1cb82b008c64f4eb4e81560b5c431d"
+    },
+    {
+      "path": ".agents/skills/record-demo/assets/cursors/arrow@2x.png",
+      "sha256": "47e76a05c7b5a8bfd208adaff3625899f1961a0fe3cf57bb213bfdc900858f55"
+    },
+    {
+      "path": ".agents/skills/record-demo/assets/cursors/arrow.png",
+      "sha256": "95559ae83f99bc8a57a1ffa62e664b961044d0a2ebddf12b0697d418d1fe5a31"
+    },
+    {
+      "path": ".agents/skills/record-demo/assets/cursors/hand.png",
+      "sha256": "0c50cea4b2e2d0c8239596f59c75bbc8bbe7922dd6154f3cd39a32f18be7a36a"
+    },
+    {
+      "path": ".agents/skills/record-demo/assets/cursors/ibeam@2x.png",
+      "sha256": "ea6a82ae8423f5daf3f37f8f33078fe5180716dcad6963bc285788ccb0a56ee6"
+    },
+    {
+      "path": ".agents/skills/record-demo/assets/cursors/ibeam.png",
+      "sha256": "68b3d5b1001f10506c08bcf6e286f707609f29141eec40a6cda7078cc0f2ca3d"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/produce-demo.test.mjs",
+      "sha256": "d34eed8c019028de08d400e0031ada453db5a47bfe5fa09003b1f5e411dc1546"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/produce-demo.mjs",
+      "sha256": "68e950e39ff2fac43337c71e8659f9530496af954aa6be7b2a8a5c01df016c9b",
+      "upstreamSha256": "6d5f8d2d598243529f4129c002af3024da3bfca34f1d3a42a17080dffd972738",
+      "adaptation": "DWC local video/poster links; no upload placeholders."
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/storyboard.mjs",
+      "sha256": "24caddda0e9bc87be552b2dc1fba2aeaaf0eda7a248c137b5ef8f891b6de1e17"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/timeline.mjs",
+      "sha256": "a8b2ae6b384beb3cfc225f22d1650a1a22a833464f7a6c6a1a685fc78ddfb9b7"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/ffmpeg.mjs",
+      "sha256": "3d06cad9605dccb560eae6a20f19c5da4c2cb74ba1bb043d5dfbf3c79012ba50"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/render.mjs",
+      "sha256": "cee8eb0911062e9c308c16bc2d8a58c5a6e7a6cec621a6c5729736748225834c"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/takes.mjs",
+      "sha256": "a835f35fba1d725106ae8d9c2d289717a36f7d20803b3fb4b5b33cdaf8913f40"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/copy.mjs",
+      "sha256": "b2645f258662c6d2d4a3273026334e734218f6232ccd24e6feaf364c38820639"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/brand.mjs",
+      "sha256": "5bb35ee532884bef562a494bb1b64bde9274344ba5074f5b2e1158b848bcc81c"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/standard.mjs",
+      "sha256": "f483538446e6aba1f09518a66a398522d5d30b6892371f06cc46bb61485a012d"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/templates.mjs",
+      "sha256": "8f6a63e4c4789c7c37cbcad6ad722d3eeb424ff75941f90e127c5a538c065b13"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/music.mjs",
+      "sha256": "9cd8727235768ba43121b87b2c09aa9ec41b35ce17a609dfa28a63b0d5bb447f"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/studio-server.mjs",
+      "sha256": "34a2ce85bc879b03a0d2c85bc21b89afbcbb07ae8c6cb000d6a8749e5ba3476e"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/review.mjs",
+      "sha256": "282065a808084fbb7d40542507eeabcd3c45695187e7077778314adb253ce57e"
+    },
+    {
+      "path": ".agents/skills/produce-demo/scripts/lib/studio.mjs",
+      "sha256": "7b14f07f024decffc588dffb86150b71af3fa44ab2a1f026d8ee45a6338b0b7d"
+    },
+    {
+      "path": ".agents/skills/shared/html/index.mjs",
+      "sha256": "35c40ec82e8087d7bd9c76627863f668ec4b411480b1a4ff1a661d0fe6d8ce96"
+    },
+    {
+      "path": ".agents/skills/shared/html/index.test.mjs",
+      "sha256": "a5f3718e1eeb3a3d065195a1b82fcf2520e8ca1b500403b1f240d21ee0d918b4"
+    }
+  ]
+}

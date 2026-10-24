@@ -66,6 +66,10 @@ the same instructions. Skills are versioned once and shared by both tools.
 See [the agent workflow](docs/agent-workflow.md) for discovery and sources.
 No API key or agent CLI is installed by the project.
 
+Local demo tools use `pnpm demo:install`, `pnpm demo:record` and
+`pnpm demo:produce`. All footage and finished videos stay under [demos/](demos/README.md);
+there is no upload step. FFmpeg/libx264 is needed for MP4 production.
+
 See [scope](docs/project-scope.md) and [architecture](docs/architecture.md).
 Cloud deployment, HTTPS, Bootstrap/SASS, and a separate prototype are outside
 the current user-selected scope, despite appearing in the assignment brief.
