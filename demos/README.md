@@ -1,6 +1,7 @@
 # Local demos
 
-All demo artifacts stay in this project. There is no upload step.
+All demo artifacts stay in this project and are delivered as local file paths.
+Rendering uses Geist and Geist Mono from Google Fonts, with system-font fallback offline.
 
 - `scripts/`: authored TypeScript take scripts (commit when useful).
 - `takes/`: raw WebM/MP4 clips and `.record-demo/` screenshots/logs (ignored).

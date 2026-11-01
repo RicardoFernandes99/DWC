@@ -21,6 +21,7 @@ description: Implement or modify NestJS REST endpoints, DTOs, MongoDB models, S3
    control before adding uploads or signed URLs; validate file size and type.
 7. Update Swagger with DTO schemas and success/error responses. Keep liveness
    separate from dependency readiness; failures must not disclose secrets.
-8. Run API tests/typecheck/build and root lint/format checks. Run real-service
-   smoke checks when touching persistence, storage or configuration. Use isolated
-   test data and remove only records/objects created by the check.
+8. Run API typecheck/build and root lint/scoped format checks. Manually exercise
+   the changed endpoint and a meaningful refusal. Automated tests and smoke are
+   optional; choose a small focused check only when useful. Use isolated data and
+   remove only records/objects created by the check. Do not build a test suite by default.

@@ -33,6 +33,11 @@ Read `design-engineering` for UI details, `animate` for deliberate motion, and
   a concrete compatibility/correctness requirement or measured issue, and explain.
 - Reuse `src/components/ui`, `cn`, and semantic CSS tokens. Prefer composition and
   explicit variants over many boolean props. Keep state near its consumers.
+- Read `docs/ui-guidelines.md` and reuse the design-system specimen once 045 is
+  implemented. `src/index.css` owns theme values; consume semantic utilities.
+  Keep primitives in `components/ui`, repeated project patterns in
+  `components/shared`, and feature-only components with their feature. Repeated
+  controls/behavior deserve typed props rather than copied markup.
 - Use shadcn/ReUI rather than parallel direct Radix application components.
   Registry commands run in `apps/web`; inspect generated code and dependencies.
   Example: `pnpm dlx shadcn@4.22.0 add @reui/rating`. Do not copy whole dashboards.
@@ -77,8 +82,10 @@ Read `design-engineering` for UI details, `animate` for deliberate motion, and
 
 ## Checks
 
-Run web `typecheck`, `test` and `build` via `pnpm --filter @dwc/web`, plus root lint
-and formatting checks. The build verifies compiler output. Exercise changed flows
-in a browser when useful; mocks prove only client behavior. Checks are part of
+Run web `typecheck` and `build` via `pnpm --filter @dwc/web`, plus root lint and
+scoped formatting checks. The build verifies compiler output. Exercise the changed
+flow briefly in a browser, including responsive/keyboard behavior and a meaningful
+failure. Automated tests are optional; add only small tests with clear value.
+No per-feature e2e suite is required. Checks are part of
 implementation, not a separate workflow stage. Use the demo skills when visual
 evidence is wanted, saving results under root `demos/`.

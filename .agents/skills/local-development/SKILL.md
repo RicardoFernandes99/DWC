@@ -1,6 +1,6 @@
 ---
 name: local-development
-description: Install, run, validate, or troubleshoot the DWC monorepo and its local MongoDB and S3 services. Use for environment setup, service startup, and connection failures.
+description: Install, run, validate, or troubleshoot the DWC monorepo and its local MongoDB, Redis and S3 services. Use for environment setup, service startup, and connection failures.
 ---
 
 # Local development
@@ -13,8 +13,11 @@ description: Install, run, validate, or troubleshoot the DWC monorepo and its lo
    `pnpm infra:up`. Preserve existing `.env`; inspect variable presence, not values.
 4. Run `pnpm dev` in a persistent terminal. Check `/api/health/ready` on the API
    and via Vite's `/api` proxy. A process or port alone does not prove readiness.
-5. Run `pnpm smoke` to check OpenAPI, MongoDB persistence and S3 write/read/delete.
-   Run `pnpm check` before claiming the full scaffold passes.
+5. Use `pnpm smoke` when useful to diagnose OpenAPI, MongoDB or S3, not as a
+   mandatory per-feature gate. A short health/request check is enough for ordinary setup.
+   Check Redis with `docker compose exec redis redis-cli ping` and expect `PONG`.
+   Redis is not yet consumed by the API or covered by API readiness/smoke checks.
+   Use `pnpm check` only when full validation is warranted; do not claim skipped checks passed.
 6. Inspect relevant logs after a failure. Check Docker service health, bucket
    initialization, replica set state, configured ports, and missing variables.
    Never print credentials or use `docker compose config` without suppressing

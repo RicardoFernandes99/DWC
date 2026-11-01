@@ -18,10 +18,21 @@ flow and PHP tooling when scaffolding that app.
 
 ## Local services
 
-Docker Compose retains MongoDB and Floci state in named volumes. The Node apps run
+Docker Compose retains MongoDB, Redis and Floci state in named volumes. The Node apps run
 on the host for fast iteration. MongoDB runs one replica set member; the host
 connection uses `directConnection=true` to avoid container DNS discovery issues.
 This supports atomic updates now and transactions when the domain needs them.
+
+Redis 8.2 runs on loopback port 6379 with a `redis-cli ping` health check.
+The `redis-data` volume and append-only persistence with a one-second fsync
+policy retain data across normal restarts. Redis is intended for expiring
+refresh-token sessions and revocation data when authentication is implemented.
+Store token hashes or identifiers rather than raw bearer tokens, and expire
+records with the associated session/token lifetime. JWT signature and expiry
+checks remain in the API; MongoDB remains the store for users and domain data.
+The scaffold has no Redis client or auth flow yet. `REDIS_URL` in `.env.example`
+reserves the future API connection setting; it is not currently validated or used.
+Redis has no local authentication and must remain bound to loopback.
 
 Floci 2.3.0 emulates S3 on port 4566. The AWS SDK uses endpoint configuration and
 path-style requests, so the application can work with another compatible S3

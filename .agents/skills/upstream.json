@@ -6,7 +6,7 @@
       "path": ".agents/skills/record-demo/scripts/record-demo.sh",
       "sha256": "b34e7a68ec74304510806568564ead6bfc270af621e7be3d31cefce430821a42",
       "upstreamSha256": "fc147a3abbe9aab9de69a68245a39333b909d0aa772047b251abcd958a9da587",
-      "adaptation": "DWC local video/poster links; no upload placeholders."
+      "adaptation": "DWC local video/poster links."
     },
     {
       "path": ".agents/skills/record-demo/scripts/doctor.sh",
@@ -14,9 +14,9 @@
     },
     {
       "path": ".agents/skills/record-demo/scripts/driver.mjs",
-      "sha256": "8bb977934be4976b29ad7bdd75e538b67ddc1e7178336007e25b927376dd2119",
+      "sha256": "df8e1a284cc4f2559f8e0cb7cba0c2d16616b4f3b22943ebb982d1b464117641",
       "upstreamSha256": "088fe05c970c1b42d96f575d0f306c54c31f31185e46b7e099310c7f56ab74b5",
-      "adaptation": "DWC local video/poster links; no upload placeholders."
+      "adaptation": "DWC local video/poster links and generic preview diagnostics."
     },
     {
       "path": ".agents/skills/record-demo/assets/overlay.js",
@@ -54,7 +54,7 @@
       "path": ".agents/skills/produce-demo/scripts/produce-demo.mjs",
       "sha256": "68e950e39ff2fac43337c71e8659f9530496af954aa6be7b2a8a5c01df016c9b",
       "upstreamSha256": "6d5f8d2d598243529f4129c002af3024da3bfca34f1d3a42a17080dffd972738",
-      "adaptation": "DWC local video/poster links; no upload placeholders."
+      "adaptation": "DWC local video/poster links."
     },
     {
       "path": ".agents/skills/produce-demo/scripts/lib/storyboard.mjs",

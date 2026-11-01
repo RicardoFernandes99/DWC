@@ -20,6 +20,21 @@ services:
       retries: 30
       start_period: 5s
 
+  redis:
+    image: redis:8.2-alpine@sha256:489a769e0a54dc245896132a15c72d2bc7296719954da99398f43a3877e5f8eb
+    command:
+      ['redis-server', '--appendonly', 'yes', '--appendfsync', 'everysec']
+    ports:
+      - '127.0.0.1:6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
   storage:
     image: floci/floci:2.3.0@sha256:e0b292df4dc9559b7b1bf4f51bdda4bb8e269276236438cd03cae661260ea8a9
     ports:
@@ -35,4 +50,5 @@ services:
 
 volumes:
   mongodb-data:
+  redis-data:
   floci-data:

@@ -53,7 +53,7 @@ do not describe them as implemented.
   rollback cannot undo an external side effect. Publish only after commit.
 - When stale human edits matter, use a revision in the atomic update predicate;
   do not assume every write has a unique timestamp.
-- Test simultaneous bids/stock updates against real MongoDB, including deadline
+- Exercise simultaneous bids/stock updates against real MongoDB, including deadline
   rejection. Document persistence-to-delivery gaps; add durable delivery only when
   required rather than introducing a queue by default.
 
@@ -74,6 +74,9 @@ do not describe them as implemented.
 
 ## Checks
 
-Run API `test`, `typecheck` and `build` via `pnpm --filter @dwc/api`, plus root lint
-and formatting checks. `pnpm smoke` needs a running API/services and removes only
-its own temporary data. Mocks cannot prove database concurrency guarantees.
+Run API `typecheck` and `build` via `pnpm --filter @dwc/api`, plus root lint and
+scoped formatting checks. Manually exercise the changed endpoint and a meaningful
+refusal. Automated tests are optional; reserve small focused tests for useful
+regression protection. `pnpm smoke` is available when helpful, not a per-ticket
+gate. It needs running services and removes only its own data. Real requests can
+exercise concurrency; mocks cannot prove database concurrency guarantees.

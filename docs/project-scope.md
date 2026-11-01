@@ -1,8 +1,11 @@
 # Project scope
 
 The PDF describes an individual seven-week local-producer marketplace project.
-The user's subsequent decisions below govern this implementation. Differences
-from the assignment should be recorded in the final report.
+The user's subsequent decisions below govern this implementation. Detailed
+agreed flows live in [product decisions](product-decisions.md), with the work
+grouped in the [feature roadmap](feature-roadmap.md). Differences from the
+assignment should be recorded in the final report. The implementation guide is
+reference material; explicit user decisions take precedence over its examples.
 
 ## Agreed technology and delivery
 
@@ -21,6 +24,9 @@ from the assignment should be recorded in the final report.
   These are three layout ranges separated by two breakpoints; no SASS map is needed.
 - Docker MongoDB and Floci for local S3 emulation, replacing the earlier
   RustFS/MinIO storage choice at the user's request.
+- Redis runs locally in Docker for future expiring authentication session data,
+  including refresh-token sessions and revocation. JWT verification stays in the
+  API; the authentication implementation and token lifecycle remain future work.
 - Local HTTP development. HTTPS is undecided and not part of initial setup.
 - No cloud deployment or separate prototype deliverable.
 
@@ -34,7 +40,9 @@ from the assignment should be recorded in the final report.
   auction creation/monitoring; sales statistics and low-stock indicators.
 - Administrators (Laravel): approve/reject producers, moderate content/reviews,
   inspect users/orders/auctions and service health.
-- Order lifecycle: pending, confirmed, ready, delivered.
+- Delivery orders: pending, confirmed, shipped, delivered. Collection orders:
+  pending, confirmed, ready for collection, collected. Producers advance one
+  step at a time; pending orders support the agreed refund/cancellation flow.
 - Auctions: starting price, minimum increment, duration, authenticated bids,
   bid history, participant count, synchronized countdown and rejection messages.
 - Server-authoritative atomic bid acceptance, persisted history and consistent
@@ -56,3 +64,4 @@ from the assignment should be recorded in the final report.
 Only workspace tooling, agent guidance, a minimal frontend, API health/docs,
 MongoDB connectivity and S3 initialization are implemented. Authentication,
 catalogue, ordering, auctions and Laravel remain future feature work.
+Redis infrastructure is configured, but its API/auth integration is not implemented.

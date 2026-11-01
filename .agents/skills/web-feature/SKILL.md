@@ -19,8 +19,8 @@ description: Implement or change React screens, components, forms, and client be
    loading, failure, and empty states. UI copy stays in English.
 5. Call the real `/api` contract. Do not invent backend success, permissions,
    auction outcomes, or stock changes. Clean up subscriptions when introduced.
-6. Test the changed interaction and a meaningful failure case. Run web tests,
-   typecheck, build, root lint and relevant formatting checks. The production
-   build must confirm compiler output. Review the UI in a browser when possible;
-   distinguish automated tests from visual checks actually performed.
+6. Run typecheck/build, root lint and scoped formatting checks. Briefly exercise
+   the interaction, a meaningful failure and responsive/keyboard behavior in a
+   browser. Automated tests are optional; add only small tests with clear value.
+   The production build must confirm compiler output. Report checks actually performed.
 7. Summarize the behavior and validation, including any unimplemented dependency.
