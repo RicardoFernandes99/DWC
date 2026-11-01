@@ -1,9 +1,9 @@
 # 009: Approve or reject producer applications through the API
 
 - Macro: M02, M08
-- Status: In progress
+- Status: In review
 - Depends on: 007
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/19
 - Branch / parent: `codex/age-009-producer-admin-decisions-api` / `codex/age-008-producer-onboarding-web` at `9ffb71172b282e8e64d73560eb53161c9e8b10a7`
 - Blockers: None beyond dependencies
 
@@ -49,9 +49,9 @@ Approve and reject local applications with real admin requests; try a non-admin 
 
 ## Delivery notes
 
-- Implemented on `codex/age-009-producer-admin-decisions-api`, stacked on PR #17 (`codex/age-008-producer-onboarding-web` at `9ffb71172b282e8e64d73560eb53161c9e8b10a7`).
+- Implemented on `codex/age-009-producer-admin-decisions-api`, stacked on PR #17 (`codex/age-008-producer-onboarding-web` at `9ffb71172b282e8e64d73560eb53161c9e8b10a7`). PR #19 is ready for review in stack #18.
 - Orchestrator/reviewer: Gemini 4 Argon (Low). Builder subagent: `self` (`Model: 'inherit'` — Gemini 4 Argon Low, `0f3687b4-9120-4728-ab4f-6d72c1e0229a`, transcript usage: 245,590 input tokens, 2,856,345 cached tokens, 33,514 output/thinking tokens), with zero subagent correction rounds.
-- Frontier verdict: APPROVED against parent `9ffb71172b282e8e64d73560eb53161c9e8b10a7`.
+- Frontier verdict: APPROVED against parent `9ffb71172b282e8e64d73560eb53161c9e8b10a7` on reviewed implementation commit `9335b6427f16d581ea555a026df95bb207f03b0c`.
 - Static and contract checks passed with Node 24.22.2 and pnpm 11.25.0:
   - `pnpm contract:generate` and `pnpm contract:check`
   - `pnpm typecheck` (`tsconfig.tools.json`, `@dwc/api`, `@dwc/web`)
