@@ -1,9 +1,9 @@
 # 004: Register, sign in and restore a browser session
 
 - Macro: M01
-- Status: In progress
+- Status: In review
 - Depends on: 003, 045
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/12
 - Branch / parent: `codex/age-004-auth-web` / `codex/age-045-ui-foundation`
 - Blockers: None. Tickets 003 and 045 are present on the parent branch.
 
@@ -104,3 +104,6 @@ The API and UI foundation dependencies are present on the parent branch.
   Four build-owned test accounts remain in the local database. The local web and
   isolated API servers remain running for the user's preview.
 - Existing build-skill and ticket-index edits were preserved outside this commit.
+
+- PR #12 is ready for review, targeting PR #10. Frontier approval covers
+  implementation commit `b863b8c`; this subsequent update records publication only.
