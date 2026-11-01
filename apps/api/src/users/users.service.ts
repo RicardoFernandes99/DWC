@@ -41,7 +41,7 @@ function toUserResponse(user: UserDocument): UserResponseDto {
 export class UsersService {
   constructor(@InjectModel(User.name) private readonly users: Model<User>) {}
 
-  async register(input: RegisterUserDto): Promise<UserResponseDto> {
+  async register(input: RegisterUserDto) {
     const email = input.email.trim().toLowerCase();
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_COST);
 
