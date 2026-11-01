@@ -261,6 +261,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/producer/products/{id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProducerProductsController_getImagePreview"];
+        put?: never;
+        post: operations["ProducerProductsController_uploadImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -574,6 +590,35 @@ export interface components {
              */
             reason: string;
         };
+        ProducerProductImageMetadataDto: {
+            /**
+             * @description Validated canonical raster MIME type of the stored image.
+             * @example image/jpeg
+             * @enum {string}
+             */
+            mimeType: "image/jpeg" | "image/png" | "image/webp";
+            /**
+             * @description Stored image size in bytes.
+             * @example 184320
+             */
+            sizeBytes: number;
+            /**
+             * @description Image width in pixels.
+             * @example 1200
+             */
+            width: number;
+            /**
+             * @description Image height in pixels.
+             * @example 900
+             */
+            height: number;
+            /**
+             * Format: date-time
+             * @description Timestamp when the image was uploaded.
+             * @example 2026-11-01T12:00:00.000Z
+             */
+            uploadedAt: string;
+        };
         ProducerProductResponseDto: {
             /** @example 671f0f98ac53ba58e26c4789 */
             id: string;
@@ -637,6 +682,16 @@ export interface components {
              * @example false
              */
             hasImage: boolean;
+            /**
+             * @description Short-lived signed preview URL when an active unarchived, unmoderated product has an image; null otherwise.
+             * @example null
+             */
+            imageUrl: string | null;
+            /**
+             * @description Validated image metadata when an image is attached; null otherwise.
+             * @example null
+             */
+            imageMeta: components["schemas"]["ProducerProductImageMetadataDto"] | null;
             /** @example 1 */
             revision: number;
             /**
@@ -787,6 +842,57 @@ export interface components {
              * @example 1
              */
             revision: number;
+        };
+        UploadProducerProductImageSwaggerDto: {
+            /**
+             * @description Current product revision to prevent stale image replacements.
+             * @example 1
+             */
+            revision: number;
+            /**
+             * Format: binary
+             * @description Raster product image file (JPEG, PNG or WebP; SVG rejected; max 5 MB / 5,242,880 bytes; dimensions 1..4096 px, max 16,777,216 pixels).
+             */
+            file: string;
+        };
+        ProducerProductImagePreviewResponseDto: {
+            /**
+             * @description Validated canonical raster MIME type of the stored image.
+             * @example image/jpeg
+             * @enum {string}
+             */
+            mimeType: "image/jpeg" | "image/png" | "image/webp";
+            /**
+             * @description Stored image size in bytes.
+             * @example 184320
+             */
+            sizeBytes: number;
+            /**
+             * @description Image width in pixels.
+             * @example 1200
+             */
+            width: number;
+            /**
+             * @description Image height in pixels.
+             * @example 900
+             */
+            height: number;
+            /**
+             * Format: date-time
+             * @description Timestamp when the image was uploaded.
+             * @example 2026-11-01T12:00:00.000Z
+             */
+            uploadedAt: string;
+            /**
+             * @description Short-lived signed GET URL for the private product image object.
+             * @example http://127.0.0.1:4566/product-images/products/671f0f98ac53ba58e26c4788/671f0f98ac53ba58e26c4789/7b8e1100-5b8d-4900-a312-9076511c48b3.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300
+             */
+            url: string;
+            /**
+             * @description Lifetime of the signed URL in seconds.
+             * @example 300
+             */
+            expiresInSeconds: number;
         };
     };
     responses: never;
@@ -1671,7 +1777,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Authentication storage unavailable. */
+            /** @description Authentication or product image storage unavailable. */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -1723,7 +1829,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Authentication storage unavailable. */
+            /** @description Authentication or product image storage unavailable. */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -1781,7 +1887,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Authentication storage unavailable. */
+            /** @description Authentication or product image storage unavailable. */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -1850,7 +1956,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Authentication storage unavailable. */
+            /** @description Authentication or product image storage unavailable. */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -1919,7 +2025,149 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Authentication storage unavailable. */
+            /** @description Authentication or product image storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProductsController_getImagePreview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Product identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Short-lived signed preview URL and metadata for the producer’s product image. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProductImagePreviewResponseDto"];
+                };
+            };
+            /** @description Invalid product identifier or unexpected query fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may manage products. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product or product image not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Archived or moderated products cannot mint fresh image URLs. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication or product image storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProductsController_uploadImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Product identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Multipart upload with current product revision and a raster image file (JPEG, PNG or WebP; SVG rejected; max 5 MB; dimensions 1..4096 px, max 16,777,216 pixels). */
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["UploadProducerProductImageSwaggerDto"];
+            };
+        };
+        responses: {
+            /** @description Product image uploaded or replaced in private S3 storage and signed preview access returned. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProductResponseDto"];
+                };
+            };
+            /** @description Missing or invalid image bytes, unsupported SVG or non-raster format, spoofed MIME declaration, invalid pixel bounds, or invalid revision. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may manage products. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product is archived, moderated, or its revision changed concurrently. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Uploaded file exceeds the 5 MB (5,242,880 bytes) size limit. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication or product image storage unavailable. */
             503: {
                 headers: {
                     [name: string]: unknown;

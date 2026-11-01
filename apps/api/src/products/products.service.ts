@@ -1,22 +1,39 @@
+import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import {
+  StorageService,
+  type SignedGetUrlResult,
+} from '../storage/storage.service.js';
 import { ProducerStatus, User, UserRole } from '../users/user.schema.js';
 import {
   ArchiveProducerProductDto,
   CreateProducerProductDto,
   ListProducerProductsQueryDto,
+  ProducerProductImageMetadataDto,
+  ProducerProductImagePreviewResponseDto,
   ProducerProductListResponseDto,
   ProducerProductResponseDto,
   UpdateProducerProductDto,
 } from './product.dto.js';
-import { Product, ProductDocument } from './product.schema.js';
+import {
+  validateProductImage,
+  type UploadedImageFileInput,
+} from './product-image.validator.js';
+import {
+  Product,
+  ProductDocument,
+  ProductImageMetadata,
+} from './product.schema.js';
 
 function formatDate(value: Date | string | null | undefined): string | null {
   if (!value) {
@@ -25,9 +42,39 @@ function formatDate(value: Date | string | null | undefined): string | null {
   return (value instanceof Date ? value : new Date(value)).toISOString();
 }
 
+function toProducerProductImageMetadata(
+  image: ProductImageMetadata | null | undefined,
+): ProducerProductImageMetadataDto | null {
+  if (!image) {
+    return null;
+  }
+  return {
+    mimeType: image.mimeType,
+    sizeBytes: image.sizeBytes,
+    width: image.width,
+    height: image.height,
+    uploadedAt: formatDate(image.uploadedAt) ?? new Date(0).toISOString(),
+  };
+}
+
+function canMintProductImageUrl(product: ProductDocument): boolean {
+  return (
+    Boolean(product.image?.objectKey) &&
+    product.archivedAt === null &&
+    product.moderatedAt === null
+  );
+}
+
 function toProducerProductResponse(
   product: ProductDocument,
+  storage: StorageService,
 ): ProducerProductResponseDto {
+  const imageMeta = toProducerProductImageMetadata(product.image);
+  const imageUrl =
+    canMintProductImageUrl(product) && product.image
+      ? storage.createSignedGetUrl(product.image.objectKey).url
+      : null;
+
   return {
     id: product._id.toString(),
     producerId: product.producerId.toString(),
@@ -47,6 +94,8 @@ function toProducerProductResponse(
     moderatedAt: formatDate(product.moderatedAt),
     moderationReason: product.moderationReason ?? null,
     hasImage: Boolean(product.image),
+    imageUrl,
+    imageMeta,
     revision: product.revision ?? 1,
     createdAt: formatDate(product.createdAt) ?? new Date(0).toISOString(),
     updatedAt: formatDate(product.updatedAt) ?? new Date(0).toISOString(),
@@ -55,11 +104,14 @@ function toProducerProductResponse(
 
 @Injectable()
 export class ProductsService {
+  private readonly logger = new Logger(ProductsService.name);
+
   constructor(
     @InjectModel(Product.name)
     private readonly products: Model<Product>,
     @InjectModel(User.name)
     private readonly users: Model<User>,
+    private readonly storage: StorageService,
   ) {}
 
   private async requireApprovedProducer(userId: string): Promise<void> {
@@ -71,6 +123,19 @@ export class ProductsService {
     if (!approved) {
       throw new ForbiddenException(
         'Only approved producers may manage products.',
+      );
+    }
+  }
+
+  private async cleanupStorageObject(
+    objectKey: string,
+    reason: string,
+  ): Promise<void> {
+    try {
+      await this.storage.deleteObject(objectKey);
+    } catch {
+      this.logger.warn(
+        `Deferred S3 cleanup required for objectKey="${objectKey}" (${reason}).`,
       );
     }
   }
@@ -105,7 +170,7 @@ export class ProductsService {
     ]);
 
     return {
-      items: docs.map((doc) => toProducerProductResponse(doc)),
+      items: docs.map((doc) => toProducerProductResponse(doc, this.storage)),
       total,
       page,
       limit,
@@ -136,7 +201,7 @@ export class ProductsService {
       image: null,
       revision: 1,
     });
-    return toProducerProductResponse(product);
+    return toProducerProductResponse(product, this.storage);
   }
 
   async getForProducer(
@@ -151,7 +216,7 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException('Product not found.');
     }
-    return toProducerProductResponse(product);
+    return toProducerProductResponse(product, this.storage);
   }
 
   async updateForProducer(
@@ -228,7 +293,7 @@ export class ProductsService {
       );
     }
 
-    return toProducerProductResponse(updated);
+    return toProducerProductResponse(updated, this.storage);
   }
 
   async archiveForProducer(
@@ -270,6 +335,174 @@ export class ProductsService {
       );
     }
 
-    return toProducerProductResponse(updated);
+    return toProducerProductResponse(updated, this.storage);
+  }
+
+  async uploadImageForProducer(
+    userId: string,
+    id: string,
+    revision: number,
+    file: UploadedImageFileInput | undefined,
+  ): Promise<ProducerProductResponseDto> {
+    await this.requireApprovedProducer(userId);
+    const validated = validateProductImage(file);
+
+    const existing = await this.products.findOne({
+      _id: new Types.ObjectId(id),
+      producerId: new Types.ObjectId(userId),
+    });
+    if (!existing) {
+      throw new NotFoundException('Product not found.');
+    }
+    if (existing.archivedAt !== null) {
+      throw new ConflictException('Archived products cannot be edited.');
+    }
+    if (existing.moderatedAt !== null) {
+      throw new ConflictException('Moderated products cannot be edited.');
+    }
+    if (existing.revision !== revision) {
+      throw new ConflictException(
+        'Product was modified concurrently. Refresh and try again.',
+      );
+    }
+
+    const objectKey = `products/${userId}/${existing._id.toString()}/${randomUUID()}.${validated.extension}`;
+    try {
+      await this.storage.putObject({
+        key: objectKey,
+        body: file!.buffer!,
+        contentType: validated.mimeType,
+        cacheControl: 'private, max-age=300',
+      });
+    } catch {
+      this.logger.error(
+        `Product image upload to S3 failed for productId="${existing._id.toString()}".`,
+      );
+      throw new ServiceUnavailableException(
+        'Product image storage is currently unavailable.',
+      );
+    }
+
+    const uploadedAt = new Date();
+    let updated: ProductDocument | null;
+    try {
+      updated = await this.products.findOneAndUpdate(
+        {
+          _id: existing._id,
+          producerId: existing.producerId,
+          archivedAt: null,
+          moderatedAt: null,
+          revision,
+        },
+        {
+          $set: {
+            image: {
+              objectKey,
+              mimeType: validated.mimeType,
+              sizeBytes: validated.sizeBytes,
+              width: validated.width,
+              height: validated.height,
+              uploadedAt,
+            },
+          },
+          $inc: { revision: 1 },
+        },
+        { returnDocument: 'after', runValidators: true },
+      );
+    } catch (error) {
+      await this.cleanupStorageObject(objectKey, 'failed database update');
+      throw error;
+    }
+
+    if (!updated) {
+      await this.cleanupStorageObject(
+        objectKey,
+        'concurrent product modification',
+      );
+      const current = await this.products.findOne({
+        _id: existing._id,
+        producerId: existing.producerId,
+      });
+      if (!current) {
+        throw new NotFoundException('Product not found.');
+      }
+      if (current.archivedAt !== null) {
+        throw new ConflictException('Archived products cannot be edited.');
+      }
+      if (current.moderatedAt !== null) {
+        throw new ConflictException('Moderated products cannot be edited.');
+      }
+      throw new ConflictException(
+        'Product was modified concurrently. Refresh and try again.',
+      );
+    }
+
+    const previousObjectKey = existing.image?.objectKey;
+    if (previousObjectKey && previousObjectKey !== objectKey) {
+      await this.cleanupStorageObject(
+        previousObjectKey,
+        'replaced product image',
+      );
+    }
+
+    return toProducerProductResponse(updated, this.storage);
+  }
+
+  async getImagePreviewForProducer(
+    userId: string,
+    id: string,
+  ): Promise<ProducerProductImagePreviewResponseDto> {
+    await this.requireApprovedProducer(userId);
+    const product = await this.products.findOne({
+      _id: new Types.ObjectId(id),
+      producerId: new Types.ObjectId(userId),
+    });
+    if (!product) {
+      throw new NotFoundException('Product not found.');
+    }
+    if (product.archivedAt !== null || product.moderatedAt !== null) {
+      throw new ConflictException(
+        'Archived or moderated products cannot mint fresh image URLs.',
+      );
+    }
+    if (!product.image?.objectKey) {
+      throw new NotFoundException('Product has no uploaded image.');
+    }
+
+    const signed = this.storage.createSignedGetUrl(product.image.objectKey);
+    const meta = toProducerProductImageMetadata(product.image)!;
+    return {
+      url: signed.url,
+      expiresInSeconds: signed.expiresInSeconds,
+      ...meta,
+    };
+  }
+
+  async resolvePublicImageUrl(
+    productId: string,
+  ): Promise<SignedGetUrlResult | null> {
+    if (!Types.ObjectId.isValid(productId)) {
+      return null;
+    }
+    const product = await this.products.findOne({
+      _id: new Types.ObjectId(productId),
+      published: true,
+      archivedAt: null,
+      moderatedAt: null,
+    });
+    if (!product?.image?.objectKey) {
+      return null;
+    }
+
+    const producerEligible = await this.users.exists({
+      _id: product.producerId,
+      role: UserRole.Producer,
+      producerStatus: ProducerStatus.Approved,
+    });
+    if (!producerEligible) {
+      return null;
+    }
+
+    return this.storage.createSignedGetUrl(product.image.objectKey);
   }
 }

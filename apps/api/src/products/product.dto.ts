@@ -22,6 +22,12 @@ import {
   ProductSeason,
   ProductUnit,
 } from './product.schema.js';
+import {
+  ALLOWED_PRODUCT_IMAGE_MIME_TYPES,
+  MAX_PRODUCT_IMAGE_BYTES,
+  MAX_PRODUCT_IMAGE_DIMENSION,
+  MIN_PRODUCT_IMAGE_DIMENSION,
+} from './product-image.validator.js';
 
 function parseOptionalBoolean({ value }: { value: unknown }): unknown {
   if (value === 'true' || value === true) {
@@ -358,6 +364,96 @@ export class ArchiveProducerProductDto {
   revision!: number;
 }
 
+export class UploadProducerProductImageDto {
+  @ApiProperty({
+    example: 1,
+    minimum: 1,
+    description:
+      'Current product revision to prevent stale image replacements.',
+  })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  revision!: number;
+}
+
+export class UploadProducerProductImageSwaggerDto {
+  @ApiProperty({
+    example: 1,
+    minimum: 1,
+    description:
+      'Current product revision to prevent stale image replacements.',
+  })
+  revision!: number;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    description:
+      'Raster product image file (JPEG, PNG or WebP; SVG rejected; max 5 MB / 5,242,880 bytes; dimensions 1..4096 px, max 16,777,216 pixels).',
+  })
+  file!: unknown;
+}
+
+export class ProducerProductImageMetadataDto {
+  @ApiProperty({
+    enum: ALLOWED_PRODUCT_IMAGE_MIME_TYPES,
+    example: 'image/jpeg',
+    description: 'Validated canonical raster MIME type of the stored image.',
+  })
+  mimeType!: string;
+
+  @ApiProperty({
+    example: 184320,
+    minimum: 1,
+    maximum: MAX_PRODUCT_IMAGE_BYTES,
+    description: 'Stored image size in bytes.',
+  })
+  sizeBytes!: number;
+
+  @ApiProperty({
+    example: 1200,
+    minimum: MIN_PRODUCT_IMAGE_DIMENSION,
+    maximum: MAX_PRODUCT_IMAGE_DIMENSION,
+    description: 'Image width in pixels.',
+  })
+  width!: number;
+
+  @ApiProperty({
+    example: 900,
+    minimum: MIN_PRODUCT_IMAGE_DIMENSION,
+    maximum: MAX_PRODUCT_IMAGE_DIMENSION,
+    description: 'Image height in pixels.',
+  })
+  height!: number;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    example: '2026-11-01T12:00:00.000Z',
+    description: 'Timestamp when the image was uploaded.',
+  })
+  uploadedAt!: string;
+}
+
+export class ProducerProductImagePreviewResponseDto extends ProducerProductImageMetadataDto {
+  @ApiProperty({
+    example:
+      'http://127.0.0.1:4566/product-images/products/671f0f98ac53ba58e26c4788/671f0f98ac53ba58e26c4789/7b8e1100-5b8d-4900-a312-9076511c48b3.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300',
+    description:
+      'Short-lived signed GET URL for the private product image object.',
+  })
+  url!: string;
+
+  @ApiProperty({
+    example: 300,
+    minimum: 60,
+    maximum: 900,
+    description: 'Lifetime of the signed URL in seconds.',
+  })
+  expiresInSeconds!: number;
+}
+
 export class ProducerProductResponseDto {
   @ApiProperty({ example: '671f0f98ac53ba58e26c4789' })
   id!: string;
@@ -445,6 +541,24 @@ export class ProducerProductResponseDto {
     description: 'Whether an image has been uploaded for this product.',
   })
   hasImage!: boolean;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description:
+      'Short-lived signed preview URL when an active unarchived, unmoderated product has an image; null otherwise.',
+  })
+  imageUrl!: string | null;
+
+  @ApiProperty({
+    type: () => ProducerProductImageMetadataDto,
+    nullable: true,
+    example: null,
+    description:
+      'Validated image metadata when an image is attached; null otherwise.',
+  })
+  imageMeta!: ProducerProductImageMetadataDto | null;
 
   @ApiProperty({ example: 1, minimum: 1 })
   revision!: number;

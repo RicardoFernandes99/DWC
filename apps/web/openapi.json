@@ -860,7 +860,7 @@
             "description": "Only approved producers may manage products."
           },
           "503": {
-            "description": "Authentication storage unavailable."
+            "description": "Authentication or product image storage unavailable."
           }
         },
         "security": [
@@ -906,7 +906,7 @@
             "description": "Only approved producers may manage products."
           },
           "503": {
-            "description": "Authentication storage unavailable."
+            "description": "Authentication or product image storage unavailable."
           }
         },
         "security": [
@@ -958,7 +958,7 @@
             "description": "Product not found."
           },
           "503": {
-            "description": "Authentication storage unavailable."
+            "description": "Authentication or product image storage unavailable."
           }
         },
         "security": [
@@ -1021,7 +1021,7 @@
             "description": "Product is archived or its revision/stock changed concurrently."
           },
           "503": {
-            "description": "Authentication storage unavailable."
+            "description": "Authentication or product image storage unavailable."
           }
         },
         "security": [
@@ -1086,7 +1086,129 @@
             "description": "Product is already archived or its revision changed concurrently."
           },
           "503": {
-            "description": "Authentication storage unavailable."
+            "description": "Authentication or product image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer products"
+        ]
+      }
+    },
+    "/api/producer/products/{id}/image": {
+      "post": {
+        "operationId": "ProducerProductsController_uploadImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Product identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Multipart upload with current product revision and a raster image file (JPEG, PNG or WebP; SVG rejected; max 5 MB; dimensions 1..4096 px, max 16,777,216 pixels).",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadProducerProductImageSwaggerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product image uploaded or replaced in private S3 storage and signed preview access returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProductResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid image bytes, unsupported SVG or non-raster format, spoofed MIME declaration, invalid pixel bounds, or invalid revision."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may manage products."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "409": {
+            "description": "Product is archived, moderated, or its revision changed concurrently."
+          },
+          "413": {
+            "description": "Uploaded file exceeds the 5 MB (5,242,880 bytes) size limit."
+          },
+          "503": {
+            "description": "Authentication or product image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer products"
+        ]
+      },
+      "get": {
+        "operationId": "ProducerProductsController_getImagePreview",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Product identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Short-lived signed preview URL and metadata for the producer’s product image.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProductImagePreviewResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid product identifier or unexpected query fields."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may manage products."
+          },
+          "404": {
+            "description": "Product or product image not found."
+          },
+          "409": {
+            "description": "Archived or moderated products cannot mint fresh image URLs."
+          },
+          "503": {
+            "description": "Authentication or product image storage unavailable."
           }
         },
         "security": [
@@ -1749,6 +1871,55 @@
           "reason"
         ]
       },
+      "ProducerProductImageMetadataDto": {
+        "type": "object",
+        "properties": {
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ],
+            "example": "image/jpeg",
+            "description": "Validated canonical raster MIME type of the stored image."
+          },
+          "sizeBytes": {
+            "type": "number",
+            "example": 184320,
+            "minimum": 1,
+            "maximum": 5242880,
+            "description": "Stored image size in bytes."
+          },
+          "width": {
+            "type": "number",
+            "example": 1200,
+            "minimum": 1,
+            "maximum": 4096,
+            "description": "Image width in pixels."
+          },
+          "height": {
+            "type": "number",
+            "example": 900,
+            "minimum": 1,
+            "maximum": 4096,
+            "description": "Image height in pixels."
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-01T12:00:00.000Z",
+            "description": "Timestamp when the image was uploaded."
+          }
+        },
+        "required": [
+          "mimeType",
+          "sizeBytes",
+          "width",
+          "height",
+          "uploadedAt"
+        ]
+      },
       "ProducerProductResponseDto": {
         "type": "object",
         "properties": {
@@ -1879,6 +2050,23 @@
             "example": false,
             "description": "Whether an image has been uploaded for this product."
           },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Short-lived signed preview URL when an active unarchived, unmoderated product has an image; null otherwise."
+          },
+          "imageMeta": {
+            "nullable": true,
+            "example": null,
+            "description": "Validated image metadata when an image is attached; null otherwise.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProducerProductImageMetadataDto"
+              }
+            ]
+          },
           "revision": {
             "type": "number",
             "example": 1,
@@ -1914,6 +2102,8 @@
           "moderatedAt",
           "moderationReason",
           "hasImage",
+          "imageUrl",
+          "imageMeta",
           "revision",
           "createdAt",
           "updatedAt"
@@ -2207,6 +2397,89 @@
         },
         "required": [
           "revision"
+        ]
+      },
+      "UploadProducerProductImageSwaggerDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "description": "Current product revision to prevent stale image replacements."
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Raster product image file (JPEG, PNG or WebP; SVG rejected; max 5 MB / 5,242,880 bytes; dimensions 1..4096 px, max 16,777,216 pixels)."
+          }
+        },
+        "required": [
+          "revision",
+          "file"
+        ]
+      },
+      "ProducerProductImagePreviewResponseDto": {
+        "type": "object",
+        "properties": {
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ],
+            "example": "image/jpeg",
+            "description": "Validated canonical raster MIME type of the stored image."
+          },
+          "sizeBytes": {
+            "type": "number",
+            "example": 184320,
+            "minimum": 1,
+            "maximum": 5242880,
+            "description": "Stored image size in bytes."
+          },
+          "width": {
+            "type": "number",
+            "example": 1200,
+            "minimum": 1,
+            "maximum": 4096,
+            "description": "Image width in pixels."
+          },
+          "height": {
+            "type": "number",
+            "example": 900,
+            "minimum": 1,
+            "maximum": 4096,
+            "description": "Image height in pixels."
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-01T12:00:00.000Z",
+            "description": "Timestamp when the image was uploaded."
+          },
+          "url": {
+            "type": "string",
+            "example": "http://127.0.0.1:4566/product-images/products/671f0f98ac53ba58e26c4788/671f0f98ac53ba58e26c4789/7b8e1100-5b8d-4900-a312-9076511c48b3.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300",
+            "description": "Short-lived signed GET URL for the private product image object."
+          },
+          "expiresInSeconds": {
+            "type": "number",
+            "example": 300,
+            "minimum": 60,
+            "maximum": 900,
+            "description": "Lifetime of the signed URL in seconds."
+          }
+        },
+        "required": [
+          "mimeType",
+          "sizeBytes",
+          "width",
+          "height",
+          "uploadedAt",
+          "url",
+          "expiresInSeconds"
         ]
       }
     }

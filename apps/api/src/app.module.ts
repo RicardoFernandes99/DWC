@@ -6,7 +6,7 @@ import { validateEnvironment } from './config.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
 import { RedisModule } from './redis/redis.module.js';
-import { StorageService } from './storage/storage.service.js';
+import { StorageModule } from './storage/storage.module.js';
 import { UsersModule } from './users/users.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module.js';
@@ -21,6 +21,7 @@ import { ProductsModule } from './products/products.module.js';
     ProductsModule,
     UsersModule,
     RedisModule,
+    StorageModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: fileURLToPath(new URL('../../../.env', import.meta.url)),
@@ -36,6 +37,6 @@ import { ProductsModule } from './products/products.module.js';
     }),
   ],
   controllers: [HealthController],
-  providers: [HealthService, StorageService],
+  providers: [HealthService],
 })
 export class AppModule {}

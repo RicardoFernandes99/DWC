@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '../auth/auth.module.js';
+import { StorageModule } from '../storage/storage.module.js';
 import { User, UserSchema } from '../users/user.schema.js';
 import { ProducerProductsController } from './producer-products.controller.js';
 import { Product, ProductSchema } from './product.schema.js';
@@ -9,6 +10,7 @@ import { ProductsService } from './products.service.js';
 @Module({
   imports: [
     AuthModule,
+    StorageModule,
     MongooseModule.forFeature([
       { name: Product.name, schema: ProductSchema },
       { name: User.name, schema: UserSchema },
