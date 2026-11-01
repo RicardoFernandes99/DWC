@@ -60,6 +60,12 @@ Read `design-engineering` for UI details, `animate` for deliberate motion, and
 
 - Mobile-first layout, semantic HTML, labelled controls, keyboard access, visible
   focus and explicit loading/error/empty/success states. Copy stays in English.
+- Make every screen responsive across three ranges: below 768px with base
+  styles, 768px to below 1280px with `md:`, and 1280px upward with `xl:`.
+  Adapt navigation, forms, cart, orders and other layouts to the available space;
+  the two, three and four column rule applies specifically to product grids.
+  Use Tailwind; do not introduce SASS. Check every changed screen in all three
+  ranges, including intermediate widths, for overflow and usable controls.
 - Reserve image dimensions and async-content space; use tabular numerals for
   changing numbers. Respect reduced motion and label icon-only actions.
 - The API owns permissions, prices, stock, order transitions and accepted bids.

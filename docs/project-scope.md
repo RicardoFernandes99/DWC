@@ -13,6 +13,12 @@ from the assignment should be recorded in the final report.
   with Rules of React and compiler diagnostics enforced. Manual memoization is
   exceptional, not the default development style.
 - shadcn/ui, ReUI and Tailwind; no Bootstrap/SASS requirement in this implementation.
+- Every application screen must be responsive and mobile-first, using three
+  screen ranges: below 768px, 768px to below 1280px, and 1280px upward, with
+  Tailwind base styles, `md:` and `xl:` variants. Navigation, forms, cart, orders
+  and other layouts adapt to the available space within these ranges. Product
+  grids specifically use two, three and four columns respectively.
+  These are three layout ranges separated by two breakpoints; no SASS map is needed.
 - Docker MongoDB and Floci for local S3 emulation, replacing the earlier
   RustFS/MinIO storage choice at the user's request.
 - Local HTTP development. HTTPS is undecided and not part of initial setup.
