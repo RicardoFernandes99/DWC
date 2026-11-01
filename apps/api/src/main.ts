@@ -11,7 +11,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
   app.setGlobalPrefix('api');
-  app.enableCors({ origin: config.getOrThrow<string>('WEB_ORIGIN') });
+  app.enableCors({
+    origin: config.getOrThrow<string>('WEB_ORIGIN'),
+    credentials: true,
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -27,6 +30,7 @@ async function bootstrap() {
     )
     .setVersion('0.1.0')
     .addBearerAuth()
+    .addCookieAuth('dwc_refresh', { type: 'apiKey', in: 'cookie' }, 'refresh')
     .build();
   SwaggerModule.setup(
     'api-docs',

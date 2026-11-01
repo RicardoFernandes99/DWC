@@ -71,8 +71,8 @@ docs/             project scope, architecture, agent workflow and research
 ```
 
 Laravel backoffice remains planned as `apps/backoffice`; it is not scaffolded in
-this Web/API foundation. The API supports buyer/producer registration; login,
-sessions and other business features remain unimplemented.
+this Web/API foundation. The API supports buyer/producer registration and Redis-backed authentication sessions.
+Other business features remain unimplemented.
 
 ## Working with agents
 
@@ -91,3 +91,38 @@ See [scope](docs/project-scope.md) and [architecture](docs/architecture.md).
 Cloud deployment, HTTPS, Bootstrap/SASS, and a separate prototype are outside
 the current user-selected scope, despite appearing in the assignment brief.
 The report should record these differences and declare AI assistance.
+
+## Authentication API
+
+Registered buyers and producers can sign in using `POST /api/auth/login` with
+`{ email, password }`. The response contains `accessToken`, `expiresIn: 900` and
+the public user. Keep the access token in memory and send `Authorization: Bearer
+<accessToken>` to `GET /api/auth/me`. Every request checks the Redis session and
+loads the current user and producer status.
+
+Login also sets `dwc_refresh`, an opaque HttpOnly, SameSite=Lax cookie scoped to
+`/api/auth`. `POST /api/auth/refresh` rotates it once. Sessions expire absolutely
+seven days after login; refreshing never extends them. `POST /api/auth/logout`
+revokes only that cookie's session, clears the cookie and returns 204 even when
+the credential is missing or invalid. An already rotated credential is invalid
+and cannot revoke its replacement. Do not automatically refresh or retry logout.
+
+Both refresh and logout require `Origin` to equal `WEB_ORIGIN` exactly, including
+requests from curl or other non-browser clients. Use a cookie jar for those
+clients and send `Origin: http://localhost:5173` locally. Browser calls use
+`credentials: 'include'`; CORS allows credentials only for the configured origin.
+Swagger at `/api-docs` documents bearer and cookie authentication and failures.
+Login permits ten attempts per IP per minute in this API process and returns 429
+with retry headers when exceeded. DTOs bound credentials; invalid input returns
+400, invalid credentials return 401, untrusted Origin returns 403, and unavailable
+Redis returns a sanitized 503 without authenticating callers.
+
+New environments receive a random `JWT_SECRET` from `pnpm setup:local`. For an
+existing `.env`, add a random secret of at least 32 characters, `JWT_ISSUER=dwc-api`,
+`JWT_AUDIENCE=dwc-web` and `AUTH_COOKIE_SECURE=false`. Generate the secret locally
+with `node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"`.
+Setup never overwrites existing `.env` files. Local HTTP explicitly disables the
+Secure flag; HTTPS requires `AUTH_COOKIE_SECURE=true`. `WEB_ORIGIN` must be an exact
+origin with no path or trailing slash. JWTs use HS256 and validate issuer,
+audience, signature and expiry. Redis stores session IDs, user IDs and SHA-256
+refresh hashes with TTLs, never raw refresh credentials.

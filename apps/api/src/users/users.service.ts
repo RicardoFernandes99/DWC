@@ -41,6 +41,23 @@ function toUserResponse(user: UserDocument): UserResponseDto {
 export class UsersService {
   constructor(@InjectModel(User.name) private readonly users: Model<User>) {}
 
+  async verifyCredentials(email: string, password: string) {
+    const user = await this.users
+      .findOne({ email: email.trim().toLowerCase() })
+      .select('+passwordHash');
+    // Always perform bcrypt work, including for unknown accounts.
+    const hash =
+      user?.passwordHash ??
+      '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxWxLyZfQMP.YGJkLb0F2PfZL3K';
+    const valid = await bcrypt.compare(password, hash);
+    return user && valid ? toUserResponse(user) : null;
+  }
+
+  async findCurrent(id: string) {
+    const user = await this.users.findById(id);
+    return user ? toUserResponse(user) : null;
+  }
+
   async register(input: RegisterUserDto) {
     const email = input.email.trim().toLowerCase();
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_COST);

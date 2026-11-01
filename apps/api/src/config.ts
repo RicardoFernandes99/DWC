@@ -8,6 +8,10 @@ export function validateEnvironment(input: Record<string, unknown>) {
     'S3_ACCESS_KEY_ID',
     'S3_SECRET_ACCESS_KEY',
     'WEB_ORIGIN',
+    'JWT_SECRET',
+    'JWT_ISSUER',
+    'JWT_AUDIENCE',
+    'AUTH_COOKIE_SECURE',
   ];
   for (const name of required) {
     if (typeof input[name] !== 'string' || !input[name]) {
@@ -17,6 +21,17 @@ export function validateEnvironment(input: Record<string, unknown>) {
     }
   }
   const port = Number(input.API_PORT ?? 3000);
+  if (
+    typeof input.JWT_SECRET !== 'string' ||
+    input.JWT_SECRET.length < 32 ||
+    input.JWT_SECRET.startsWith('replace-')
+  ) {
+    throw new Error(
+      'JWT_SECRET must be a generated secret of at least 32 characters.',
+    );
+  }
+  if (!['true', 'false'].includes(String(input.AUTH_COOKIE_SECURE)))
+    throw new Error('AUTH_COOKIE_SECURE must explicitly be true or false.');
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error('API_PORT must be an integer between 1 and 65535.');
   }
@@ -33,6 +48,14 @@ export function validateEnvironment(input: Record<string, unknown>) {
     }
     if (!['http:', 'https:'].includes(url.protocol)) {
       throw new Error(`${name} must use HTTP or HTTPS.`);
+    }
+    if (name === 'WEB_ORIGIN') {
+      if (url.origin !== value)
+        throw new Error(
+          'WEB_ORIGIN must be an exact origin without a path or trailing slash.',
+        );
+      if (url.protocol === 'https:' && input.AUTH_COOKIE_SECURE !== 'true')
+        throw new Error('HTTPS requires AUTH_COOKIE_SECURE=true.');
     }
   }
   const redisUrl = input.REDIS_URL;
