@@ -64,4 +64,5 @@ reference material; explicit user decisions take precedence over its examples.
 Workspace tooling, a minimal frontend, API health/docs, MongoDB connectivity,
 S3 initialization and buyer/producer registration are implemented. Login and
 sessions, catalogue, ordering, auctions and Laravel remain future feature work.
-Redis infrastructure is configured, but its API/auth integration is not implemented.
+Redis infrastructure is configured and the API manages a required Redis connection
+for readiness. Authentication sessions and token lifecycle remain future work.

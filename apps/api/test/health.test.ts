@@ -6,6 +6,7 @@ import { validateEnvironment } from '../dist/config.js';
 import { ServiceUnavailableException } from '@nestjs/common';
 import type { Connection } from 'mongoose';
 import type { StorageService } from '../dist/storage/storage.service.js';
+import type { RedisService } from '../dist/redis/redis.service.js';
 
 const connected = {
   db: { admin: () => ({ ping: async () => ({ ok: 1 }) }) },
@@ -13,15 +14,19 @@ const connected = {
 function storage(ping: () => Promise<void>) {
   return { ping } as StorageService;
 }
+function redis(ping: () => Promise<string>) {
+  return { ping } as RedisService;
+}
 
 test('readiness requires MongoDB and storage', async () => {
   const service = new HealthService(
     connected,
     storage(async () => {}),
+    redis(async () => 'PONG'),
   );
   assert.deepEqual(await service.readiness(), {
     status: 'ok',
-    checks: { mongodb: 'up', storage: 'up' },
+    checks: { mongodb: 'up', storage: 'up', redis: 'up' },
   });
 });
 
@@ -31,13 +36,14 @@ test('storage failure returns 503 without exposing credentials or internal error
     storage(async () => {
       throw new Error('private internal details');
     }),
+    redis(async () => 'PONG'),
   );
   await assert.rejects(service.readiness(), (error) => {
     assert.ok(error instanceof ServiceUnavailableException);
     assert.equal(error.getStatus(), 503);
     assert.deepEqual(error.getResponse(), {
       status: 'degraded',
-      checks: { mongodb: 'up', storage: 'down' },
+      checks: { mongodb: 'up', storage: 'down', redis: 'up' },
     });
     return true;
   });
@@ -47,6 +53,7 @@ test('disconnected MongoDB prevents readiness', async () => {
   const service = new HealthService(
     {} as Connection,
     storage(async () => {}),
+    redis(async () => 'PONG'),
   );
   await assert.rejects(service.readiness(), (error) => {
     assert.ok(error instanceof ServiceUnavailableException);

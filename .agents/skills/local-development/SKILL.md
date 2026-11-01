@@ -16,7 +16,8 @@ description: Install, run, validate, or troubleshoot the DWC monorepo and its lo
 5. Use `pnpm smoke` when useful to diagnose OpenAPI, MongoDB or S3, not as a
    mandatory per-feature gate. A short health/request check is enough for ordinary setup.
    Check Redis with `docker compose exec redis redis-cli ping` and expect `PONG`.
-   Redis is not yet consumed by the API or covered by API readiness/smoke checks.
+   API readiness and `pnpm smoke` also verify Redis connectivity; smoke checks
+   a short-lived value round-trip and removes only its own key.
    Use `pnpm check` only when full validation is warranted; do not claim skipped checks passed.
 6. Inspect relevant logs after a failure. Check Docker service health, bucket
    initialization, replica set state, configured ports, and missing variables.
