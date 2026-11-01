@@ -20,4 +20,11 @@ export class UserResponseDto {
     example: null,
   })
   producerStatus!: ProducerStatus | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+  })
+  producerRejectionReason!: string | null;
 }

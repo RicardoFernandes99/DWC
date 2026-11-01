@@ -1,10 +1,10 @@
 # 007: Submit and resubmit producer applications
 
 - Macro: M02
-- Status: Draft
+- Status: In progress
 - Depends on: 003
 - PR: Not opened
-- Branch / parent: Not assigned
+- Branch / parent: `codex/age-007-producer-applications-api` / `main` at `72644054a1bb4a6e7daa461251e5b0d7f5068741`
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -37,11 +37,11 @@ Follow [ticket checks and handoff](README.md).
 
 ## Acceptance criteria
 
-- [ ] Producers submit and inspect only their own application.
-- [ ] Rejected producers correct/resubmit and pending producers see pending status.
-- [ ] Buyers, unauthenticated callers and forged approval fields are refused.
-- [ ] Resubmission races cannot override a newer administrator decision.
-- [ ] Validation, state conflicts and response DTOs are documented in OpenAPI.
+- [x] Producers submit and inspect only their own application.
+- [x] Rejected producers correct/resubmit and pending producers see pending status.
+- [x] Buyers, unauthenticated callers and forged approval fields are refused.
+- [x] Resubmission races cannot override a newer administrator decision.
+- [x] Validation, state conflicts and response DTOs are documented in OpenAPI.
 
 ## Checks
 
@@ -51,4 +51,9 @@ Submit an application, arrange a rejected fixture, resubmit it and try the actio
 
 ## Delivery notes
 
-Not implemented. Record actual evidence and PR/stack metadata here.
+- Implemented `ProducerApplication` embedded schema and `producerRejectionReason` on `User` in `apps/api/src/users/user.schema.ts`.
+- Extended `UserResponseDto` and `UsersService.toUserResponse` so `/api/auth/me` returns `producerRejectionReason` only when the user is a rejected producer.
+- Created `ProducerApplicationModule` with `ProducerApplicationController`, `ProducerApplicationService`, and validated DTOs for `GET /api/producer/application`, `PUT /api/producer/application`, and `POST /api/producer/application/resubmit`.
+- Atomic update predicates enforce that `PUT` applies only to `pending` producers, while `POST /resubmit` atomically requires `rejected` status and returns to `pending` with cleared `rejectionReason`.
+- Updated web session runtime guards and test fixtures; regenerated OpenAPI contract (`openapi.json` and `api-schema.ts`).
+- Verified all routes, role checks, field boundaries, and state transitions via live HTTP test against local MongoDB and Redis. All unit tests, typechecks, lint, build, and contract checks pass.

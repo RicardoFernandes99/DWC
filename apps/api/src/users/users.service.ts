@@ -34,6 +34,11 @@ function toUserResponse(user: UserDocument): UserResponseDto {
     email: user.email,
     role: user.role,
     producerStatus: user.producerStatus,
+    producerRejectionReason:
+      user.role === UserRole.Producer &&
+      user.producerStatus === ProducerStatus.Rejected
+        ? (user.producerRejectionReason ?? null)
+        : null,
   };
 }
 

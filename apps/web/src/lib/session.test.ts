@@ -5,6 +5,7 @@ const person = {
   email: 'one@example.com',
   role: 'buyer',
   producerStatus: null,
+  producerRejectionReason: null,
 };
 const session = (accessToken: string) => ({
   accessToken,

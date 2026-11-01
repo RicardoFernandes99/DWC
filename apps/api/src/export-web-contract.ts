@@ -11,15 +11,23 @@ import { UsersController } from './users/users.controller.js';
 import { UsersService } from './users/users.service.js';
 import { PaymentMethodsController } from './payment-methods/payment-methods.controller.js';
 import { PaymentMethodsService } from './payment-methods/payment-methods.service.js';
+import { ProducerApplicationController } from './producer-application/producer-application.controller.js';
+import { ProducerApplicationService } from './producer-application/producer-application.service.js';
 
 // Contract-only module: controllers and DTO metadata are real; no service is called.
 @Module({
   imports: [ThrottlerModule.forRoot([{ ttl: 60_000, limit: 10 }])],
-  controllers: [AuthController, UsersController, PaymentMethodsController],
+  controllers: [
+    AuthController,
+    UsersController,
+    PaymentMethodsController,
+    ProducerApplicationController,
+  ],
   providers: [
     { provide: AuthService, useValue: {} },
     { provide: UsersService, useValue: {} },
     { provide: PaymentMethodsService, useValue: {} },
+    { provide: ProducerApplicationService, useValue: {} },
     {
       provide: ConfigService,
       useValue: { getOrThrow: () => 'http://localhost' },

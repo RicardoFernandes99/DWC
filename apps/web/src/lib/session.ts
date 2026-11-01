@@ -28,7 +28,9 @@ function user(value: unknown): value is User {
       value.producerStatus === 'pending' ||
       value.producerStatus === 'approved' ||
       value.producerStatus === 'rejected' ||
-      value.producerStatus === 'suspended')
+      value.producerStatus === 'suspended') &&
+    (value.producerRejectionReason === null ||
+      typeof value.producerRejectionReason === 'string')
   );
 }
 function auth(value: unknown): value is Auth {

@@ -280,6 +280,144 @@
           "Payment methods"
         ]
       }
+    },
+    "/api/producer/application": {
+      "get": {
+        "operationId": "ProducerApplicationController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current producer application and review status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerApplicationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected query fields are not accepted."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only producers may access producer applications."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer application"
+        ]
+      },
+      "put": {
+        "operationId": "ProducerApplicationController_submit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitProducerApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application successfully saved or updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerApplicationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application fields, bounds or unexpected properties."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only producers may access producer applications."
+          },
+          "409": {
+            "description": "Only pending producer applications can be saved directly."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer application"
+        ]
+      }
+    },
+    "/api/producer/application/resubmit": {
+      "post": {
+        "operationId": "ProducerApplicationController_resubmit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitProducerApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application successfully resubmitted for review.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerApplicationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application fields, bounds or unexpected properties."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only producers may access producer applications."
+          },
+          "409": {
+            "description": "Only rejected producer applications can be resubmitted."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer application"
+        ]
+      }
     }
   },
   "info": {
@@ -357,6 +495,11 @@
             ],
             "nullable": true,
             "example": null
+          },
+          "producerRejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null
           }
         },
         "required": [
@@ -364,7 +507,8 @@
           "name",
           "email",
           "role",
-          "producerStatus"
+          "producerStatus",
+          "producerRejectionReason"
         ]
       },
       "AuthResponseDto": {
@@ -486,6 +630,161 @@
           "expiryMonth",
           "expiryYear",
           "expired"
+        ]
+      },
+      "ProducerApplicationDetailsDto": {
+        "type": "object",
+        "properties": {
+          "farmName": {
+            "type": "string",
+            "example": "Quinta do Sol",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Public name of the farm or producer enterprise."
+          },
+          "description": {
+            "type": "string",
+            "example": "Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "Detailed overview of farming practices, products, and story."
+          },
+          "locality": {
+            "type": "string",
+            "example": "Sintra",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Town, village or administrative locality."
+          },
+          "collectionAddress": {
+            "type": "string",
+            "example": "Rua Principal 12, 2710-001 Sintra",
+            "minLength": 1,
+            "maxLength": 240,
+            "description": "Physical address for order collections and farm visits."
+          },
+          "latitude": {
+            "type": "number",
+            "example": 38.8029,
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude coordinate in decimal degrees between -90 and 90."
+          },
+          "longitude": {
+            "type": "number",
+            "example": -9.3817,
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude coordinate in decimal degrees between -180 and 180."
+          }
+        },
+        "required": [
+          "farmName",
+          "description",
+          "locality",
+          "collectionAddress",
+          "latitude",
+          "longitude"
+        ]
+      },
+      "ProducerApplicationResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "suspended"
+            ],
+            "example": "pending",
+            "description": "Review status of the producer registration."
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Administrator explanation for application rejection, if rejected."
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2026-11-01T12:00:00.000Z",
+            "description": "ISO-8601 timestamp of most recent application submission."
+          },
+          "application": {
+            "nullable": true,
+            "description": "Current submitted application details, or null if not yet submitted.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProducerApplicationDetailsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "rejectionReason",
+          "submittedAt",
+          "application"
+        ]
+      },
+      "SubmitProducerApplicationDto": {
+        "type": "object",
+        "properties": {
+          "farmName": {
+            "type": "string",
+            "example": "Quinta do Sol",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Public name of the farm or producer enterprise."
+          },
+          "description": {
+            "type": "string",
+            "example": "Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "Detailed overview of farming practices, products, and story."
+          },
+          "locality": {
+            "type": "string",
+            "example": "Sintra",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Town, village or administrative locality."
+          },
+          "collectionAddress": {
+            "type": "string",
+            "example": "Rua Principal 12, 2710-001 Sintra",
+            "minLength": 1,
+            "maxLength": 240,
+            "description": "Physical address for order collections and farm visits."
+          },
+          "latitude": {
+            "type": "number",
+            "example": 38.8029,
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude coordinate in decimal degrees between -90 and 90."
+          },
+          "longitude": {
+            "type": "number",
+            "example": -9.3817,
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude coordinate in decimal degrees between -180 and 180."
+          }
+        },
+        "required": [
+          "farmName",
+          "description",
+          "locality",
+          "collectionAddress",
+          "latitude",
+          "longitude"
         ]
       }
     }

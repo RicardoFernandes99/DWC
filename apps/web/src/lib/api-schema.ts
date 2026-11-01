@@ -101,6 +101,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/producer/application": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProducerApplicationController_get"];
+        put: operations["ProducerApplicationController_submit"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producer/application/resubmit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ProducerApplicationController_resubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -127,6 +159,8 @@ export interface components {
              * @enum {string|null}
              */
             producerStatus: null | "pending" | "approved" | "rejected" | "suspended";
+            /** @example null */
+            producerRejectionReason: string | null;
         };
         AuthResponseDto: {
             accessToken: string;
@@ -170,6 +204,91 @@ export interface components {
             expiryYear: number;
             /** @example false */
             expired: boolean;
+        };
+        ProducerApplicationDetailsDto: {
+            /**
+             * @description Public name of the farm or producer enterprise.
+             * @example Quinta do Sol
+             */
+            farmName: string;
+            /**
+             * @description Detailed overview of farming practices, products, and story.
+             * @example Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.
+             */
+            description: string;
+            /**
+             * @description Town, village or administrative locality.
+             * @example Sintra
+             */
+            locality: string;
+            /**
+             * @description Physical address for order collections and farm visits.
+             * @example Rua Principal 12, 2710-001 Sintra
+             */
+            collectionAddress: string;
+            /**
+             * @description Latitude coordinate in decimal degrees between -90 and 90.
+             * @example 38.8029
+             */
+            latitude: number;
+            /**
+             * @description Longitude coordinate in decimal degrees between -180 and 180.
+             * @example -9.3817
+             */
+            longitude: number;
+        };
+        ProducerApplicationResponseDto: {
+            /**
+             * @description Review status of the producer registration.
+             * @example pending
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected" | "suspended";
+            /**
+             * @description Administrator explanation for application rejection, if rejected.
+             * @example null
+             */
+            rejectionReason: string | null;
+            /**
+             * Format: date-time
+             * @description ISO-8601 timestamp of most recent application submission.
+             * @example 2026-11-01T12:00:00.000Z
+             */
+            submittedAt: string | null;
+            /** @description Current submitted application details, or null if not yet submitted. */
+            application: components["schemas"]["ProducerApplicationDetailsDto"] | null;
+        };
+        SubmitProducerApplicationDto: {
+            /**
+             * @description Public name of the farm or producer enterprise.
+             * @example Quinta do Sol
+             */
+            farmName: string;
+            /**
+             * @description Detailed overview of farming practices, products, and story.
+             * @example Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.
+             */
+            description: string;
+            /**
+             * @description Town, village or administrative locality.
+             * @example Sintra
+             */
+            locality: string;
+            /**
+             * @description Physical address for order collections and farm visits.
+             * @example Rua Principal 12, 2710-001 Sintra
+             */
+            collectionAddress: string;
+            /**
+             * @description Latitude coordinate in decimal degrees between -90 and 90.
+             * @example 38.8029
+             */
+            latitude: number;
+            /**
+             * @description Longitude coordinate in decimal degrees between -180 and 180.
+             * @example -9.3817
+             */
+            longitude: number;
         };
     };
     responses: never;
@@ -466,6 +585,172 @@ export interface operations {
             };
             /** @description Only buyers may manage payment methods. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerApplicationController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current producer application and review status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerApplicationResponseDto"];
+                };
+            };
+            /** @description Unexpected query fields are not accepted. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only producers may access producer applications. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerApplicationController_submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitProducerApplicationDto"];
+            };
+        };
+        responses: {
+            /** @description Application successfully saved or updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerApplicationResponseDto"];
+                };
+            };
+            /** @description Invalid application fields, bounds or unexpected properties. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only producers may access producer applications. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only pending producer applications can be saved directly. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerApplicationController_resubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitProducerApplicationDto"];
+            };
+        };
+        responses: {
+            /** @description Application successfully resubmitted for review. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerApplicationResponseDto"];
+                };
+            };
+            /** @description Invalid application fields, bounds or unexpected properties. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only producers may access producer applications. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only rejected producer applications can be resubmitted. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

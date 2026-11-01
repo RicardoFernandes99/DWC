@@ -10,11 +10,13 @@ import { StorageService } from './storage/storage.service.js';
 import { UsersModule } from './users/users.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module.js';
+import { ProducerApplicationModule } from './producer-application/producer-application.module.js';
 
 @Module({
   imports: [
     AuthModule,
     PaymentMethodsModule,
+    ProducerApplicationModule,
     UsersModule,
     RedisModule,
     ConfigModule.forRoot({
