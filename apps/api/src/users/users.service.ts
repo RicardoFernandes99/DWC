@@ -42,8 +42,6 @@ export class UsersService {
   constructor(@InjectModel(User.name) private readonly users: Model<User>) {}
 
   async register(input: RegisterUserDto): Promise<UserResponseDto> {
-    // Wait for the schema's unique email index before accepting registrations.
-    await this.users.init();
     const email = input.email.trim().toLowerCase();
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_COST);
 

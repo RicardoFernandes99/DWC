@@ -22,7 +22,6 @@ export class User {
     required: true,
     trim: true,
     lowercase: true,
-    unique: true,
     maxlength: 254,
   })
   email!: string;
@@ -43,3 +42,4 @@ export class User {
 
 export type UserDocument = HydratedDocument<User>;
 export const UserSchema = SchemaFactory.createForClass(User);
+UserSchema.index({ email: 1 }, { unique: true });
