@@ -13,6 +13,7 @@ import { Link, Outlet, useNavigate, useSearch } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/form-field';
+import { PaymentMethods } from '@/features/payment-methods/components/payment-methods';
 import {
   ApiError,
   login,
@@ -476,6 +477,9 @@ export function Account() {
                     : 'Status unavailable'}
           </p>
         </section>
+      )}
+      {current.role === 'buyer' && (
+        <PaymentMethods key={current.id} buyerId={current.id} />
       )}
       {message && (
         <p role="alert" className="mt-5 text-destructive">

@@ -1,10 +1,10 @@
 # 006: Manage saved payment methods from the buyer account
 
 - Macro: M01
-- Status: Draft
+- Status: In progress
 - Depends on: 004, 005
-- PR: Not opened
-- Branch / parent: Not assigned
+- PR: Not opened (orchestrator owns publication)
+- Branch / parent: `codex/age-006-payment-methods-web` / `codex/age-005-payment-methods-api` at `758ee7a736b4d9b5dd35797ba91c524d26857211`
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -40,15 +40,15 @@ see their masked saved methods. This prepares the account for later bidding.
 
 ## Acceptance criteria
 
-- [ ] A signed-in buyer adds a method and sees the API-returned masked record.
-- [ ] Only last4 and expiry appear in the outgoing request; arbitrary card digits
+- [x] A signed-in buyer adds a method and sees the API-returned masked record.
+- [x] Only last4 and expiry appear in the outgoing request; arbitrary card digits
       work without payment-provider checks or a simulation label.
-- [ ] Expired/invalid dates fail clearly; a failed request preserves safe retry UX
+- [x] Expired/invalid dates fail clearly; a failed request preserves safe retry UX
       and restores controls without exposing the number elsewhere.
-- [ ] Empty, expired and loading states are distinct; logout/account switching
+- [x] Empty, expired and loading states are distinct; logout/account switching
       clears user-scoped payment data through the session flow.
-- [ ] Producers cannot access buyer payment UI, and API refusals remain handled.
-- [ ] Labels, keyboard navigation and feedback work at all three screen ranges.
+- [x] Producers cannot access buyer payment UI, and API refusals remain handled.
+- [x] Labels, keyboard navigation and feedback work at all three screen ranges.
 
 ## Checks
 
@@ -58,4 +58,32 @@ Save and reload a dummy method, inspect the outgoing payload, and try a rejected
 
 ## Delivery notes
 
-Not implemented. Sol records actual evidence and PR/stack metadata here.
+Implemented on `codex/age-006-payment-methods-web`, based on
+PR #13's API contract. UTC month/year validation follows the API's calendar-month
+cutoff and accepted year range from 1000 to 9999. The buyer-only account section lists
+and saves API-owned masked records; raw card input stays in the mounted form and
+is reduced to last four digits before the request. Session-aware API requests
+share the existing refresh/retry behavior and reject results from an older session.
+
+Implementation checks passed with Node 24.22.1 and pnpm 11.25.0: Web typecheck,
+Web production build with React Compiler output verification, Web tests (10/10),
+root lint, scoped Prettier check and `pnpm contract:check`. Browser review and the
+frontier verdict are pending. Sol owns the final verdict and PR/stack metadata.
+
+- Frontier verdict: APPROVED against parent PR #13 at
+  `758ee7a736b4d9b5dd35797ba91c524d26857211`.
+- Real Chrome/API check saved arbitrary `1234 0000`, observed only last4 `0000`
+  and expiry in the POST payload, reloaded the masked record, and confirmed the
+  number cleared after success. Prior-month/year input failed locally.
+- Forced HTTP 400 and network failures preserved input and restored Save controls.
+  Delayed/controlled list responses verified loading and expired feedback.
+- Logout and a second buyer login showed an empty list and cleared form. Producer
+  UI omitted payment methods and its real API request returned 403.
+- Keyboard tab order and no horizontal overflow passed at widths 375, 767, 768,
+  900, 1279, 1280 and 1440. Desktop and mobile screenshots were visually reviewed.
+- Browser checks used an isolated Vite server on 5174 with matching temporary API
+  origin settings. Existing Web server and project .env were preserved.
+- Builder: gpt-6-luna, medium effort. No model changes or formal correction rounds;
+  review feedback during implementation addressed stale-session responses and
+  mutation feedback. Token, cached-input, output/reasoning usage and cost unavailable.
+- No removal, default-card selection, charges, checkout or bidding controls added.
