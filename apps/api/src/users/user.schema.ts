@@ -13,7 +13,7 @@ export enum ProducerStatus {
   Suspended = 'suspended',
 }
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, autoIndex: true })
 export class User {
   @Prop({ required: true, trim: true, minlength: 1, maxlength: 100 })
   name!: string;
@@ -22,7 +22,6 @@ export class User {
     required: true,
     trim: true,
     lowercase: true,
-    unique: true,
     maxlength: 254,
   })
   email!: string;
@@ -43,3 +42,4 @@ export class User {
 
 export type UserDocument = HydratedDocument<User>;
 export const UserSchema = SchemaFactory.createForClass(User);
+UserSchema.index({ email: 1 }, { unique: true });

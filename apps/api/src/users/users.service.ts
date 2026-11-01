@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, OnModuleInit } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import bcrypt from 'bcryptjs';
 import { Model } from 'mongoose';
@@ -38,14 +38,10 @@ function toUserResponse(user: UserDocument): UserResponseDto {
 }
 
 @Injectable()
-export class UsersService implements OnModuleInit {
+export class UsersService {
   constructor(@InjectModel(User.name) private readonly users: Model<User>) {}
 
-  async onModuleInit(): Promise<void> {
-    await this.users.createIndexes();
-  }
-
-  async register(input: RegisterUserDto): Promise<UserResponseDto> {
+  async register(input: RegisterUserDto) {
     const email = input.email.trim().toLowerCase();
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_COST);
 

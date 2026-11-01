@@ -2,7 +2,9 @@ import 'reflect-metadata';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { getConnectionToken } from '@nestjs/mongoose';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import type { Connection } from 'mongoose';
 import { AppModule } from './app.module.js';
 
 async function bootstrap() {
@@ -30,6 +32,11 @@ async function bootstrap() {
     'api-docs',
     app,
     SwaggerModule.createDocument(app, swagger),
+  );
+  await app.init();
+  const database = app.get<Connection>(getConnectionToken());
+  await Promise.all(
+    Object.values(database.models).map((model) => model.init()),
   );
   await app.listen(config.getOrThrow<number>('API_PORT'), '127.0.0.1');
 }
