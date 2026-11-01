@@ -1,9 +1,9 @@
 # 006: Manage saved payment methods from the buyer account
 
 - Macro: M01
-- Status: In progress
+- Status: In review
 - Depends on: 004, 005
-- PR: Not opened (orchestrator owns publication)
+- PR: https://github.com/RicardoFernandes99/DWC/pull/14 (orchestrator owns publication)
 - Branch / parent: `codex/age-006-payment-methods-web` / `codex/age-005-payment-methods-api` at `758ee7a736b4d9b5dd35797ba91c524d26857211`
 - Blockers: None beyond dependencies
 
@@ -67,8 +67,7 @@ share the existing refresh/retry behavior and reject results from an older sessi
 
 Implementation checks passed with Node 24.22.1 and pnpm 11.25.0: Web typecheck,
 Web production build with React Compiler output verification, Web tests (10/10),
-root lint, scoped Prettier check and `pnpm contract:check`. Browser review and the
-frontier verdict are pending. Sol owns the final verdict and PR/stack metadata.
+root lint, scoped Prettier check and `pnpm contract:check`.
 
 - Frontier verdict: APPROVED against parent PR #13 at
   `758ee7a736b4d9b5dd35797ba91c524d26857211`.
@@ -87,3 +86,6 @@ frontier verdict are pending. Sol owns the final verdict and PR/stack metadata.
   review feedback during implementation addressed stale-session responses and
   mutation feedback. Token, cached-input, output/reasoning usage and cost unavailable.
 - No removal, default-card selection, charges, checkout or bidding controls added.
+
+- Reviewed implementation commit: `0f0fe3d`. PR #14 is ready for review above PR #13.
+- Temporary test accounts, saved methods and their Redis sessions were removed.
