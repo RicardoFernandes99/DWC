@@ -87,4 +87,45 @@ describe('browser session', () => {
     await expect(oldRestore).rejects.toMatchObject({ status: 401 });
     await expect(client.currentUser()).resolves.toEqual(person);
   });
+  it('uses the shared bearer session for API feature requests and retries once', async () => {
+    let apiAttempts = 0;
+    const fetch = vi.fn(async (url: string, options: RequestInit) => {
+      if (url.endsWith('/login')) return response(200, session('old'));
+      if (url.endsWith('/refresh')) return response(200, session('new'));
+      apiAttempts++;
+      const headers = options.headers as Record<string, string>;
+      return headers.Authorization === 'Bearer old'
+        ? response(401)
+        : response(200, []);
+    });
+    vi.stubGlobal('fetch', fetch);
+    const client = await import('./session');
+    await client.login({ email: person.email, password: 'password' });
+    await expect(
+      client.authenticatedRequest('payment-methods'),
+    ).resolves.toEqual([]);
+    expect(fetch.mock.calls.map(([url]) => url)).toContain(
+      '/api/payment-methods',
+    );
+    expect(apiAttempts).toBe(2);
+  });
+  it('rejects a successful feature response after logout changes the session', async () => {
+    let resolveRequest: (value: ReturnType<typeof response>) => void = () => {};
+    const waiting = new Promise<ReturnType<typeof response>>((resolve) => {
+      resolveRequest = resolve;
+    });
+    const fetch = vi.fn(async (url: string) => {
+      if (url.endsWith('/login')) return response(200, session('active'));
+      if (url.endsWith('/payment-methods')) return waiting;
+      return response(204);
+    });
+    vi.stubGlobal('fetch', fetch);
+    const client = await import('./session');
+    await client.login({ email: person.email, password: 'password' });
+    const staleRequest = client.authenticatedRequest('payment-methods');
+    const signingOut = client.logout();
+    resolveRequest(response(200, []));
+    await expect(staleRequest).rejects.toMatchObject({ status: 401 });
+    await signingOut;
+  });
 });

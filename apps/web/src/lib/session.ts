@@ -42,10 +42,11 @@ function auth(value: unknown): value is Auth {
 async function request(
   path: string,
   options: RequestInit = {},
+  base = '/api/auth',
 ): Promise<unknown> {
   let response: Response;
   try {
-    response = await fetch(`/api/auth/${path}`, {
+    response = await fetch(`${base}/${path}`, {
       ...options,
       credentials: 'include',
       signal: AbortSignal.timeout(10000),
@@ -153,6 +154,54 @@ export async function me(): Promise<User> {
   if (generation !== current || !user(result))
     throw new ApiError(0, 'The server returned an invalid response.');
   return result;
+}
+/** Makes one authenticated API request, refreshing and retrying at most once. */
+export async function authenticatedRequest(
+  path: string,
+  options: RequestInit = {},
+): Promise<unknown> {
+  const current = generation;
+  const used = token;
+  if (!used) throw new ApiError(401, 'Please sign in.');
+  const send = (accessToken: string) =>
+    request(
+      path,
+      {
+        ...options,
+        headers: { ...options.headers, Authorization: `Bearer ${accessToken}` },
+      },
+      '/api',
+    );
+  const ensureCurrent = (result: unknown) => {
+    if (generation !== current) throw new ApiError(401, 'Session changed.');
+    return result;
+  };
+  try {
+    return ensureCurrent(await send(used));
+  } catch (error) {
+    if (
+      !(error instanceof ApiError) ||
+      error.status !== 401 ||
+      generation !== current
+    )
+      throw error;
+    if (token === used) await refresh();
+    if (generation !== current || !token)
+      throw new ApiError(401, 'Please sign in.');
+    const retryToken = token;
+    try {
+      return ensureCurrent(await send(retryToken));
+    } catch (retryError) {
+      if (
+        retryError instanceof ApiError &&
+        retryError.status === 401 &&
+        generation === current &&
+        token === retryToken
+      )
+        token = undefined;
+      throw retryError;
+    }
+  }
 }
 export async function logout(): Promise<void> {
   const inFlight = pending;
