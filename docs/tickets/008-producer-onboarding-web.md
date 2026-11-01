@@ -1,9 +1,9 @@
 # 008: Show producer approval and resubmission screens
 
 - Macro: M02
-- Status: In progress
+- Status: In review
 - Depends on: 004, 007
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/17
 - Branch / parent: `codex/age-008-producer-onboarding-web` / `codex/age-007-producer-applications-api` at `6943fc53c6ca042f379dce4e3f729c9ad969feb5`
 - Blockers: None beyond dependencies
 
@@ -51,7 +51,7 @@ Check pending, rejected/resubmission and suspension views in a browser, includin
 
 - Implemented on `codex/age-008-producer-onboarding-web`, stacked on PR #16 (`codex/age-007-producer-applications-api` at `6943fc53c6ca042f379dce4e3f729c9ad969feb5`).
 - Orchestrator/reviewer: Gemini 4 Argon (Low). Builder subagent: `self` (`Model: 'inherit'` — Gemini 4 Argon Low, `c17cba56-d5ad-4541-8750-a4e18649e7bd`, transcript usage: 188,816 input tokens, 3,515,185 cached tokens, 18,716 output/thinking tokens), with zero subagent correction rounds and inline polish during frontier review.
-- Frontier verdict: APPROVED against parent `6943fc53c6ca042f379dce4e3f729c9ad969feb5`.
+- Frontier verdict: APPROVED against parent `6943fc53c6ca042f379dce4e3f729c9ad969feb5` on reviewed implementation commit `24a15f823e41ce9138f879d07f116cfcd194e468`. PR #17 is ready for review, stacked above PR #16.
 - Static, compiler and contract checks passed with Node 24.22.2 and pnpm 11.25.0:
   - `pnpm --filter @dwc/web typecheck` (`tsc --noEmit`)
   - `pnpm --filter @dwc/web test` (15/15 tests across 4 files, including 5 new tests in `apps/web/src/producer-onboarding.test.tsx`)
