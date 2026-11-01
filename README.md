@@ -70,7 +70,8 @@ docs/             project scope, architecture, agent workflow and research
 ```
 
 Laravel backoffice remains planned as `apps/backoffice`; it is not scaffolded in
-this Web/API foundation. Business features are not implemented yet.
+this Web/API foundation. The API supports buyer/producer registration; login,
+sessions and other business features remain unimplemented.
 
 ## Working with agents
 

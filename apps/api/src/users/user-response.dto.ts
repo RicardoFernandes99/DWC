@@ -1,0 +1,23 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { ProducerStatus, UserRole } from './user.schema.js';
+
+export class UserResponseDto {
+  @ApiProperty({ example: '671f0f98ac53ba58e26c4789' })
+  id!: string;
+
+  @ApiProperty({ example: 'Ana Silva' })
+  name!: string;
+
+  @ApiProperty({ example: 'ana@example.com' })
+  email!: string;
+
+  @ApiProperty({ enum: UserRole, example: UserRole.Buyer })
+  role!: UserRole;
+
+  @ApiProperty({
+    enum: [null, ...Object.values(ProducerStatus)],
+    nullable: true,
+    example: null,
+  })
+  producerStatus!: ProducerStatus | null;
+}

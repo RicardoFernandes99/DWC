@@ -61,7 +61,7 @@ reference material; explicit user decisions take precedence over its examples.
 
 ## Current foundation
 
-Only workspace tooling, agent guidance, a minimal frontend, API health/docs,
-MongoDB connectivity and S3 initialization are implemented. Authentication,
-catalogue, ordering, auctions and Laravel remain future feature work.
+Workspace tooling, a minimal frontend, API health/docs, MongoDB connectivity,
+S3 initialization and buyer/producer registration are implemented. Login and
+sessions, catalogue, ordering, auctions and Laravel remain future feature work.
 Redis infrastructure is configured, but its API/auth integration is not implemented.

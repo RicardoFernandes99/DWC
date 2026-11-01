@@ -10,7 +10,9 @@ Compiler diagnostics. Production builds check for emitted compiler markers.
 `apps/api` is the NestJS authority for domain logic, permissions, persistence
 and future Socket.io events. TypeScript emits decorator metadata for Nest's
 dependency injection. Swagger and global request validation are initialized.
-No authentication or business endpoints are claimed by this initial scaffold.
+Buyer/producer registration persists users with bcrypt password hashes and an
+indexed normalized email. Login, sessions and remaining business endpoints are
+future work.
 
 `apps/backoffice` will hold Laravel. Prefer consuming authenticated NestJS
 administrative endpoints to avoid duplicating business rules. Choose its auth
