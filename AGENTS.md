@@ -59,6 +59,11 @@ For `build N` or building the next ticket, use the `build` skill's requested
 ticket/plan/builder/frontier-review/stacked-PR workflow. It includes scoped
 delegation and PR publication, with merging left to the user.
 
+Use authenticated GitHub CLI (`gh`) for GitHub operations, including PRs, issues
+and comments. The user prefers account-authenticated CLI actions without the
+ChatGPT Codex Connector attribution. Do not use the GitHub connector as a silent
+fallback. If `gh` is unavailable or unauthenticated, report the setup needed.
+
 ## Skills
 
 Shared task instructions live in `.agents/skills/<name>/SKILL.md`:

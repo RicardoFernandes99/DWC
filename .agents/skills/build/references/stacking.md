@@ -6,7 +6,9 @@ unrelated features. Ticket readiness still depends on actual prerequisites.
 ## Discover and resume
 
 1. Resolve the repository/remote from Git and query live GitHub PR metadata using
-   the connector or authenticated `gh`. Get state, number, title, creation time,
+   authenticated GitHub CLI (`gh`). Use `gh` for all GitHub reads/writes in this
+   workflow; the user does not want ChatGPT Codex Connector attribution. Do not
+   silently fall back to the connector. Get state, number, title, creation time,
    base/head refs, head SHA and URL. Missing access blocks stack selection and
    publication; do not guess from local branch names or an old chat.
 2. First look for a PR/branch for this exact ticket using recorded metadata,

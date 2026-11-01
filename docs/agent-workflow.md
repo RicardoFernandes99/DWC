@@ -35,6 +35,9 @@ etc.; Claude exposes the same skills as `/plan`, `/grill-me`, `/animate`, etc.
 Skill descriptions also allow automatic matching. New skills should be available
 on the next turn; refresh/restart the client if its discovery cache needs it.
 The project does not install/authenticate agent CLIs or auto-enable MCP servers.
+For GitHub operations use authenticated GitHub CLI (`gh`), including PR discovery,
+creation, updates and comments. The user prefers CLI attribution over the ChatGPT
+Codex Connector. Do not silently fall back to the connector when CLI setup is missing.
 
 | Skill                         | Use                                                               |
 | ----------------------------- | ----------------------------------------------------------------- |

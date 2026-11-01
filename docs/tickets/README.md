@@ -16,7 +16,8 @@ and the pinned pnpm. Install with `pnpm install --frozen-lockfile`; run
 Start a fresh Codex chat in this repository, select Sol Medium and send
 `build 1` or `$build 1`. The skill reads ticket 001, chooses its builder and
 ends with a reviewed PR. It does not require the earlier chat history. Keep the
-GitHub connector or authenticated CLI available for PR discovery/publication.
+authenticated GitHub CLI (`gh`) available for PR discovery/publication. GitHub
+operations use `gh` rather than the ChatGPT Codex Connector, by user preference.
 Later UI work requires ticket 045 before 004; unresolved product decisions are
 still blocked where listed below.
 
