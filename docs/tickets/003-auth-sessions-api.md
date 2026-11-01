@@ -1,10 +1,10 @@
 # 003: Sign in, refresh and revoke Redis-backed sessions
 
 - Macro: M01
-- Status: In progress
+- Status: In review
 - Depends on: 001, 002
-- PR: Not opened
-- Branch / parent: Not assigned
+- PR: https://github.com/RicardoFernandes99/DWC/pull/9
+- Branch / parent: codex/age-003-auth-sessions-api / main
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -104,3 +104,7 @@ Implemented on `codex/age-003-auth-sessions-api`, parent `main` at
   application. A rotated credential is invalid for logout and cannot revoke its
   replacement. HTTPS Secure-cookie configuration is implemented; HTTP flags were
   exercised locally. No Socket.io or frontend session flow is included.
+
+- Frontier verdict: APPROVED on implementation commit 9a11242. One correction
+  round tightened persisted-session validation and absolute expiry. Final
+  verification required no further code corrections. PR #9 is ready for review.
