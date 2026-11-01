@@ -1,9 +1,9 @@
 # 007: Submit and resubmit producer applications
 
 - Macro: M02
-- Status: In progress
+- Status: In review
 - Depends on: 003
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/16
 - Branch / parent: `codex/age-007-producer-applications-api` / `main` at `72644054a1bb4a6e7daa461251e5b0d7f5068741`
 - Blockers: None beyond dependencies
 
@@ -51,9 +51,40 @@ Submit an application, arrange a rejected fixture, resubmit it and try the actio
 
 ## Delivery notes
 
-- Implemented `ProducerApplication` embedded schema and `producerRejectionReason` on `User` in `apps/api/src/users/user.schema.ts`.
-- Extended `UserResponseDto` and `UsersService.toUserResponse` so `/api/auth/me` returns `producerRejectionReason` only when the user is a rejected producer.
-- Created `ProducerApplicationModule` with `ProducerApplicationController`, `ProducerApplicationService`, and validated DTOs for `GET /api/producer/application`, `PUT /api/producer/application`, and `POST /api/producer/application/resubmit`.
-- Atomic update predicates enforce that `PUT` applies only to `pending` producers, while `POST /resubmit` atomically requires `rejected` status and returns to `pending` with cleared `rejectionReason`.
-- Updated web session runtime guards and test fixtures; regenerated OpenAPI contract (`openapi.json` and `api-schema.ts`).
-- Verified all routes, role checks, field boundaries, and state transitions via live HTTP test against local MongoDB and Redis. All unit tests, typechecks, lint, build, and contract checks pass.
+- Implemented on `codex/age-007-producer-applications-api`, parent `main` at
+  `72644054a1bb4a6e7daa461251e5b0d7f5068741`. PR #16 is ready for review.
+- Orchestrator/reviewer: Gemini 4 Argon (Low). Initial implementation subagent:
+  Flash (`2fa41024-a2a1-451a-8614-b6d18698343b`, total usage from transcript:
+  503,562 input tokens, 2,718,452 cached tokens, 28,238 output/thinking tokens);
+  reviewed and refined on Argon (Low) with zero subagent correction rounds.
+- Frontier verdict: APPROVED against parent `72644054a1bb4a6e7daa461251e5b0d7f5068741`
+  on reviewed implementation commit `78847c452c3dddc75253cef2cdbd398971a40779`.
+- Static and contract checks passed with Node 24.22.2 and pnpm 11.25.0:
+  `pnpm contract:generate`, `pnpm contract:check`, `pnpm lint`, `pnpm typecheck`,
+  `pnpm test` (10/10 web tests, 4/4 API health tests), `pnpm build` (including
+  React Compiler verification), and scoped `prettier --check`.
+- Real HTTP and persistence verification on isolated port `3017` against local
+  MongoDB replica set and Redis:
+  - Unauthenticated calls returned `401`; buyer calls to `GET`, `PUT`, and
+    `POST /api/producer/application/resubmit` returned `403`.
+  - Unexpected query fields (`GET ?userId=123`), forged privileged fields (`role`,
+    `producerStatus`), out-of-range or non-numeric coordinates (`latitude: 95`,
+    `longitude: -185`, string coordinates), and whitespace-only text fields
+    returned `400`.
+  - Initial producer `GET` returned `{ status: 'pending', rejectionReason: null, submittedAt: null, application: null }`
+    with `Cache-Control: no-store`.
+  - Valid `PUT /api/producer/application` trimmed text fields, persisted embedded
+    `producerApplication` on `User`, and recorded `submittedAt`.
+  - Simulated administrator rejection in MongoDB surfaced `producerStatus: 'rejected'`
+    and `producerRejectionReason` on both `/api/auth/me` and
+    `GET /api/producer/application`, while `PUT` returned `409 Conflict`.
+  - `POST /api/producer/application/resubmit` atomically required `rejected`
+    status, transitioned back to `pending`, cleared `producerRejectionReason`,
+    and updated `submittedAt`.
+  - Duplicate `POST /resubmit` while `pending` and `PUT` / `POST /resubmit` after
+    simulated administrator approval returned `409 Conflict` without overwriting
+    the newer decision.
+  - All temporary test users and Redis session keys were removed after verification.
+- Limitations: Administrator approval/rejection endpoints belong to ticket 009;
+  producer onboarding UI screens belong to ticket 008; public producer profile
+  endpoints and approved profile editing belong to tickets 010 and 013.
