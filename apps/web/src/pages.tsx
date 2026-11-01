@@ -1,5 +1,12 @@
 import { safeReturn } from './safe-return';
 import { useState } from 'react';
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Leaf,
+  ShoppingBasket,
+  Sprout,
+} from 'lucide-react';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Outlet, useNavigate, useSearch } from '@tanstack/react-router';
@@ -25,13 +32,20 @@ export function Shell() {
   });
   return (
     <>
-      <header className="border-b border-border">
-        <nav className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-5">
-          <Link to="/" className="font-semibold">
-            From Farm to Table
+      <header className="site-header">
+        <nav className="site-nav" aria-label="Main navigation">
+          <Link to="/" className="brand-link">
+            <span className="brand-mark">
+              <Sprout aria-hidden="true" />
+            </span>
+            <span>
+              From Farm <span className="brand-connector">to</span> Table
+            </span>
           </Link>
-          <div className="flex gap-4 text-sm">
-            <Link to="/">Home</Link>
+          <div className="site-nav-links">
+            <Link to="/" className="home-link">
+              Home
+            </Link>
             {query.data ? (
               <Link
                 to={query.data.role === 'producer' ? '/producer' : '/account'}
@@ -40,8 +54,12 @@ export function Shell() {
               </Link>
             ) : (
               <>
-                <Link to="/login">Sign in</Link>
-                <Link to="/register">Register</Link>
+                <Link to="/login" activeProps={{ className: 'nav-active' }}>
+                  Sign in
+                </Link>
+                <Link to="/register" className="nav-register">
+                  Sign up <ArrowUpRight aria-hidden="true" />
+                </Link>
               </>
             )}
           </div>
@@ -121,183 +139,242 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
     },
   });
   return (
-    <main className="mx-auto max-w-lg px-6 py-12 md:py-20 xl:py-24">
-      <p className="text-sm font-medium uppercase tracking-widest text-primary">
-        From Farm to Table
-      </p>
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight">
-        {mode === 'login' ? 'Welcome back' : 'Create your account'}
-      </h1>
-      <p className="mt-3 text-muted-foreground">
-        {mode === 'login'
-          ? 'Sign in to your account.'
-          : 'Join as a buyer or a local producer.'}
-      </p>
-      {created ? (
-        <div className="mt-8 rounded-lg border p-5" role="status">
+    <main className="auth-layout" data-mode={mode}>
+      <aside className="auth-story" aria-label="From Farm to Table">
+        <img
+          src="/images/countryside.jpg"
+          alt="Sunlight over green fields and rolling countryside"
+          width="1400"
+          height="933"
+          className="auth-story-image"
+          fetchPriority="high"
+        />
+        <div className="auth-story-content">
+          <span className="auth-story-symbol">
+            <Leaf aria-hidden="true" />
+          </span>
+          <h2>
+            Good things
+            <br />
+            grow close
+            <br />
+            <em>to home.</em>
+          </h2>
           <p>
-            Your account was created, but we could not sign you in. Please sign
-            in to continue.
+            A place for local produce and the people
+            <br className="hidden xl:block" /> who make it possible.
           </p>
-          <Link
-            to="/login"
-            className="mt-3 inline-block text-primary underline"
-          >
-            Go to sign in
-          </Link>
+          <div className="auth-story-footer">
+            <span>From the land. To your table.</span>
+            <Sprout aria-hidden="true" />
+          </div>
         </div>
-      ) : (
-        <form
-          className="mt-8 space-y-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            void form.handleSubmit();
-          }}
-        >
-          {mode === 'register' && (
-            <form.Field name="name">
-              {(field) => (
-                <FormField id="name" label="Name" error={nameError}>
-                  <Input
-                    id="name"
-                    aria-invalid={!!nameError}
-                    aria-describedby={nameError ? 'name-error' : undefined}
-                    autoComplete="name"
-                    required
-                    maxLength={100}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => {
-                      setNameError('');
-                      field.handleChange(e.target.value);
-                    }}
-                  />
-                </FormField>
-              )}
-            </form.Field>
-          )}
-          <form.Field name="email">
-            {(field) => (
-              <FormField id="email" label="Email" error={emailError}>
-                <Input
-                  id="email"
-                  aria-invalid={!!emailError}
-                  aria-describedby={emailError ? 'email-error' : undefined}
-                  type="email"
-                  autoComplete="email"
-                  required
-                  maxLength={254}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => {
-                    setEmailError('');
-                    field.handleChange(e.target.value);
-                  }}
-                />
-              </FormField>
-            )}
-          </form.Field>
-          <form.Field name="password">
-            {(field) => (
-              <FormField
-                id="password"
-                label="Password"
-                error={passwordError}
-                description={
-                  mode === 'register' ? 'Use 8 to 72 UTF-8 bytes.' : undefined
-                }
+      </aside>
+      <section className="auth-form-side" aria-labelledby="auth-title">
+        <div className="auth-form-content">
+          <h1 id="auth-title" className="auth-title">
+            {mode === 'login' ? 'Welcome back' : 'Create your account'}
+          </h1>
+          <p className="auth-intro">
+            {mode === 'login'
+              ? 'A little closer to your local community.'
+              : 'Your local community starts here.'}
+          </p>
+          {created ? (
+            <div className="mt-8 rounded-lg border p-5" role="status">
+              <p>
+                Your account was created, but we could not sign you in. Please
+                sign in to continue.
+              </p>
+              <Link
+                to="/login"
+                className="mt-3 inline-block text-primary underline"
               >
-                <Input
-                  id="password"
-                  aria-invalid={!!passwordError}
-                  aria-describedby={
-                    [
-                      mode === 'register' ? 'password-description' : '',
-                      passwordError ? 'password-error' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ') || undefined
-                  }
-                  type="password"
-                  autoComplete={
-                    mode === 'login' ? 'current-password' : 'new-password'
-                  }
-                  required
-                  maxLength={72}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              </FormField>
-            )}
-          </form.Field>
-          {mode === 'register' && (
-            <form.Field name="role">
-              {(field) => (
-                <fieldset className="space-y-2">
-                  <legend className="text-sm font-medium">Account type</legend>
-                  <div className="flex gap-6">
-                    <label>
-                      <input
-                        type="radio"
-                        name="role"
-                        value="buyer"
-                        checked={field.state.value === 'buyer'}
-                        onChange={() => field.handleChange('buyer')}
-                      />{' '}
-                      Buyer
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name="role"
-                        value="producer"
-                        checked={field.state.value === 'producer'}
-                        onChange={() => field.handleChange('producer')}
-                      />{' '}
-                      Producer
-                    </label>
-                  </div>
-                </fieldset>
+                Go to sign in
+              </Link>
+            </div>
+          ) : (
+            <form
+              className="auth-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void form.handleSubmit();
+              }}
+            >
+              {mode === 'register' && (
+                <form.Field name="name">
+                  {(field) => (
+                    <FormField id="name" label="Name" error={nameError}>
+                      <Input
+                        id="name"
+                        aria-invalid={!!nameError}
+                        aria-describedby={nameError ? 'name-error' : undefined}
+                        autoComplete="name"
+                        required
+                        maxLength={100}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => {
+                          setNameError('');
+                          field.handleChange(e.target.value);
+                        }}
+                      />
+                    </FormField>
+                  )}
+                </form.Field>
               )}
-            </form.Field>
+              <form.Field name="email">
+                {(field) => (
+                  <FormField id="email" label="Email" error={emailError}>
+                    <Input
+                      id="email"
+                      aria-invalid={!!emailError}
+                      aria-describedby={emailError ? 'email-error' : undefined}
+                      type="email"
+                      autoComplete="email"
+                      required
+                      maxLength={254}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => {
+                        setEmailError('');
+                        field.handleChange(e.target.value);
+                      }}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+              <form.Field name="password">
+                {(field) => (
+                  <FormField
+                    id="password"
+                    label="Password"
+                    error={passwordError}
+                    description={
+                      mode === 'register'
+                        ? 'Use 8 to 72 UTF-8 bytes.'
+                        : undefined
+                    }
+                  >
+                    <Input
+                      id="password"
+                      aria-invalid={!!passwordError}
+                      aria-describedby={
+                        [
+                          mode === 'register' ? 'password-description' : '',
+                          passwordError ? 'password-error' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ') || undefined
+                      }
+                      type="password"
+                      autoComplete={
+                        mode === 'login' ? 'current-password' : 'new-password'
+                      }
+                      required
+                      maxLength={72}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+              {mode === 'register' && (
+                <form.Field name="role">
+                  {(field) => (
+                    <fieldset className="space-y-3">
+                      <legend className="text-sm font-medium">
+                        Account type
+                      </legend>
+                      <div className="auth-role-options">
+                        <label className="auth-role-option">
+                          <input
+                            type="radio"
+                            name="role"
+                            value="buyer"
+                            className="peer sr-only"
+                            checked={field.state.value === 'buyer'}
+                            onChange={() => field.handleChange('buyer')}
+                          />
+                          <span className="auth-role-card">
+                            <ShoppingBasket aria-hidden="true" />
+                            <span>
+                              <strong>Buyer</strong>
+                              <small>Find local favourites</small>
+                            </span>
+                            <span className="auth-role-dot" />
+                          </span>
+                        </label>
+                        <label className="auth-role-option">
+                          <input
+                            type="radio"
+                            name="role"
+                            value="producer"
+                            className="peer sr-only"
+                            checked={field.state.value === 'producer'}
+                            onChange={() => field.handleChange('producer')}
+                          />
+                          <span className="auth-role-card">
+                            <Sprout aria-hidden="true" />
+                            <span>
+                              <strong>Producer</strong>
+                              <small>Share what you grow</small>
+                            </span>
+                            <span className="auth-role-dot" />
+                          </span>
+                        </label>
+                      </div>
+                    </fieldset>
+                  )}
+                </form.Field>
+              )}
+              {error && (
+                <p role="alert" className="text-sm text-destructive">
+                  {error}
+                </p>
+              )}
+              <form.Subscribe selector={(state) => state.isSubmitting}>
+                {(submitting) => (
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="auth-submit"
+                  >
+                    {submitting
+                      ? 'Please wait…'
+                      : mode === 'login'
+                        ? 'Sign in'
+                        : 'Sign up'}
+                    <ArrowRight aria-hidden="true" />
+                  </Button>
+                )}
+              </form.Subscribe>
+            </form>
           )}
-          {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          )}
-          <form.Subscribe selector={(state) => state.isSubmitting}>
-            {(submitting) => (
-              <Button type="submit" disabled={submitting}>
-                {submitting
-                  ? 'Please wait…'
-                  : mode === 'login'
-                    ? 'Sign in'
-                    : 'Create account'}
-              </Button>
+          <p className="auth-switch">
+            {mode === 'login' ? (
+              <>
+                New here?{' '}
+                <Link to="/register" className="text-primary underline">
+                  Sign up
+                </Link>
+              </>
+            ) : (
+              <>
+                Already registered?{' '}
+                <Link to="/login" className="text-primary underline">
+                  Sign in
+                </Link>
+              </>
             )}
-          </form.Subscribe>
-        </form>
-      )}
-      <p className="mt-6 text-sm">
-        {mode === 'login' ? (
-          <>
-            New here?{' '}
-            <Link to="/register" className="text-primary underline">
-              Create an account
-            </Link>
-          </>
-        ) : (
-          <>
-            Already registered?{' '}
-            <Link to="/login" className="text-primary underline">
-              Sign in
-            </Link>
-          </>
-        )}
-      </p>
+          </p>
+        </div>
+        <p className="auth-form-footer">
+          <Sprout aria-hidden="true" /> Rooted in community.
+        </p>
+      </section>
     </main>
   );
 }

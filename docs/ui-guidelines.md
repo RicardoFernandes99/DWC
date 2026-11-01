@@ -66,3 +66,16 @@ Use a quick manual browser check plus typecheck/lint/build; no snapshot or visua
 regression test suite is required for this university project.
 
 Run `pnpm --filter @dwc/web dev` and open `/?style-guide` to view the specimen locally. The entry is excluded from production builds.
+
+## Authentication screens
+
+Login and registration use a warm neutral form surface and a countryside image
+panel on tablet and desktop. On mobile, the image panel gives way to a single
+form column. Fraunces is self-hosted for editorial headings; controls retain the
+existing system font and semantic green palette. Theme values and auth styles
+remain in `apps/web/src/index.css`.
+
+The countryside photograph is from
+[Unsplash](https://images.unsplash.com/photo-1500382017468-9049fed747ef), stored
+locally under `apps/web/public/images`. Fraunces is distributed under the SIL Open
+Font License, included with the font under `apps/web/public/fonts`.
