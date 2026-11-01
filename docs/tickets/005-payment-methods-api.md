@@ -1,10 +1,10 @@
 # 005: Save buyer payment-method metadata
 
 - Macro: M01
-- Status: Draft
+- Status: In progress
 - Depends on: 003
 - PR: Not opened
-- Branch / parent: Not assigned
+- Branch / parent: codex/age-005-payment-methods-api / main
 - Blockers: None beyond dependencies; auction settlement remains a later decision
 
 ## Outcome
@@ -44,13 +44,13 @@ This stores display metadata and an application-generated ID, not usable card da
 
 ## Acceptance criteria
 
-- [ ] A buyer adds a method and sees masked metadata in their own list.
-- [ ] Other accounts cannot read another buyer's methods or assign their owner.
-- [ ] Arbitrary last4 digits pass; malformed/expired dates and extra card fields fail.
-- [ ] The current expiry month is valid; the previous month is expired, including
+- [x] A buyer adds a method and sees masked metadata in their own list.
+- [x] Other accounts cannot read another buyer's methods or assign their owner.
+- [x] Arbitrary last4 digits pass; malformed/expired dates and extra card fields fail.
+- [x] The current expiry month is valid; the previous month is expired, including
       the December/January boundary. Existing expiry is recalculated from server time.
-- [ ] Responses and stored documents contain no full card numbers or CVVs.
-- [ ] Producer/admin access is refused and routes/errors are documented in OpenAPI.
+- [x] Responses and stored documents contain no full card numbers or CVVs.
+- [x] Producer/admin access is refused and routes/errors are documented in OpenAPI.
 
 ## Checks
 
@@ -60,4 +60,30 @@ Add/list a dummy method, try an expired date and confirm another account cannot 
 
 ## Delivery notes
 
-Not implemented. Sol records actual evidence and PR/stack metadata here.
+Implemented on `codex/age-005-payment-methods-api`, parent `main` at
+`649e1fa19eaadf3e2c07da9894b19cdd0fe05a6a`. PR publication follows orchestrator review.
+
+- API typecheck/build, root lint, scoped Prettier, contract generation/check, Web
+  typecheck and Web build passed with Node 24.22.1 and pnpm 11.25.0.
+- Real HTTP against local MongoDB/Redis: unauthenticated create returned 401;
+  buyer create/list returned 201/200; another buyer saw an empty list; producer
+  and test-owned administrator-role accounts received 403. Malformed last4,
+  prior-month expiry, caller-supplied owner on create and ownerId query returned 400. Arbitrary `0000` last4 and the current UTC expiry month were accepted.
+- Persistence inspection found only `_id`, ownerId, last4, expiry month/year,
+  timestamps and Mongoose version in the method document. The response contained
+  only id, last4, expiry month/year and expired. A previously valid method remained
+  listed as expired after its stored expiry was moved into a past UTC month.
+- With a fixed clock at 2027-01-01 UTC, the actual `findOwnedUnexpired` service
+  returned null for December 2026, a method for January 2027, and null for a
+  foreign owner or malformed ID. This verifies the December/January cutoff.
+- All temporary HTTP accounts, payment-method documents and lookup records were
+  removed. No project `.env` values were changed; the API used temporary
+  process-only settings for manual requests.
+- Token/credit usage is unavailable in this client. No payment provider, charges,
+  auction integration or UI is included.
+
+- Builder: gpt-6-luna, medium effort. One correction round aligned the list
+  index with its stable sort and rejected unknown list query fields. No model
+  adaptation. Input, cached input, output/reasoning usage and total cost unavailable.
+- Frontier verdict: APPROVED against parent 649e1fa19eaadf3e2c07da9894b19cdd0fe05a6a.
+  All ticket acceptance checks passed on the implementation committed with these notes.

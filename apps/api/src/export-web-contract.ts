@@ -9,14 +9,17 @@ import { AuthController } from './auth/auth.controller.js';
 import { AuthService } from './auth/auth.service.js';
 import { UsersController } from './users/users.controller.js';
 import { UsersService } from './users/users.service.js';
+import { PaymentMethodsController } from './payment-methods/payment-methods.controller.js';
+import { PaymentMethodsService } from './payment-methods/payment-methods.service.js';
 
 // Contract-only module: controllers and DTO metadata are real; no service is called.
 @Module({
   imports: [ThrottlerModule.forRoot([{ ttl: 60_000, limit: 10 }])],
-  controllers: [AuthController, UsersController],
+  controllers: [AuthController, UsersController, PaymentMethodsController],
   providers: [
     { provide: AuthService, useValue: {} },
     { provide: UsersService, useValue: {} },
+    { provide: PaymentMethodsService, useValue: {} },
     {
       provide: ConfigService,
       useValue: { getOrThrow: () => 'http://localhost' },
