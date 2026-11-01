@@ -3,7 +3,7 @@
 - Macro: M03
 - Status: In review
 - Depends on: 010
-- PR: Pending creation
+- PR: https://github.com/RicardoFernandes99/DWC/pull/21
 - Branch / parent: `codex/age-011-product-images-api` / `codex/age-010-products-profile-api` at `012e82026c247d98f64904f2a630cfd234e7aa0f`
 - Blockers: None beyond dependencies
 
@@ -47,7 +47,7 @@ Upload/replace a small raster image and try an invalid file or foreign product. 
 
 ## Delivery notes
 
-- Implemented on `codex/age-011-product-images-api`, stacked on PR #20 (`codex/age-010-products-profile-api` at `012e82026c247d98f64904f2a630cfd234e7aa0f`) in stack #18.
+- Implemented on `codex/age-011-product-images-api`, stacked on PR #20 (`codex/age-010-products-profile-api` at `012e82026c247d98f64904f2a630cfd234e7aa0f`). PR #21 is ready for review in stack #18.
 - Concrete product image validation limits (`apps/api/src/products/product-image.validator.ts`):
   - Allowed raster formats verified by actual magic bytes and header dimensions: `image/jpeg` (`.jpg`), `image/png` (`.png`), and `image/webp` (`.webp`, supporting `VP8 `, `VP8L`, and `VP8X` chunks).
   - Maximum file size: `5_242_880` bytes (`5 MB`), enforced at both the Multer interceptor boundary and the byte validator.
@@ -59,7 +59,7 @@ Upload/replace a small raster image and try an invalid file or foreign product. 
   - Safe image replacement: uploads new S3 object first, then performs a revision-guarded conditional MongoDB update (`_id`, `producerId`, `archivedAt: null`, `moderatedAt: null`, `revision`). Failed/conflicting database updates clean up the newly uploaded orphan S3 object and preserve the previous working `image` reference in MongoDB; successful replacements best-effort delete the old S3 object and log only `objectKey` if deferred cleanup is needed.
   - Archived (`archivedAt !== null`) and moderated (`moderatedAt !== null`) products preserve `hasImage: true` and `imageMeta` for historical reference while returning `imageUrl: null`, refusing `GET /api/producer/products/:id/image` and `POST /api/producer/products/:id/image` with `409 Conflict`, and returning `null` from `ProductsService.resolvePublicImageUrl`.
 - Orchestrator/reviewer: Gemini 4 Argon (Low). Builder subagent: `self` (`Model: 'inherit'` — Gemini 4 Argon Low, `83734a84-d718-48e3-8288-13b1c2ddf1ed`, transcript usage: 152,418 input tokens, 2,213,551 cached tokens, 31,908 output/thinking tokens), with zero subagent correction rounds.
-- Frontier verdict: APPROVED against parent `012e82026c247d98f64904f2a630cfd234e7aa0f`.
+- Frontier verdict: APPROVED against parent `012e82026c247d98f64904f2a630cfd234e7aa0f` on reviewed implementation commit `d37bf64282b123a3a37e65ab7f316fddd56e773c`.
 - Static and contract checks passed with Node 24.22.2 and pnpm 11.25.0:
   - `pnpm contract:generate` and `pnpm contract:check`
   - `pnpm typecheck` (`tsconfig.tools.json`, `@dwc/api`, `@dwc/web`)
