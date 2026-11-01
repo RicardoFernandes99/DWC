@@ -63,6 +63,8 @@ Motion. Its principles/recipes and upstream MIT notice are included.
 
 Use typecheck/lint/build and brief manual checks for ordinary changes. Unit,
 integration and e2e tests are optional; add only small tests with clear value.
+CI installs the frozen lockfile, then runs formatting, lint, typecheck and build.
+It does not start Docker/services or run automated tests/smoke by default.
 `pnpm check` still runs the existing full suite and `pnpm smoke` remains available
 for troubleshooting, but neither is a mandatory per-ticket gate. Do not call a
 skipped check a pass. Visual demos are optional
