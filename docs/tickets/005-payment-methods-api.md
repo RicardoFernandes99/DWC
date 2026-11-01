@@ -1,9 +1,9 @@
 # 005: Save buyer payment-method metadata
 
 - Macro: M01
-- Status: In progress
+- Status: In review
 - Depends on: 003
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/13
 - Branch / parent: codex/age-005-payment-methods-api / main
 - Blockers: None beyond dependencies; auction settlement remains a later decision
 
@@ -61,7 +61,7 @@ Add/list a dummy method, try an expired date and confirm another account cannot 
 ## Delivery notes
 
 Implemented on `codex/age-005-payment-methods-api`, parent `main` at
-`649e1fa19eaadf3e2c07da9894b19cdd0fe05a6a`. PR publication follows orchestrator review.
+`649e1fa19eaadf3e2c07da9894b19cdd0fe05a6a`. PR #13 is ready for review.
 
 - API typecheck/build, root lint, scoped Prettier, contract generation/check, Web
   typecheck and Web build passed with Node 24.22.1 and pnpm 11.25.0.
@@ -86,4 +86,4 @@ Implemented on `codex/age-005-payment-methods-api`, parent `main` at
   index with its stable sort and rejected unknown list query fields. No model
   adaptation. Input, cached input, output/reasoning usage and total cost unavailable.
 - Frontier verdict: APPROVED against parent 649e1fa19eaadf3e2c07da9894b19cdd0fe05a6a.
-  All ticket acceptance checks passed on the implementation committed with these notes.
+  All ticket acceptance checks passed on reviewed implementation commit 6e7beac.
