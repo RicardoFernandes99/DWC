@@ -1,9 +1,9 @@
 # 002: Connect the API to Redis and report readiness
 
 - Macro: M01
-- Status: In progress
+- Status: In review
 - Depends on: Redis Compose/configuration changes from the current foundation
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/6
 - Branch / parent: `codex/age-002-redis-integration` / `codex/age-001-registration-api` (PR #5)
 - Blockers: None. Redis infrastructure is present on the verified parent.
 
@@ -61,6 +61,7 @@ Check Redis connectivity and sanitized readiness once, including a missing/unrea
   Token/credit usage unavailable.
 - Frontier verdict: APPROVED. Reviewed the ticket-only diff and new Redis files
   against parent `a3faf2edd4810d7a7ef89bdbc2bee71e388ea373`.
+  Reviewed/check revision: `e15282cac8c297576bded876befa80104bb7817c`.
 - Static checks passed on Node 24.22.1 and pnpm 11.25.0: API `typecheck`, `build`,
   tools TypeScript check, root `lint`, scoped Prettier and `git diff --check`.
   Existing API tests passed, 4/4.
