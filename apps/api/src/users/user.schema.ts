@@ -13,7 +13,7 @@ export enum ProducerStatus {
   Suspended = 'suspended',
 }
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, autoIndex: true })
 export class User {
   @Prop({ required: true, trim: true, minlength: 1, maxlength: 100 })
   name!: string;
