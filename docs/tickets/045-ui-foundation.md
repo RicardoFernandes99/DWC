@@ -1,9 +1,9 @@
 # 045: Establish shared UI tokens, primitives and a visual style specimen
 
 - Macro: M01, M03 shared UI foundation
-- Status: In progress
+- Status: In review
 - Depends on: None
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/10
 - Branch / parent: `codex/age-045-ui-foundation` / `codex/age-003-auth-sessions-api` at `92f5265cb52a99ef5126332c9f2d85906fb5059c`
 - Blockers: None; build before 004 and subsequent feature screens
 
@@ -34,6 +34,8 @@ organized reusable controls and typed component APIs.
   real reuse arises. Feature-only composition stays in its feature folder.
 - Ticket 004 retains local access when it introduces routing, for example through
   a development-only style-guide route. Do not ship a fake marketplace as preview.
+- Use a side menu to select one specimen section at a time, with a compact
+  section picker on mobile, rather than displaying every section in one long page.
 
 ## Acceptance criteria
 
@@ -58,7 +60,11 @@ The production build excludes the specimen module; no dependencies were added.
 - Builder: `gpt-6.1-terra`, medium effort. No model adaptations or correction rounds.
 - Usage and accepted-work cost measurements: unavailable.
 - Parent: PR #9, commit `92f5265cb52a99ef5126332c9f2d85906fb5059c`.
-- Frontier verdict: APPROVED. Reviewed the ticket-only source diff and new files.
+- Frontier verdict: APPROVED for the initial implementation at `aac5fa8` and
+  the subsequent user-requested section navigation. The sidebar selects a single
+  section, with a labelled native picker below 768px. This was a scope refinement,
+  not a correction round. The final implementation revision is the commit that
+  records these delivery notes on PR #10.
 - Builder checks passed under Node 24.22.1: web typecheck, production build and
   React Compiler verification, root lint, scoped Prettier, and both existing web tests.
 - Orchestrator checked the specimen in Codex's in-app browser at 390px, 900px
@@ -66,4 +72,8 @@ The production build excludes the specimen module; no dependencies were added.
   error states are visible, and disabled button/input controls remain disabled.
 - Local verification used port 5175 after a stalled server on 5173 was stopped.
   The normal development command still uses 5173.
-- No application limitations identified. PR publication pending.
+- Navigation refinement checks passed under Node 24: web typecheck/build with
+  React Compiler verification, root lint and scoped Prettier. Codex browser
+  re-review at 390px, 900px and 1440px confirmed section selection, keyboard
+  activation, visible focus and no horizontal overflow.
+- PR #10 is ready for review against PR #9. Merging remains with the user.
