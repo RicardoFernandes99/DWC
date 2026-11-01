@@ -137,3 +137,23 @@ to the contract-only module in `apps/api/src/export-web-contract.ts`.
 Open `/ui-design` from the home page for the selected Orchard desktop/mobile
 concept board and source images. These visual references establish the UI
 baseline for future shadcn/ui and ReUI implementation.
+
+## Producer application review and admin bootstrap
+
+Public registration (`POST /api/auth/register`) only creates `buyer` and `producer`
+accounts. Create a local administrator account deliberately with:
+
+```sh
+pnpm --filter @dwc/api admin:bootstrap -- --name "Local Admin" --email "admin@example.com" --password "<8..72-byte-secret>"
+```
+
+`ADMIN_BOOTSTRAP_NAME`, `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` are
+also accepted from the environment. The bootstrap command hashes the password with
+bcrypt, refuses to overwrite or promote an existing user, and never logs credentials.
+
+Authenticated administrators can inspect and decide submitted producer applications:
+
+- `GET /api/admin/producer-applications` — paginated list (`page`, `limit`, optional `status`).
+- `GET /api/admin/producer-applications/:id` — application review details and current `revision`.
+- `POST /api/admin/producer-applications/:id/approve` — atomically approves a pending application matching `{ revision }`.
+- `POST /api/admin/producer-applications/:id/reject` — atomically rejects a pending application matching `{ revision, reason }`.

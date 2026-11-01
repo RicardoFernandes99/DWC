@@ -418,6 +418,268 @@
           "Producer application"
         ]
       }
+    },
+    "/api/admin/producer-applications": {
+      "get": {
+        "operationId": "AdminProducerApplicationsController_list",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Optional producer application status filter.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "suspended"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page number.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum number of applications returned per page.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of submitted producer applications ordered by most recent submission.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProducerApplicationListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination bounds, status filter or query fields."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin producer applications"
+        ]
+      }
+    },
+    "/api/admin/producer-applications/{id}": {
+      "get": {
+        "operationId": "AdminProducerApplicationsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Producer user identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producer application details and review metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProducerApplicationItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid producer user identifier."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Producer account not found or has not submitted an application."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin producer applications"
+        ]
+      }
+    },
+    "/api/admin/producer-applications/{id}/approve": {
+      "post": {
+        "operationId": "AdminProducerApplicationsController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Producer user identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveProducerApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Producer application approved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProducerApplicationItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid producer user identifier or revision payload."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Producer account not found."
+          },
+          "409": {
+            "description": "Application is unsubmitted, not pending, or its revision changed concurrently."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin producer applications"
+        ]
+      }
+    },
+    "/api/admin/producer-applications/{id}/reject": {
+      "post": {
+        "operationId": "AdminProducerApplicationsController_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Producer user identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectProducerApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Producer application rejected with administrator feedback.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProducerApplicationItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid producer user identifier, revision payload, or missing/invalid rejection reason."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Producer account not found."
+          },
+          "409": {
+            "description": "Application is unsubmitted, not pending, or its revision changed concurrently."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin producer applications"
+        ]
+      }
     }
   },
   "info": {
@@ -480,7 +742,8 @@
             "type": "string",
             "enum": [
               "buyer",
-              "producer"
+              "producer",
+              "admin"
             ],
             "example": "buyer"
           },
@@ -714,6 +977,13 @@
             "example": "2026-11-01T12:00:00.000Z",
             "description": "ISO-8601 timestamp of most recent application submission."
           },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null,
+            "description": "ISO-8601 timestamp of the latest administrator approval or rejection decision, if any."
+          },
           "application": {
             "nullable": true,
             "description": "Current submitted application details, or null if not yet submitted.",
@@ -729,6 +999,7 @@
           "status",
           "rejectionReason",
           "submittedAt",
+          "decidedAt",
           "application"
         ]
       },
@@ -785,6 +1056,145 @@
           "collectionAddress",
           "latitude",
           "longitude"
+        ]
+      },
+      "AdminProducerApplicationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "671f0f98ac53ba58e26c4789"
+          },
+          "name": {
+            "type": "string",
+            "example": "Maria Costa"
+          },
+          "email": {
+            "type": "string",
+            "example": "maria@example.com"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "suspended"
+            ],
+            "example": "pending"
+          },
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "description": "Current application decision revision used for concurrency checks."
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-01T12:00:00.000Z"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "decidedBy": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Administrator user ID that recorded the latest decision."
+          },
+          "application": {
+            "$ref": "#/components/schemas/ProducerApplicationDetailsDto"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "status",
+          "revision",
+          "rejectionReason",
+          "submittedAt",
+          "decidedAt",
+          "decidedBy",
+          "application"
+        ]
+      },
+      "AdminProducerApplicationListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminProducerApplicationItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0
+          },
+          "page": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20,
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "ApproveProducerApplicationDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "description": "Current application decision revision to prevent stale or concurrent overwrite."
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "RejectProducerApplicationDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "description": "Current application decision revision to prevent stale or concurrent overwrite."
+          },
+          "reason": {
+            "type": "string",
+            "example": "Please provide your complete collection street number and organic certification details.",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Required administrator explanation for rejection."
+          }
+        },
+        "required": [
+          "revision",
+          "reason"
         ]
       }
     }

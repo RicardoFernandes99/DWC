@@ -133,6 +133,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/producer-applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminProducerApplicationsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/producer-applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminProducerApplicationsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/producer-applications/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminProducerApplicationsController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/producer-applications/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminProducerApplicationsController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -153,7 +217,7 @@ export interface components {
              * @example buyer
              * @enum {string}
              */
-            role: "buyer" | "producer";
+            role: "buyer" | "producer" | "admin";
             /**
              * @example null
              * @enum {string|null}
@@ -255,6 +319,12 @@ export interface components {
              * @example 2026-11-01T12:00:00.000Z
              */
             submittedAt: string | null;
+            /**
+             * Format: date-time
+             * @description ISO-8601 timestamp of the latest administrator approval or rejection decision, if any.
+             * @example null
+             */
+            decidedAt: string | null;
             /** @description Current submitted application details, or null if not yet submitted. */
             application: components["schemas"]["ProducerApplicationDetailsDto"] | null;
         };
@@ -289,6 +359,70 @@ export interface components {
              * @example -9.3817
              */
             longitude: number;
+        };
+        AdminProducerApplicationItemDto: {
+            /** @example 671f0f98ac53ba58e26c4789 */
+            id: string;
+            /** @example Maria Costa */
+            name: string;
+            /** @example maria@example.com */
+            email: string;
+            /**
+             * @example pending
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected" | "suspended";
+            /**
+             * @description Current application decision revision used for concurrency checks.
+             * @example 1
+             */
+            revision: number;
+            /** @example null */
+            rejectionReason: string | null;
+            /**
+             * Format: date-time
+             * @example 2026-11-01T12:00:00.000Z
+             */
+            submittedAt: string;
+            /**
+             * Format: date-time
+             * @example null
+             */
+            decidedAt: string | null;
+            /**
+             * @description Administrator user ID that recorded the latest decision.
+             * @example null
+             */
+            decidedBy: string | null;
+            application: components["schemas"]["ProducerApplicationDetailsDto"];
+        };
+        AdminProducerApplicationListResponseDto: {
+            items: components["schemas"]["AdminProducerApplicationItemDto"][];
+            /** @example 1 */
+            total: number;
+            /** @example 1 */
+            page: number;
+            /** @example 20 */
+            limit: number;
+        };
+        ApproveProducerApplicationDto: {
+            /**
+             * @description Current application decision revision to prevent stale or concurrent overwrite.
+             * @example 1
+             */
+            revision: number;
+        };
+        RejectProducerApplicationDto: {
+            /**
+             * @description Current application decision revision to prevent stale or concurrent overwrite.
+             * @example 1
+             */
+            revision: number;
+            /**
+             * @description Required administrator explanation for rejection.
+             * @example Please provide your complete collection street number and organic certification details.
+             */
+            reason: string;
         };
     };
     responses: never;
@@ -750,6 +884,257 @@ export interface operations {
                 content?: never;
             };
             /** @description Only rejected producer applications can be resubmitted. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminProducerApplicationsController_list: {
+        parameters: {
+            query?: {
+                /** @description Optional producer application status filter. */
+                status?: "pending" | "approved" | "rejected" | "suspended";
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Maximum number of applications returned per page. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of submitted producer applications ordered by most recent submission. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProducerApplicationListResponseDto"];
+                };
+            };
+            /** @description Invalid pagination bounds, status filter or query fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminProducerApplicationsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Producer user identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Producer application details and review metadata. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProducerApplicationItemDto"];
+                };
+            };
+            /** @description Invalid producer user identifier. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Producer account not found or has not submitted an application. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminProducerApplicationsController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Producer user identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveProducerApplicationDto"];
+            };
+        };
+        responses: {
+            /** @description Producer application approved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProducerApplicationItemDto"];
+                };
+            };
+            /** @description Invalid producer user identifier or revision payload. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Producer account not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Application is unsubmitted, not pending, or its revision changed concurrently. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminProducerApplicationsController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Producer user identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectProducerApplicationDto"];
+            };
+        };
+        responses: {
+            /** @description Producer application rejected with administrator feedback. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProducerApplicationItemDto"];
+                };
+            };
+            /** @description Invalid producer user identifier, revision payload, or missing/invalid rejection reason. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Producer account not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Application is unsubmitted, not pending, or its revision changed concurrently. */
             409: {
                 headers: {
                     [name: string]: unknown;

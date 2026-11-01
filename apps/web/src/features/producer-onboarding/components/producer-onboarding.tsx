@@ -62,6 +62,9 @@ function isProducerApplicationResponse(
     (value.rejectionReason === null ||
       typeof value.rejectionReason === 'string') &&
     (value.submittedAt === null || typeof value.submittedAt === 'string') &&
+    (value.decidedAt === undefined ||
+      value.decidedAt === null ||
+      typeof value.decidedAt === 'string') &&
     (value.application === null || isApplicationDetails(value.application))
   );
 }

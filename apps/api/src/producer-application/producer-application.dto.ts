@@ -1,7 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsEnum,
+  IsInt,
+  IsMongoId,
   IsNumber,
+  IsOptional,
   IsString,
   Max,
   MaxLength,
@@ -174,10 +178,175 @@ export class ProducerApplicationResponseDto {
   submittedAt!: string | null;
 
   @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: null,
+    description:
+      'ISO-8601 timestamp of the latest administrator approval or rejection decision, if any.',
+  })
+  decidedAt!: string | null;
+
+  @ApiProperty({
     type: ProducerApplicationDetailsDto,
     nullable: true,
     description:
       'Current submitted application details, or null if not yet submitted.',
   })
   application!: ProducerApplicationDetailsDto | null;
+}
+
+export class ProducerApplicationIdParamDto {
+  @ApiProperty({
+    example: '671f0f98ac53ba58e26c4789',
+    description: 'Producer user identifier.',
+  })
+  @IsMongoId()
+  id!: string;
+}
+
+export class ListAdminProducerApplicationsQueryDto {
+  @ApiPropertyOptional({
+    enum: ProducerStatus,
+    description: 'Optional producer application status filter.',
+  })
+  @IsOptional()
+  @IsEnum(ProducerStatus)
+  status?: ProducerStatus;
+
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: 1000,
+    default: 1,
+    example: 1,
+    description: '1-based page number.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  page?: number = 1;
+
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: 50,
+    default: 20,
+    example: 20,
+    description: 'Maximum number of applications returned per page.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number = 20;
+}
+
+export class ApproveProducerApplicationDto {
+  @ApiProperty({
+    example: 1,
+    minimum: 1,
+    description:
+      'Current application decision revision to prevent stale or concurrent overwrite.',
+  })
+  @IsInt()
+  @Min(1)
+  revision!: number;
+}
+
+export class RejectProducerApplicationDto {
+  @ApiProperty({
+    example: 1,
+    minimum: 1,
+    description:
+      'Current application decision revision to prevent stale or concurrent overwrite.',
+  })
+  @IsInt()
+  @Min(1)
+  revision!: number;
+
+  @ApiProperty({
+    example:
+      'Please provide your complete collection street number and organic certification details.',
+    minLength: 1,
+    maxLength: 500,
+    description: 'Required administrator explanation for rejection.',
+  })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @MinLength(1)
+  @MaxLength(500)
+  reason!: string;
+}
+
+export class AdminProducerApplicationItemDto {
+  @ApiProperty({ example: '671f0f98ac53ba58e26c4789' })
+  id!: string;
+
+  @ApiProperty({ example: 'Maria Costa' })
+  name!: string;
+
+  @ApiProperty({ example: 'maria@example.com' })
+  email!: string;
+
+  @ApiProperty({ enum: ProducerStatus, example: ProducerStatus.Pending })
+  status!: ProducerStatus;
+
+  @ApiProperty({
+    example: 1,
+    minimum: 1,
+    description:
+      'Current application decision revision used for concurrency checks.',
+  })
+  revision!: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+  })
+  rejectionReason!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    example: '2026-11-01T12:00:00.000Z',
+  })
+  submittedAt!: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: null,
+  })
+  decidedAt!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Administrator user ID that recorded the latest decision.',
+  })
+  decidedBy!: string | null;
+
+  @ApiProperty({ type: ProducerApplicationDetailsDto })
+  application!: ProducerApplicationDetailsDto;
+}
+
+export class AdminProducerApplicationListResponseDto {
+  @ApiProperty({ type: AdminProducerApplicationItemDto, isArray: true })
+  items!: AdminProducerApplicationItemDto[];
+
+  @ApiProperty({ example: 1, minimum: 0 })
+  total!: number;
+
+  @ApiProperty({ example: 1, minimum: 1 })
+  page!: number;
+
+  @ApiProperty({ example: 20, minimum: 1, maximum: 50 })
+  limit!: number;
 }

@@ -23,7 +23,9 @@ function user(value: unknown): value is User {
     typeof value.id === 'string' &&
     typeof value.name === 'string' &&
     typeof value.email === 'string' &&
-    (value.role === 'buyer' || value.role === 'producer') &&
+    (value.role === 'buyer' ||
+      value.role === 'producer' ||
+      value.role === 'admin') &&
     (value.producerStatus === null ||
       value.producerStatus === 'pending' ||
       value.producerStatus === 'approved' ||

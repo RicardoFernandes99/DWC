@@ -5,12 +5,14 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { readFile, writeFile } from 'node:fs/promises';
+import { AdminGuard } from './auth/admin.guard.js';
 import { AuthController } from './auth/auth.controller.js';
 import { AuthService } from './auth/auth.service.js';
 import { UsersController } from './users/users.controller.js';
 import { UsersService } from './users/users.service.js';
 import { PaymentMethodsController } from './payment-methods/payment-methods.controller.js';
 import { PaymentMethodsService } from './payment-methods/payment-methods.service.js';
+import { AdminProducerApplicationsController } from './producer-application/admin-producer-applications.controller.js';
 import { ProducerApplicationController } from './producer-application/producer-application.controller.js';
 import { ProducerApplicationService } from './producer-application/producer-application.service.js';
 
@@ -22,9 +24,11 @@ import { ProducerApplicationService } from './producer-application/producer-appl
     UsersController,
     PaymentMethodsController,
     ProducerApplicationController,
+    AdminProducerApplicationsController,
   ],
   providers: [
     { provide: AuthService, useValue: {} },
+    { provide: AdminGuard, useValue: { canActivate: () => true } },
     { provide: UsersService, useValue: {} },
     { provide: PaymentMethodsService, useValue: {} },
     { provide: ProducerApplicationService, useValue: {} },

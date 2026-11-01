@@ -1,10 +1,10 @@
 # 009: Approve or reject producer applications through the API
 
 - Macro: M02, M08
-- Status: Draft
+- Status: In progress
 - Depends on: 007
 - PR: Not opened
-- Branch / parent: Not assigned
+- Branch / parent: `codex/age-009-producer-admin-decisions-api` / `codex/age-008-producer-onboarding-web` at `9ffb71172b282e8e64d73560eb53161c9e8b10a7`
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -35,11 +35,11 @@ unlocking real publishing without waiting for the Laravel interface.
 
 ## Acceptance criteria
 
-- [ ] Admin can inspect/approve/reject; buyers/producers receive 403.
-- [ ] Missing application/reason and stale/already-decided requests are handled.
-- [ ] Concurrent opposite decisions cannot overwrite one another silently.
-- [ ] Approval immediately changes server eligibility without requiring token expiry.
-- [ ] Bootstrap is deliberate and non-destructive; OpenAPI matches the contract.
+- [x] Admin can inspect/approve/reject; buyers/producers receive 403.
+- [x] Missing application/reason and stale/already-decided requests are handled.
+- [x] Concurrent opposite decisions cannot overwrite one another silently.
+- [x] Approval immediately changes server eligibility without requiring token expiry.
+- [x] Bootstrap is deliberate and non-destructive; OpenAPI matches the contract.
 
 ## Checks
 
@@ -49,4 +49,24 @@ Approve and reject local applications with real admin requests; try a non-admin 
 
 ## Delivery notes
 
-Not implemented. Record actual evidence and PR/stack metadata here.
+- Implemented on `codex/age-009-producer-admin-decisions-api`, stacked on PR #17 (`codex/age-008-producer-onboarding-web` at `9ffb71172b282e8e64d73560eb53161c9e8b10a7`).
+- Orchestrator/reviewer: Gemini 4 Argon (Low). Builder subagent: `self` (`Model: 'inherit'` — Gemini 4 Argon Low, `0f3687b4-9120-4728-ab4f-6d72c1e0229a`, transcript usage: 245,590 input tokens, 2,856,345 cached tokens, 33,514 output/thinking tokens), with zero subagent correction rounds.
+- Frontier verdict: APPROVED against parent `9ffb71172b282e8e64d73560eb53161c9e8b10a7`.
+- Static and contract checks passed with Node 24.22.2 and pnpm 11.25.0:
+  - `pnpm contract:generate` and `pnpm contract:check`
+  - `pnpm typecheck` (`tsconfig.tools.json`, `@dwc/api`, `@dwc/web`)
+  - `pnpm lint` (`eslint . --max-warnings 0`)
+  - `pnpm test` (`@dwc/web`: 15/15 tests across 4 files; `@dwc/api`: 4/4 tests)
+  - `pnpm build` (`@dwc/api` NestJS build and `@dwc/web` Vite + React Compiler build)
+  - Scoped `prettier --check` on all 17 touched files
+- Real HTTP, MongoDB replica-set and Redis verification on isolated port `3019`:
+  - `pnpm --filter @dwc/api admin:bootstrap` rejected a short password (`exit code 1`) without echoing the secret, refused to overwrite or promote an existing buyer account (`exit code 1`), and created a new administrator account (`role: 'admin'`) hashed with bcrypt (`cost = 12`).
+  - Public `POST /api/auth/register` with `role: 'admin'` returned `400 Bad Request`.
+  - Unauthenticated calls to `/api/admin/producer-applications` returned `401 Unauthorized`; buyer and producer calls to `GET /`, `GET /:id`, `POST /:id/approve`, and `POST /:id/reject` returned `403 Forbidden`.
+  - Unsubmitted producer accounts were excluded from `GET /api/admin/producer-applications`, returned `404` on `GET /:id`, and returned `409 Conflict` on `POST /:id/approve` / `POST /:id/reject`.
+  - Submitted pending application appeared in `GET /api/admin/producer-applications` and `GET /:id` with `status: 'pending'` and `revision: 1`.
+  - `POST /:id/reject` without `reason` or with a whitespace-only `reason` returned `400 Bad Request`.
+  - Simultaneous `POST /:id/approve` and `POST /:id/reject` requests at `revision: 1` resolved atomically with one `200 OK` (`revision: 2`) and one `409 Conflict`.
+  - Full reject (`revision: 2`) -> stale approve (`409 Conflict`) -> producer sees `producerStatus: 'rejected'`, `rejectionReason`, and `decidedAt` on `/api/auth/me` and `/api/producer/application` -> producer resubmits (`POST /api/producer/application/resubmit`, `revision: 3`) -> stale approve with `revision: 2` (`409 Conflict`) -> admin approves with `revision: 3` (`200 OK`, `status: 'approved'`, `revision: 4`) -> producer immediately sees `producerStatus: 'approved'` on `/api/auth/me` and `/api/producer/application` using the existing access token without waiting for token expiry.
+  - All temporary verification users and Redis session keys were removed after verification (`0` residual records).
+- Limitations: Persistent inbox and live Socket.io notifications for producer approval/rejection decisions belong to Tickets 023 and 024; producer suspension endpoints belong to Ticket 035; Laravel backoffice review screens belong to Tickets 038 and 039.

@@ -1,9 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, SchemaTypes, Types } from 'mongoose';
 
 export enum UserRole {
   Buyer = 'buyer',
   Producer = 'producer',
+  Admin = 'admin',
 }
 
 export enum ProducerStatus {
@@ -71,8 +72,26 @@ export class User {
 
   @Prop({ type: String, trim: true, maxlength: 500, default: null })
   producerRejectionReason!: string | null;
+
+  @Prop({ type: Number, default: 0, min: 0 })
+  producerDecisionRevision!: number;
+
+  @Prop({
+    type: SchemaTypes.ObjectId,
+    ref: 'User',
+    default: null,
+  })
+  producerDecisionBy!: Types.ObjectId | null;
+
+  @Prop({ type: Date, default: null })
+  producerDecisionAt!: Date | null;
 }
 
 export type UserDocument = HydratedDocument<User>;
 export const UserSchema = SchemaFactory.createForClass(User);
 UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index({
+  role: 1,
+  producerStatus: 1,
+  'producerApplication.submittedAt': -1,
+});
