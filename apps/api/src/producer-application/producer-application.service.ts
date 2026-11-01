@@ -1,5 +1,7 @@
 import {
+  BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -17,8 +19,10 @@ import {
   ApproveProducerApplicationDto,
   ListAdminProducerApplicationsQueryDto,
   ProducerApplicationResponseDto,
+  ProducerProfileResponseDto,
   RejectProducerApplicationDto,
   SubmitProducerApplicationDto,
+  UpdateProducerProfileDto,
 } from './producer-application.dto.js';
 
 function formatDate(value: Date | string | null | undefined): string | null {
@@ -82,6 +86,30 @@ function toAdminItem(user: UserDocument): AdminProducerApplicationItemDto {
       latitude: app.latitude,
       longitude: app.longitude,
     },
+  };
+}
+
+function toProfileResponse(user: UserDocument): ProducerProfileResponseDto {
+  const app = user.producerApplication;
+  if (!app) {
+    throw new NotFoundException('Producer profile not found.');
+  }
+  const updatedAt =
+    formatDate(user.updatedAt) ??
+    formatDate(user.producerDecisionAt) ??
+    formatDate(app.submittedAt) ??
+    new Date(0).toISOString();
+
+  return {
+    farmName: app.farmName,
+    description: app.description,
+    city: app.city,
+    collectionAddress: app.collectionAddress,
+    latitude: app.latitude,
+    longitude: app.longitude,
+    status: user.producerStatus ?? ProducerStatus.Approved,
+    revision: user.producerDecisionRevision ?? 1,
+    updatedAt,
   };
 }
 
@@ -313,5 +341,91 @@ export class ProducerApplicationService {
     throw new ConflictException(
       'Producer application was updated or decided concurrently. Refresh and try again.',
     );
+  }
+
+  async getProfile(userId: string): Promise<ProducerProfileResponseDto> {
+    const user = await this.users.findById(userId);
+    if (!user || user.role !== UserRole.Producer) {
+      throw new ForbiddenException(
+        'Only approved producers may access producer profiles.',
+      );
+    }
+    if (user.producerStatus !== ProducerStatus.Approved) {
+      throw new ForbiddenException(
+        'Only approved producers may access producer profiles.',
+      );
+    }
+    if (!user.producerApplication) {
+      throw new NotFoundException('Producer profile not found.');
+    }
+    return toProfileResponse(user);
+  }
+
+  async updateProfile(
+    userId: string,
+    input: UpdateProducerProfileDto,
+  ): Promise<ProducerProfileResponseDto> {
+    const updates: Record<string, unknown> = {};
+    if (input.farmName !== undefined) {
+      updates['producerApplication.farmName'] = input.farmName;
+    }
+    if (input.description !== undefined) {
+      updates['producerApplication.description'] = input.description;
+    }
+    if (input.city !== undefined) {
+      updates['producerApplication.city'] = input.city;
+    }
+    if (input.collectionAddress !== undefined) {
+      updates['producerApplication.collectionAddress'] =
+        input.collectionAddress;
+    }
+    if (input.latitude !== undefined) {
+      updates['producerApplication.latitude'] = input.latitude;
+    }
+    if (input.longitude !== undefined) {
+      updates['producerApplication.longitude'] = input.longitude;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      throw new BadRequestException(
+        'At least one profile field must be provided.',
+      );
+    }
+
+    const updated = await this.users.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(userId),
+        role: UserRole.Producer,
+        producerStatus: ProducerStatus.Approved,
+        'producerApplication.submittedAt': { $exists: true },
+        producerDecisionRevision: input.revision,
+      },
+      {
+        $set: updates,
+        $inc: { producerDecisionRevision: 1 },
+      },
+      { returnDocument: 'after', runValidators: true },
+    );
+
+    if (!updated) {
+      const existing = await this.users.findById(userId);
+      if (
+        !existing ||
+        existing.role !== UserRole.Producer ||
+        existing.producerStatus !== ProducerStatus.Approved
+      ) {
+        throw new ForbiddenException(
+          'Only approved producers may edit producer profiles.',
+        );
+      }
+      if (!existing.producerApplication) {
+        throw new NotFoundException('Producer profile not found.');
+      }
+      throw new ConflictException(
+        'Producer profile was modified concurrently. Refresh and try again.',
+      );
+    }
+
+    return toProfileResponse(updated);
   }
 }

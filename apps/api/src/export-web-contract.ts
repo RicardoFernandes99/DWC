@@ -15,6 +15,9 @@ import { PaymentMethodsService } from './payment-methods/payment-methods.service
 import { AdminProducerApplicationsController } from './producer-application/admin-producer-applications.controller.js';
 import { ProducerApplicationController } from './producer-application/producer-application.controller.js';
 import { ProducerApplicationService } from './producer-application/producer-application.service.js';
+import { ProducerProfileController } from './producer-application/producer-profile.controller.js';
+import { ProducerProductsController } from './products/producer-products.controller.js';
+import { ProductsService } from './products/products.service.js';
 
 // Contract-only module: controllers and DTO metadata are real; no service is called.
 @Module({
@@ -24,7 +27,9 @@ import { ProducerApplicationService } from './producer-application/producer-appl
     UsersController,
     PaymentMethodsController,
     ProducerApplicationController,
+    ProducerProfileController,
     AdminProducerApplicationsController,
+    ProducerProductsController,
   ],
   providers: [
     { provide: AuthService, useValue: {} },
@@ -32,6 +37,7 @@ import { ProducerApplicationService } from './producer-application/producer-appl
     { provide: UsersService, useValue: {} },
     { provide: PaymentMethodsService, useValue: {} },
     { provide: ProducerApplicationService, useValue: {} },
+    { provide: ProductsService, useValue: {} },
     {
       provide: ConfigService,
       useValue: { getOrThrow: () => 'http://localhost' },

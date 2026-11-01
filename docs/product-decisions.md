@@ -41,6 +41,17 @@ replaced are not requirements.
   refresh and is retained when signing in as a buyer.
 - Every screen is responsive and mobile-first. The shared screen ranges and
   product-grid column counts are defined in [project scope](project-scope.md).
+- Product units use discrete pack/unit identifiers so all stock quantities,
+  low-stock thresholds, checkout line quantities and auction lot quantities are
+  strictly non-negative integers (`step = 1`, no binary floats or fractional
+  decimal quantities): `unit`, `bunch`, `box`, `jar`, `bottle`, `bag`, `kg`,
+  `g_500`, `g_250`, `l`, `ml_500`.
+- Catalogue and product management use fixed enum values:
+  - Categories: `vegetables`, `fruits`, `dairy`, `eggs`, `meat`, `bakery`,
+    `pantry`, `beverages`, `other`.
+  - Production methods: `organic`, `sustainable`, `conventional`, `artisanal`,
+    `biodynamic`.
+  - Seasons: `spring`, `summer`, `autumn`, `winter`, `year_round`.
 
 ## Checkout, stock and payment
 
@@ -168,6 +179,5 @@ Resolve these with the affected tickets, without blocking unrelated work:
 
 - Invoice format, required information and PDF download.
 - Account recovery scope. Session implementation details are drafted in ticket 003.
-- Product units, quantity precision and category/production-method values.
 - Auction settlement edge cases and scheduled auctions affected by suspension.
 - Buyer suspension behavior and detailed dashboard metric definitions.

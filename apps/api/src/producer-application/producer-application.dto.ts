@@ -350,3 +350,178 @@ export class AdminProducerApplicationListResponseDto {
   @ApiProperty({ example: 20, minimum: 1, maximum: 50 })
   limit!: number;
 }
+
+// Empty on purpose: the profile endpoint accepts no query fields.
+export class GetProducerProfileQueryDto {}
+
+export class UpdateProducerProfileDto {
+  @ApiProperty({
+    example: 1,
+    minimum: 1,
+    description:
+      'Current producer profile revision to prevent stale or concurrent overwrite.',
+  })
+  @IsInt()
+  @Min(1)
+  revision!: number;
+
+  @ApiPropertyOptional({
+    example: 'Quinta do Sol',
+    minLength: 1,
+    maxLength: 120,
+    description: 'Public name of the farm or producer enterprise.',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  farmName?: string;
+
+  @ApiPropertyOptional({
+    example:
+      'Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.',
+    minLength: 1,
+    maxLength: 2000,
+    description: 'Detailed overview of farming practices, products, and story.',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @MinLength(1)
+  @MaxLength(2000)
+  description?: string;
+
+  @ApiPropertyOptional({
+    example: 'Sintra',
+    minLength: 1,
+    maxLength: 120,
+    description: 'City or municipality of the farm.',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  city?: string;
+
+  @ApiPropertyOptional({
+    example: 'Rua Principal 12, 2710-001 Sintra',
+    minLength: 1,
+    maxLength: 240,
+    description: 'Physical address for order collections and farm visits.',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @MinLength(1)
+  @MaxLength(240)
+  collectionAddress?: string;
+
+  @ApiPropertyOptional({
+    example: 38.8029,
+    minimum: -90,
+    maximum: 90,
+    description: 'Latitude coordinate in decimal degrees between -90 and 90.',
+  })
+  @IsOptional()
+  @IsNumber({ allowNaN: false, allowInfinity: false })
+  @Min(-90)
+  @Max(90)
+  latitude?: number;
+
+  @ApiPropertyOptional({
+    example: -9.3817,
+    minimum: -180,
+    maximum: 180,
+    description:
+      'Longitude coordinate in decimal degrees between -180 and 180.',
+  })
+  @IsOptional()
+  @IsNumber({ allowNaN: false, allowInfinity: false })
+  @Min(-180)
+  @Max(180)
+  longitude?: number;
+}
+
+export class ProducerProfileResponseDto {
+  @ApiProperty({
+    example: 'Quinta do Sol',
+    minLength: 1,
+    maxLength: 120,
+    description: 'Public name of the farm or producer enterprise.',
+  })
+  farmName!: string;
+
+  @ApiProperty({
+    example:
+      'Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.',
+    minLength: 1,
+    maxLength: 2000,
+    description: 'Detailed overview of farming practices, products, and story.',
+  })
+  description!: string;
+
+  @ApiProperty({
+    example: 'Sintra',
+    minLength: 1,
+    maxLength: 120,
+    description: 'City or municipality of the farm.',
+  })
+  city!: string;
+
+  @ApiProperty({
+    example: 'Rua Principal 12, 2710-001 Sintra',
+    minLength: 1,
+    maxLength: 240,
+    description: 'Physical address for order collections and farm visits.',
+  })
+  collectionAddress!: string;
+
+  @ApiProperty({
+    example: 38.8029,
+    minimum: -90,
+    maximum: 90,
+    description: 'Latitude coordinate in decimal degrees between -90 and 90.',
+  })
+  latitude!: number;
+
+  @ApiProperty({
+    example: -9.3817,
+    minimum: -180,
+    maximum: 180,
+    description:
+      'Longitude coordinate in decimal degrees between -180 and 180.',
+  })
+  longitude!: number;
+
+  @ApiProperty({
+    enum: [ProducerStatus.Approved],
+    example: ProducerStatus.Approved,
+    description: 'Current status of the approved producer.',
+  })
+  status!: ProducerStatus;
+
+  @ApiProperty({
+    example: 2,
+    minimum: 1,
+    description: 'Current producer profile revision.',
+  })
+  revision!: number;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    example: '2026-11-01T12:00:00.000Z',
+    description: 'ISO-8601 timestamp of the latest profile update.',
+  })
+  updatedAt!: string;
+}

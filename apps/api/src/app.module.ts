@@ -11,12 +11,14 @@ import { UsersModule } from './users/users.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module.js';
 import { ProducerApplicationModule } from './producer-application/producer-application.module.js';
+import { ProductsModule } from './products/products.module.js';
 
 @Module({
   imports: [
     AuthModule,
     PaymentMethodsModule,
     ProducerApplicationModule,
+    ProductsModule,
     UsersModule,
     RedisModule,
     ConfigModule.forRoot({
