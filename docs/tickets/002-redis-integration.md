@@ -1,11 +1,11 @@
 # 002: Connect the API to Redis and report readiness
 
 - Macro: M01
-- Status: Draft
+- Status: In review
 - Depends on: Redis Compose/configuration changes from the current foundation
-- PR: Not opened
-- Branch / parent: Not assigned
-- Blockers: Redis infrastructure must be present on the ticket base
+- PR: https://github.com/RicardoFernandes99/DWC/pull/6
+- Branch / parent: `codex/age-002-redis-integration` / `codex/age-001-registration-api` (PR #5)
+- Blockers: None. Redis infrastructure is present on the verified parent.
 
 ## Outcome
 
@@ -40,12 +40,12 @@ availability and closes it cleanly. No authentication behavior is implemented ye
 
 ## Acceptance criteria
 
-- [ ] Missing/malformed Redis configuration fails with a useful sanitized error.
-- [ ] Healthy Redis appears in readiness; disconnected Redis yields bounded 503.
-- [ ] The process handles connection errors without an unhandled rejection.
-- [ ] Smoke verifies value round-trip and expiry against real Redis and cleans its key.
-- [ ] Closing the Nest app closes the client and does not leave a hanging process.
-- [ ] MongoDB/storage readiness checks still work and existing local data is preserved.
+- [x] Missing/malformed Redis configuration fails with a useful sanitized error.
+- [x] Healthy Redis appears in readiness; disconnected Redis yields bounded 503.
+- [x] The process handles connection errors without an unhandled rejection.
+- [x] Smoke verifies value round-trip and expiry against real Redis and cleans its key.
+- [x] Closing the Nest app closes the client and does not leave a hanging process.
+- [x] MongoDB/storage readiness checks still work and existing local data is preserved.
 
 ## Checks
 
@@ -55,4 +55,29 @@ Check Redis connectivity and sanitized readiness once, including a missing/unrea
 
 ## Delivery notes
 
-Not implemented. Sol records actual evidence and PR/stack metadata here.
+- Builder: `gpt-6-luna`, high reasoning, for bounded connection failure cases.
+  No model changes. Implementation feedback corrected command/handshake deadlines
+  and shutdown before handoff; zero post-handoff correction rounds.
+  Token/credit usage unavailable.
+- Frontier verdict: APPROVED. Reviewed the ticket-only diff and new Redis files
+  against parent `a3faf2edd4810d7a7ef89bdbc2bee71e388ea373`.
+  Reviewed/check revision: `e15282cac8c297576bded876befa80104bb7817c`.
+- Static checks passed on Node 24.22.1 and pnpm 11.25.0: API `typecheck`, `build`,
+  tools TypeScript check, root `lint`, scoped Prettier and `git diff --check`.
+  Existing API tests passed, 4/4.
+- Real-service evidence: healthy readiness and OpenAPI, MongoDB/S3 round-trip,
+  and smoke Redis round-trip/expiry passed. An isolated API returned sanitized
+  503 with unreachable Redis, recovered to 200 with Redis available, and returned
+  to 503 when it stopped. Missing/malformed configuration failed startup without
+  exposing values. Only verifier-owned records, objects, keys and temporary
+  infrastructure were cleaned; shared services and volumes were preserved.
+- Independent TCP-proxy checks passed: a silent Redis handshake closed its
+  socket on shutdown; dropped replies hit the 1.5-second operation deadline;
+  the replacement connection recovered; shutdown during a stalled real command
+  completed within 2.2 seconds with no open proxy sockets or unhandled rejections.
+  The initial builder listener-close uncertainty was resolved by this check.
+- RedisModule exports typed bounded operations and `execute` for future atomic
+  commands. Callbacks must return their operation promise and must not retain the
+  client. A timeout cannot establish whether a sent write reached Redis; callers
+  must resolve uncertain write outcomes using domain-specific atomic operations.
+  Authentication sessions remain ticket 003.

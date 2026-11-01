@@ -1,11 +1,11 @@
 # 001: Register buyer and producer accounts
 
 - Macro: M01
-- Status: Draft
+- Status: In review
 - Depends on: None
-- PR: Not opened
-- Branch / parent: Not assigned
-- Blockers: None beyond establishing a clean ticket base
+- PR: https://github.com/RicardoFernandes99/DWC/pull/5
+- Branch / parent: `codex/age-001-registration-api` / `main` at `3b122e7f21ce82d17d3af7330c830591298a9f4d`
+- Blockers: None
 
 ## Outcome
 
@@ -42,12 +42,12 @@ approval and cannot choose or grant administrator access.
 
 ## Acceptance criteria
 
-- [ ] Buyer/producer registrations persist the correct role and initial status.
-- [ ] The same email with different casing/outer whitespace cannot register twice.
-- [ ] Concurrent duplicate registrations result in one account and a handled 409.
-- [ ] Plaintext passwords/hashes never appear in responses or logs.
-- [ ] Invalid fields, password bounds and public administrator registration fail.
-- [ ] Existing health and storage behavior remains intact; OpenAPI matches DTOs.
+- [x] Buyer/producer registrations persist the correct role and initial status.
+- [x] The same email with different casing/outer whitespace cannot register twice.
+- [x] Concurrent duplicate registrations result in one account and a handled 409.
+- [x] Plaintext passwords/hashes never appear in responses or logs.
+- [x] Invalid fields, password bounds and public administrator registration fail.
+- [x] Existing health and storage behavior remains intact; OpenAPI matches DTOs.
 
 ## Checks
 
@@ -57,4 +57,21 @@ Register a buyer and producer, retry the same normalized email, and confirm priv
 
 ## Delivery notes
 
-Not implemented. Sol records actual evidence and PR/stack metadata here.
+- Builder: `gpt-6-luna`, high reasoning. Bounded API feature with validation and
+  duplicate-write failure cases. No model changes; zero correction rounds.
+  Token/credit usage unavailable.
+- Frontier verdict: APPROVED. Reviewed the complete ticket diff against parent
+  `3b122e7f21ce82d17d3af7330c830591298a9f4d`, including new user feature files.
+  Reviewed/check revision: `bf525cdcb3ab129151bfebf13ecd6917cbb6e9ca`.
+- Static checks passed: API `typecheck`, `build`, root `lint`, scoped Prettier.
+  Existing API tests passed, 4/4. Runtime used Node 24.22.1 and pnpm 11.25.0.
+- Real MongoDB/HTTP checks passed: buyer and pending producer persistence,
+  trimmed/case-normalized duplicates, simultaneous duplicate requests yielding
+  one 201 and one 409 with exactly one record, unknown/privileged fields and admin
+  role refused, invalid name/email/password refused, 8/72-byte UTF-8 boundaries
+  accepted and 74 bytes refused, password whitespace retained by bcrypt comparison,
+  timestamps present, explicit public response and default read hash exclusion.
+- Live health/readiness and generated OpenAPI 201/400/409 schemas passed. Source
+  and runtime logs contain no credential logging. Only verifier-owned records
+  were removed. No new automated test suite was added.
+- Registration issues no session or tokens. Login and refresh remain ticket 003.

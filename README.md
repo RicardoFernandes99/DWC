@@ -25,7 +25,7 @@ Vite proxies `/api` and `/api-docs` to NestJS. All services use HTTP locally.
 
 ```sh
 pnpm check          # formatting, lint, typecheck, tests, production builds
-pnpm smoke          # running API + MongoDB + storage round trip
+pnpm smoke          # running API + MongoDB + Redis + storage round trip
 pnpm infra:down     # stop services; retain named data volumes
 pnpm --filter @dwc/web dev
 pnpm --filter @dwc/api dev
@@ -36,18 +36,19 @@ MongoDB runs as a single-node replica set for future transactional work.
 Infrastructure ports bind to loopback; this is a development setup.
 
 Redis uses a persistent `redis-data` volume, append-only persistence and a ping
-health check. It is reserved for expiring authentication session/revocation data;
-the API client and authentication flows are not implemented yet. The future API
-connection is `REDIS_URL=redis://127.0.0.1:6379`. Existing `.env` files are preserved;
-add that setting when the API integration is implemented. `pnpm infra:up` starts
-Redis alongside the other services. Check it with:
+health check. The API requires `REDIS_URL` at startup, manages a reconnecting
+client, and includes Redis in dependency readiness. `setup:local` creates the
+variable for new `.env` files but preserves existing ones; add
+`REDIS_URL=redis://127.0.0.1:6379` manually to an existing `.env`. `pnpm infra:up`
+starts Redis alongside the other services. Check it with:
 
 ```sh
 docker compose exec redis redis-cli ping
 ```
 
-The expected response is `PONG`. API readiness and `pnpm smoke` currently check
-MongoDB and S3 only; Redis startup is checked by Compose.
+The expected response is `PONG`. API readiness and `pnpm smoke` check MongoDB,
+Redis, and S3. Smoke also verifies Redis value round-trip and expiration, and
+removes only its randomly named key.
 
 Floci uses persistent storage in the `floci-data` volume. The container's built-in
 health check gates startup. Its optional web-console sidecar is disabled; no
@@ -70,7 +71,8 @@ docs/             project scope, architecture, agent workflow and research
 ```
 
 Laravel backoffice remains planned as `apps/backoffice`; it is not scaffolded in
-this Web/API foundation. Business features are not implemented yet.
+this Web/API foundation. The API supports buyer/producer registration; login,
+sessions and other business features remain unimplemented.
 
 ## Working with agents
 

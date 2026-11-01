@@ -5,10 +5,14 @@ import { fileURLToPath } from 'node:url';
 import { validateEnvironment } from './config.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
+import { RedisModule } from './redis/redis.module.js';
 import { StorageService } from './storage/storage.service.js';
+import { UsersModule } from './users/users.module.js';
 
 @Module({
   imports: [
+    UsersModule,
+    RedisModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: fileURLToPath(new URL('../../../.env', import.meta.url)),

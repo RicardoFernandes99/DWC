@@ -15,7 +15,7 @@ export class HealthController {
   }
 
   @Get('ready')
-  @ApiOperation({ summary: 'Check MongoDB and the private S3 bucket' })
+  @ApiOperation({ summary: 'Check MongoDB, Redis, and the private S3 bucket' })
   @ApiResponse({ status: 200, description: 'All dependencies are reachable.' })
   @ApiResponse({
     status: 503,

@@ -21,7 +21,7 @@ async function bootstrap() {
   const swagger = new DocumentBuilder()
     .setTitle('From Farm to Table API')
     .setDescription(
-      'Local marketplace API. Business endpoints will be added incrementally.',
+      'Local marketplace API. Account registration is available; other business endpoints are added incrementally.',
     )
     .setVersion('0.1.0')
     .addBearerAuth()

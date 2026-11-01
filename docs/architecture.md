@@ -10,7 +10,9 @@ Compiler diagnostics. Production builds check for emitted compiler markers.
 `apps/api` is the NestJS authority for domain logic, permissions, persistence
 and future Socket.io events. TypeScript emits decorator metadata for Nest's
 dependency injection. Swagger and global request validation are initialized.
-No authentication or business endpoints are claimed by this initial scaffold.
+Buyer/producer registration persists users with bcrypt password hashes and an
+indexed normalized email. Login, sessions and remaining business endpoints are
+future work.
 
 `apps/backoffice` will hold Laravel. Prefer consuming authenticated NestJS
 administrative endpoints to avoid duplicating business rules. Choose its auth
@@ -30,8 +32,12 @@ refresh-token sessions and revocation data when authentication is implemented.
 Store token hashes or identifiers rather than raw bearer tokens, and expire
 records with the associated session/token lifetime. JWT signature and expiry
 checks remain in the API; MongoDB remains the store for users and domain data.
-The scaffold has no Redis client or auth flow yet. `REDIS_URL` in `.env.example`
-reserves the future API connection setting; it is not currently validated or used.
+The API uses the official Node Redis client through a feature module. `REDIS_URL`
+is required and validated at startup. Connection attempts and commands have
+bounded timeouts, commands are not queued while disconnected, and the client
+reconnects after interruptions. Redis readiness reports only `up` or `down`;
+connection values and internal errors are not returned. Authentication behavior
+and session records remain future work.
 Redis has no local authentication and must remain bound to loopback.
 
 Floci 2.3.0 emulates S3 on port 4566. The AWS SDK uses endpoint configuration and
@@ -53,8 +59,9 @@ server-side proxy. No browser-side S3 credentials are injected. Infrastructure
 ports and application listeners bind to loopback. The database has no local
 authentication; do not expose this Compose configuration on a public interface.
 
-Readiness pings MongoDB and checks the configured S3 bucket. The smoke command
-also exercises database persistence and object upload/download/delete. These
+Readiness pings MongoDB and Redis and checks the configured S3 bucket. The smoke
+command also exercises database persistence, a Redis value round-trip and TTL,
+and object upload/download/delete. These
 checks do not imply catalogue, order or auction behavior is implemented.
 
 ## Tooling choices
