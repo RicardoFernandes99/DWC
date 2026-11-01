@@ -8,7 +8,8 @@ const local = template
     'replace-with-local-access-key',
     `dwc${randomBytes(8).toString('hex')}`,
   )
-  .replace('replace-with-local-secret-key', randomBytes(32).toString('hex'));
+  .replace('replace-with-local-secret-key', randomBytes(32).toString('hex'))
+  .replace('replace-with-jwt-secret', randomBytes(48).toString('hex'));
 
 try {
   await writeFile(new URL('.env', root), local, { flag: 'wx', mode: 0o600 });

@@ -1,11 +1,11 @@
 # 004: Register, sign in and restore a browser session
 
 - Macro: M01
-- Status: Draft
+- Status: In review
 - Depends on: 003, 045
-- PR: Not opened
-- Branch / parent: Not assigned
-- Blockers: None beyond dependencies
+- PR: https://github.com/RicardoFernandes99/DWC/pull/12
+- Branch / parent: `codex/age-004-auth-web` / `codex/age-045-ui-foundation`
+- Blockers: None. Tickets 003 and 045 are present on the parent branch.
 
 ## Outcome
 
@@ -59,15 +59,15 @@ putting credentials in browser storage. Producers see their current status.
 
 ## Acceptance criteria
 
-- [ ] Registration/login work against the real API, including producer pending state.
-- [ ] Duplicate email and incorrect credentials give useful field/form feedback.
-- [ ] Reload restores a valid session without an unauthenticated redirect flash.
-- [ ] Multiple expired requests trigger one refresh; refresh failure stops retries.
-- [ ] Access/refresh tokens never reach localStorage, sessionStorage, URLs or logs.
-- [ ] Logout clears user-scoped state; signing in as another user exposes no old data.
-- [ ] Forms have labels/autocomplete, keyboard access, visible focus, pending and error
+- [x] Registration/login work against the real API, including producer pending state.
+- [x] Duplicate email and incorrect credentials give useful field/form feedback.
+- [x] Reload restores a valid session without an unauthenticated redirect flash.
+- [x] Multiple expired requests trigger one refresh; refresh failure stops retries.
+- [x] Access/refresh tokens never reach localStorage, sessionStorage, URLs or logs.
+- [x] Logout clears user-scoped state; signing in as another user exposes no old data.
+- [x] Forms have labels/autocomplete, keyboard access, visible focus, pending and error
       states; invalid input is preserved appropriately and duplicate submits are blocked.
-- [ ] Screens work below 768px, at 768-1279px and at 1280px+, without overflow.
+- [x] Screens work below 768px, at 768-1279px and at 1280px+, without overflow.
 
 ## Checks
 
@@ -77,4 +77,33 @@ Try registration, login, reload/session restore and logout in a browser. Check a
 
 ## Delivery notes
 
-Not implemented. Sol records actual evidence and PR/stack metadata here.
+Build started on 2026-11-01 from ticket 045's implementation, stacked on PR #10.
+The API and UI foundation dependencies are present on the parent branch.
+
+- Parent verified at `629044a5cf33c1a5f093933d30fd15a8708410e6`, PR #10.
+- Builder: `gpt-6.1-terra`, medium effort. Frontier review APPROVED after one
+  correction round for retry feedback, field focus and session boundary fixes.
+  Token, cached-token, reasoning-token and credit usage are unavailable.
+- Passed web typecheck/build with React Compiler verification, API typecheck/build,
+  root lint, scoped Prettier and `pnpm contract:check`. Final web tests passed 8/8.
+- Real browser checks covered buyer and producer registration, login, pending
+  producer status, reload restoration, logout, duplicate email, incorrect
+  credentials, external-return rejection and changing accounts without old data.
+  Remaining checks used the visible Codex browser at the user's request.
+- API interruption produced a stale-account warning and honest logout failure;
+  retrying revocation after recovery succeeded. Only the build-owned API process
+  was stopped. Shared services, existing API processes and database data stayed intact.
+- Responsive layouts checked at 375, 900 and 1440 pixels; keyboard focus and field
+  feedback checked. Focused tests cover shared refresh, bounded authentication
+  failure, refresh/logout races, stale restore after login and retry UI states.
+- Access credentials stay in module memory; refresh uses the existing HttpOnly
+  cookie. Contract generation reads actual Nest controllers/DTOs offline. The export
+  module currently includes auth/registration controllers; later consumers must add
+  their controllers there. Rejected-producer reasons remain unavailable until M02.
+- Local screenshots remain under `demos/ticket-004-review/` and are not committed.
+  Four build-owned test accounts remain in the local database. The local web and
+  isolated API servers remain running for the user's preview.
+- Existing build-skill and ticket-index edits were preserved outside this commit.
+
+- PR #12 is ready for review, targeting PR #10. Frontier approval covers
+  implementation commit `b863b8c`; this subsequent update records publication only.

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowUpRight, Leaf, RefreshCw } from 'lucide-react';
+import { ArrowUpRight, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function App() {
@@ -26,14 +26,6 @@ export function App() {
 
   return (
     <div className="min-h-svh bg-background text-foreground">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-6 py-5">
-          <Leaf className="size-6 text-primary" aria-hidden="true" />
-          <span className="font-semibold tracking-tight">
-            From Farm to Table
-          </span>
-        </div>
-      </header>
       <main className="mx-auto max-w-5xl px-6 py-16 md:py-24">
         <p className="text-sm font-medium uppercase tracking-widest text-primary">
           Grown locally

@@ -11,8 +11,10 @@ Compiler diagnostics. Production builds check for emitted compiler markers.
 and future Socket.io events. TypeScript emits decorator metadata for Nest's
 dependency injection. Swagger and global request validation are initialized.
 Buyer/producer registration persists users with bcrypt password hashes and an
-indexed normalized email. Login, sessions and remaining business endpoints are
-future work.
+indexed normalized email. Authentication issues 15-minute HS256 JWTs backed by absolute seven-day Redis
+sessions. Refresh uses atomic Lua compare-and-set rotation; logout revokes only
+the current cookie session. Each authenticated request verifies JWT signature,
+issuer/audience, session existence and current MongoDB user status.
 
 `apps/backoffice` will hold Laravel. Prefer consuming authenticated NestJS
 administrative endpoints to avoid duplicating business rules. Choose its auth
@@ -36,8 +38,7 @@ The API uses the official Node Redis client through a feature module. `REDIS_URL
 is required and validated at startup. Connection attempts and commands have
 bounded timeouts, commands are not queued while disconnected, and the client
 reconnects after interruptions. Redis readiness reports only `up` or `down`;
-connection values and internal errors are not returned. Authentication behavior
-and session records remain future work.
+connection values and internal errors are not returned. Authentication fails closed with sanitized 503 responses during Redis outages.
 Redis has no local authentication and must remain bound to loopback.
 
 Floci 2.3.0 emulates S3 on port 4566. The AWS SDK uses endpoint configuration and

@@ -24,9 +24,9 @@ reference material; explicit user decisions take precedence over its examples.
   These are three layout ranges separated by two breakpoints; no SASS map is needed.
 - Docker MongoDB and Floci for local S3 emulation, replacing the earlier
   RustFS/MinIO storage choice at the user's request.
-- Redis runs locally in Docker for future expiring authentication session data,
+- Redis runs locally in Docker for expiring authentication session data,
   including refresh-token sessions and revocation. JWT verification stays in the
-  API; the authentication implementation and token lifecycle remain future work.
+  API; login, rotation and revocation are implemented.
 - Local HTTP development. HTTPS is undecided and not part of initial setup.
 - No cloud deployment or separate prototype deliverable.
 
@@ -62,7 +62,7 @@ reference material; explicit user decisions take precedence over its examples.
 ## Current foundation
 
 Workspace tooling, a minimal frontend, API health/docs, MongoDB connectivity,
-S3 initialization and buyer/producer registration are implemented. Login and
-sessions, catalogue, ordering, auctions and Laravel remain future feature work.
+S3 initialization and buyer/producer registration are implemented. Authentication sessions are implemented; catalogue, ordering, auctions and Laravel
+remain future feature work.
 Redis infrastructure is configured and the API manages a required Redis connection
-for readiness. Authentication sessions and token lifecycle remain future work.
+for readiness. Authentication sessions use hashed refresh credentials, atomic rotation and absolute TTLs.

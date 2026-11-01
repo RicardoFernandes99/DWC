@@ -8,9 +8,11 @@ import { HealthService } from './health/health.service.js';
 import { RedisModule } from './redis/redis.module.js';
 import { StorageService } from './storage/storage.service.js';
 import { UsersModule } from './users/users.module.js';
+import { AuthModule } from './auth/auth.module.js';
 
 @Module({
   imports: [
+    AuthModule,
     UsersModule,
     RedisModule,
     ConfigModule.forRoot({

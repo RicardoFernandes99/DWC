@@ -1,10 +1,10 @@
 # 003: Sign in, refresh and revoke Redis-backed sessions
 
 - Macro: M01
-- Status: Draft
+- Status: In review
 - Depends on: 001, 002
-- PR: Not opened
-- Branch / parent: Not assigned
+- PR: https://github.com/RicardoFernandes99/DWC/pull/9
+- Branch / parent: codex/age-003-auth-sessions-api / main
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -57,14 +57,14 @@ Logout revokes the session. The same access JWT can authenticate Socket.io later
 
 ## Acceptance criteria
 
-- [ ] Valid login, authenticated `/me`, refresh and logout work through real HTTP.
-- [ ] Wrong credentials, altered/expired JWTs and revoked sessions are rejected.
-- [ ] Cookie flags/paths and Origin rejection match the contract without leaking tokens.
-- [ ] A refresh token works once; concurrent use has at most one successful rotation.
-- [ ] Logout invalidates existing access JWTs for that session, not other sessions.
-- [ ] Refresh never extends the original 7-day limit; Redis TTL matches remaining time.
-- [ ] Redis outage does not authenticate callers or disclose internal connection data.
-- [ ] OpenAPI describes bearer/cookie usage, bodies, results and expected failures.
+- [x] Valid login, authenticated `/me`, refresh and logout work through real HTTP.
+- [x] Wrong credentials, altered/expired JWTs and revoked sessions are rejected.
+- [x] Cookie flags/paths and Origin rejection match the contract without leaking tokens.
+- [x] A refresh token works once; concurrent use has at most one successful rotation.
+- [x] Logout invalidates existing access JWTs for that session, not other sessions.
+- [x] Refresh never extends the original 7-day limit; Redis TTL matches remaining time.
+- [x] Redis outage does not authenticate callers or disclose internal connection data.
+- [x] OpenAPI describes bearer/cookie usage, bodies, results and expected failures.
 
 ## Checks
 
@@ -74,4 +74,37 @@ Exercise login, refresh, logout and rejection of the revoked session with real l
 
 ## Delivery notes
 
-Not implemented. Sol records actual evidence and PR/stack metadata here.
+Implemented on `codex/age-003-auth-sessions-api`, parent `main` at
+`d5b6f404e8ac301d4e2b6f6b127278167446bab4`. PR publication follows orchestrator review.
+
+- Builder model: Sol, low effort for initial implementation; Terra, medium effort
+  for final verification after the user's clarification. Token/credit usage is
+  unavailable in this client.
+- Node 24.22.1, pnpm 11.25.0. API typecheck/build, tools typecheck, root lint and
+  existing API tests passed. Scoped Prettier checks passed.
+- Real HTTP on isolated API port 3013 with existing MongoDB/Redis: login, `/me`,
+  refresh, logout, pending-producer sign-in, generic wrong/unknown credentials 401,
+  unexpected input 400, altered JWT 401 and missing/untrusted Origin 403 passed.
+  Cookie HttpOnly/SameSite/Path/lifetime and exact credentialed CORS were checked.
+- Concurrent refresh returned one 200 and one 401; reuse returned 401. Redis TTL
+  before/after rotation was 604799789/604799770 ms. A shortened original session
+  expiry remained bounded after refresh and then rejected refresh/access with 401.
+  Stored session data contained hashes rather than raw refresh credentials.
+- Logout immediately rejected the original access JWT while a second device's
+  token still worked. The same JWT loaded changed producer status; deleting its
+  test-owned user caused 401. Login throttling returned 429. OpenAPI contained all
+  four routes and their response/authentication documentation.
+- A separate API on port 3014 with an unreachable Redis port returned sanitized
+  503 for valid-JWT `/me`, correct login and well-formed refresh. An expired,
+  correctly signed JWT returned 401. Shared Redis was never stopped.
+- Acceptance requests used temporary TypeScript scripts, removed after execution.
+  Only test-owned users/session keys were cleaned. Existing `.env` was preserved;
+  new runtime configuration was supplied to the isolated processes.
+- Login throttling is process-local, appropriate to this single-process local
+  application. A rotated credential is invalid for logout and cannot revoke its
+  replacement. HTTPS Secure-cookie configuration is implemented; HTTP flags were
+  exercised locally. No Socket.io or frontend session flow is included.
+
+- Frontier verdict: APPROVED on implementation commit 9a11242. One correction
+  round tightened persisted-session validation and absolute expiry. Final
+  verification required no further code corrections. PR #9 is ready for review.
