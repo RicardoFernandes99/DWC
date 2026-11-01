@@ -122,10 +122,7 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
   return (
     <section className="mt-10" aria-labelledby="payment-methods-title">
       <div className="mb-5">
-        <p className="text-sm font-medium uppercase tracking-widest text-primary">
-          Your account
-        </p>
-        <h2 id="payment-methods-title" className="mt-2 text-2xl font-semibold">
+        <h2 id="payment-methods-title" className="text-2xl font-semibold">
           Payment methods
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">

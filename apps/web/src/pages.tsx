@@ -444,8 +444,7 @@ export function Account() {
   const current: User = query.data;
   return (
     <main className="mx-auto max-w-5xl px-6 py-12 md:py-20">
-      <h1 className="text-3xl font-semibold">Hello, {current.name}</h1>
-      <p className="mt-2 text-muted-foreground">{current.email}</p>
+      <h1 className="text-3xl font-semibold">Your account</h1>
       {query.isError && (
         <div role="alert" className="mt-5 rounded-lg border p-4 text-sm">
           <p>
@@ -481,6 +480,21 @@ export function Account() {
       {current.role === 'buyer' && (
         <PaymentMethods key={current.id} buyerId={current.id} />
       )}
+      <section className="mt-10 border-t pt-6" aria-labelledby="profile-title">
+        <h2 id="profile-title" className="text-lg font-semibold">
+          Profile
+        </h2>
+        <dl className="mt-4 grid gap-4 text-sm md:grid-cols-2">
+          <div className="min-w-0">
+            <dt className="text-muted-foreground">Name</dt>
+            <dd className="mt-1 break-words">{current.name}</dd>
+          </div>
+          <div className="min-w-0">
+            <dt className="text-muted-foreground">Email</dt>
+            <dd className="mt-1 break-words">{current.email}</dd>
+          </div>
+        </dl>
+      </section>
       {message && (
         <p role="alert" className="mt-5 text-destructive">
           {message}
