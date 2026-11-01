@@ -9,8 +9,8 @@ metadata:
 # Record a demo
 
 Use real browser interactions with seeded/demo data. Read `apps/web/AGENTS.md`.
-Save takes under **`demos/takes/` in this repository**. Return local file paths;
-never upload or invoke an external asset host. Current pages are public; real
+Save takes under **`demos/takes/` in this repository** and return local file paths.
+Current pages are public; real
 seeded-account login can be added to `.agents/record-demo.ts` once auth exists.
 Do not add an authentication bypass or pretend future features work.
 
@@ -19,8 +19,8 @@ Do not add an authentication bypass or pretend future features work.
 Run `pnpm demo:record doctor`. Playwright is a root development dependency.
 Install its browser with `pnpm demo:install`. FFmpeg with libx264 is needed for
 MP4 and usable WebM duration headers; doctor checks it. A real display is needed
-for tab capture (on displayless Linux use Xvfb). Start the app and use a localhost
-or HTTPS URL. The doctor diagnoses setup; a real take proves capture works.
+for tab capture (on displayless Linux use Xvfb). Start the local app and record its
+localhost URL. The doctor diagnoses setup; a real take proves capture works.
 
 The TypeScript entry point applies the local project configuration and enforces
 output paths under `demos/`. Vendored runtime files are listed in `../upstream.json`.
@@ -55,4 +55,4 @@ composited outside the footage. Keep the default 1440x900 at 2x. Record scenes
 sequentially. Do not use `DEMO_NOW` for auctions: the browser clock must remain
 consistent with the API's live deadline. Seed repeatable state without freezing
 server-authoritative behavior. Recordings are evidence, not a substitute for
-API authorization or concurrent-bid tests.
+API authorization or focused concurrent-bid checks.

@@ -21,6 +21,11 @@ with the plan. No `execute`, `verify`, `finalize`, build/delivery orchestration 
 separate approval ceremony is required. Implementation includes sensible checks
 and a brief report of what changed and what actually ran.
 
+When called by `build`, provide the chat plan and return control to that skill's
+builder/frontier-review/PR loop. This general planning guidance does not replace
+the explicitly requested build workflow.
+
 Do not generate PLAN.md, STATE.md, workflow folders, tickets or ADRs. Save a plan
-only when the user explicitly requests a file, using the chosen location. Possible
-future Markdown tickets are not part of the current workflow.
+only when the user explicitly requests a file, using the chosen location.
+Existing numbered tickets live in `docs/tickets/`; use their acceptance criteria
+when planning a build instead of duplicating them into plan/state files.

@@ -893,7 +893,7 @@ class Session {
     const panel = this.page.locator('.px-tweaks').first()
     const fab = panel.locator('button[aria-label="Toggle tweaks panel"]')
     await fab.waitFor({ state: 'visible', timeout: this.cfg.waitMs }).catch(() => {
-      throw new Error('no tweaks panel on this page — only pages that render a Pixelmatters <TweaksPanel> have one')
+      throw new Error('no tweaks panel on this page; the page must render a compatible <TweaksPanel>')
     })
     if ((await fab.getAttribute('aria-pressed')) !== 'true') {
       await this.click(fab, 500, 'tweaks panel button')

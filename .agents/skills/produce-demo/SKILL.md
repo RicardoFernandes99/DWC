@@ -10,7 +10,7 @@ metadata:
 
 Use `record-demo` takes to explain a real implemented flow. Save storyboards,
 footage, drafts, final videos, posters, chapter lists and review sheets beneath
-**root `demos/`**. Deliver local paths. No uploads or external asset service.
+**root `demos/`**. Deliver the local MP4 and related local file paths directly.
 
 The project look lives in `.agents/produce-demo.ts`; the recorder shares its
 colors through `.agents/record-demo.ts`. Use DWC names and local seeded data.
@@ -20,11 +20,11 @@ below five minutes including cards/transitions; aim around 4:30 to leave margin.
 ## Setup
 
 Run `pnpm demo:produce doctor`. It checks Playwright/Chromium, FFmpeg/libx264,
-filters and branding. Run `pnpm demo:install` for the browser. The default font
-requests Geist from Google Fonts, falling back to system fonts offline; a local
-licensed font path in the brand file makes typography reproducible offline.
-Music is disabled by default. Supporting upstream scripts and the shared HTML
-renderer are included with attribution in `../NOTICE.md`.
+filters and branding. Run `pnpm demo:install` for the browser. Rendering uses
+Geist and Geist Mono from Google Fonts, with system-font fallback offline.
+A local font file can be configured when needed.
+Music is disabled by default. Vendored scripts and the shared HTML renderer
+retain their license in `../shared/LICENSE`.
 
 ## Workflow
 
@@ -42,9 +42,9 @@ renderer are included with attribution in `../NOTICE.md`.
    against [review.md](references/review-rubric.md), and fix/rebuild if needed.
 7. Return the local MP4 and useful poster/review/chapters paths. The wrapper
    fails a build over 300 seconds while retaining the local video for revision.
-   Chapter notes link to the local video and poster; no public URL is required.
+   Chapter notes link directly to the local video and poster.
 
 An optional local preview editor is `pnpm demo:produce studio demos/<name>.storyboard.json`.
 It is not required for simple videos. No synthetic narration or music is needed;
 use concise English captions and real app behavior. A demonstration cannot prove
-bid concurrency; keep actual automated checks separate from the footage.
+bid concurrency; record any focused behavior checks separately from the footage.

@@ -14,7 +14,7 @@
 
 - pnpm workspaces: `apps/web` (`@dwc/web`), `apps/api` (`@dwc/api`).
 - Node 24 LTS; pnpm is pinned in `package.json`. Commit `pnpm-lock.yaml`.
-- Local Docker MongoDB + Floci's S3 emulation; no cloud deployment required.
+- Local Docker MongoDB, Redis and Floci's S3 emulation; no cloud deployment required.
 - Laravel backoffice is planned, not yet implemented. Do not replace it with
   a React admin application or add a PHP app incidentally.
 - Prefer existing scripts and libraries. Add shared packages only when there
@@ -26,7 +26,7 @@
 - First local setup: `pnpm setup:local && pnpm infra:up`.
 - Run both apps: `pnpm dev`.
 - Validate changes: `pnpm check`; use app filters for focused work.
-- Integration checks with API/services running: `pnpm smoke`.
+- Optional integration check with API/services running: `pnpm smoke`.
 - Format intentionally: `pnpm format`.
 
 ## Implementation
@@ -36,8 +36,9 @@
   use TypeScript. Keep UI copy, documentation and identifiers in English.
 - Keep domain logic in the API. The client cannot establish permissions,
   prices, stock, auction timing, or bid validity.
-- Test changed behavior, including meaningful failure cases. Do not add tests
-  that merely restate implementation or hide failures behind mocks.
+- Verify changed behavior with proportionate manual checks and strict typecheck,
+  lint and build. Automated unit/integration/e2e tests are optional for this
+  university project; add only small tests with clear value, not a suite per feature.
 - Never commit `.env`, credentials, logs, database contents, or build output.
 - Do not delete Docker volumes, reset databases, or run destructive Git
   commands without explicit authorization.
@@ -54,6 +55,9 @@ Use `grill-me` for open decisions that need the user. Do not generate plan/state
 files, tickets or ADRs unless requested, and do not impose separate execution,
 review, verification or delivery stages. Checks and scoped cleanup are part of
 the implementation, followed by a brief account of the result and limitations.
+For `build N` or building the next ticket, use the `build` skill's requested
+ticket/plan/builder/frontier-review/stacked-PR workflow. It includes scoped
+delegation and PR publication, with merging left to the user.
 
 ## Skills
 
@@ -66,6 +70,8 @@ Shared task instructions live in `.agents/skills/<name>/SKILL.md`:
 - `design-engineering`: React composition, forms, accessibility and UI polish.
 - `animate`: purposeful motion, timing, easing and interruption.
 - `plan`: short implementation bullets in chat.
+- `build`: implement a numbered ticket with a cheaper builder, frontier review
+  and an `Age N - ...` ready-for-review PR stacked on the latest open feature PR.
 - `grill-me`: resolve meaningful open questions before implementation.
 - `scaffold-slice`: a small complete model/API/React feature.
 - `record-demo` / `produce-demo`: record and render local videos under `demos/`.
@@ -73,8 +79,8 @@ Shared task instructions live in `.agents/skills/<name>/SKILL.md`:
 Demo utilities listed in `.agents/skills/upstream.json` are vendored code kept in
 its original JavaScript/Shell form, outside authored-code lint/format checks.
 DWC adapters and configuration use TypeScript. Preserve attribution and use the
-TypeScript entry points (`pnpm demo:record`, `pnpm demo:produce`). Do not upload
-recordings; all demo artifacts stay in this project's `demos/` folder.
+TypeScript entry points (`pnpm demo:record`, `pnpm demo:produce`). Keep all demo
+artifacts in this project's `demos/` folder and deliver local file paths.
 
 Read the relevant skill when the task matches. Skills are instructions to
 follow, not proof that a command has run. Claude sees the same files through
