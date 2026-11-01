@@ -161,7 +161,7 @@ function validateApplicationInput(values: {
     recordError(
       'locality',
       'producer-locality',
-      'Enter a town or locality between 1 and 120 characters.',
+      'Enter a city or town between 1 and 120 characters.',
     );
   }
 
@@ -250,7 +250,7 @@ function ApplicationSummaryCard({
           </dd>
         </div>
         <div className="min-w-0">
-          <dt className="text-muted-foreground">Locality</dt>
+          <dt className="text-muted-foreground">City or town</dt>
           <dd className="mt-1 break-words">{application.locality}</dd>
         </div>
         <div className="min-w-0 sm:col-span-2">
@@ -439,8 +439,8 @@ function ProducerApplicationForm({
             {(field) => (
               <FormField
                 id="producer-locality"
-                label="Locality"
-                description="Town, village or municipality used for local discovery."
+                label="City or town"
+                description="City, town or municipality used for local discovery."
                 error={fieldErrors.locality}
               >
                 <Input
@@ -914,8 +914,8 @@ export function ProducerOnboarding({
                     <strong className="font-medium text-foreground">
                       Farm identity:
                     </strong>{' '}
-                    Public enterprise name and locality shown on your producer
-                    page and catalogue items.
+                    Public enterprise name and city or town shown on your
+                    producer page and catalogue items.
                   </li>
                   <li>
                     <strong className="font-medium text-foreground">

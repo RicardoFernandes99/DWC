@@ -98,7 +98,7 @@ describe('producer onboarding and status screens', () => {
     fireEvent.change(screen.getByLabelText('Farm or enterprise name'), {
       target: { value: '  Quinta do Sol  ' },
     });
-    fireEvent.change(screen.getByLabelText('Locality'), {
+    fireEvent.change(screen.getByLabelText('City or town'), {
       target: { value: 'Sintra' },
     });
     fireEvent.change(screen.getByLabelText('Collection address'), {
