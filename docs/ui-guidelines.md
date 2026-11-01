@@ -64,3 +64,5 @@ column rule belongs to product grids, not every form or page. Keep labels, visib
 focus, comfortable targets, reduced motion and explicit loading/empty/error states.
 Use a quick manual browser check plus typecheck/lint/build; no snapshot or visual
 regression test suite is required for this university project.
+
+Run `pnpm --filter @dwc/web dev` and open `/?style-guide` to view the specimen locally. The entry is excluded from production builds.

@@ -1,10 +1,10 @@
 # 045: Establish shared UI tokens, primitives and a visual style specimen
 
 - Macro: M01, M03 shared UI foundation
-- Status: Draft
+- Status: In progress
 - Depends on: None
 - PR: Not opened
-- Branch / parent: Not assigned
+- Branch / parent: `codex/age-045-ui-foundation` / `codex/age-003-auth-sessions-api` at `92f5265cb52a99ef5126332c9f2d85906fb5059c`
 - Blockers: None; build before 004 and subsequent feature screens
 
 ## Outcome
@@ -37,11 +37,11 @@ organized reusable controls and typed component APIs.
 
 ## Acceptance criteria
 
-- [ ] Specimen and existing controls visibly share the same semantic tokens.
-- [ ] Primary/secondary/destructive/disabled/focus and form-error examples are legible.
-- [ ] Primitives use consistent typed props and the documented folder structure.
-- [ ] No duplicate theme, framework, premature generic component engine or Storybook.
-- [ ] Local preview works with keyboard and all three responsive ranges.
+- [x] Specimen and existing controls visibly share the same semantic tokens.
+- [x] Primary/secondary/destructive/disabled/focus and form-error examples are legible.
+- [x] Primitives use consistent typed props and the documented folder structure.
+- [x] No duplicate theme, framework, premature generic component engine or Storybook.
+- [x] Local preview works with keyboard and all three responsive ranges.
 
 ## Checks
 
@@ -50,5 +50,20 @@ inspect the specimen and its focus/error states. No UI test suite is required.
 
 ## Delivery notes
 
-Not implemented. ID 045 was added after the domain tickets; dependencies determine
-its early place in the build order. Record actual evidence and PR metadata here.
+Implemented on 2026-11-01. The development-only `/?style-guide` entry displays
+the real semantic tokens, typography, spacing/radii, button variants, labelled
+inputs, cards and feedback. Input, Label and Card primitives use typed props.
+The production build excludes the specimen module; no dependencies were added.
+
+- Builder: `gpt-6.1-terra`, medium effort. No model adaptations or correction rounds.
+- Usage and accepted-work cost measurements: unavailable.
+- Parent: PR #9, commit `92f5265cb52a99ef5126332c9f2d85906fb5059c`.
+- Frontier verdict: APPROVED. Reviewed the ticket-only source diff and new files.
+- Builder checks passed under Node 24.22.1: web typecheck, production build and
+  React Compiler verification, root lint, scoped Prettier, and both existing web tests.
+- Orchestrator checked the specimen in Codex's in-app browser at 390px, 900px
+  and 1440px. No horizontal overflow; fields/cards adapt, keyboard focus and
+  error states are visible, and disabled button/input controls remain disabled.
+- Local verification used port 5175 after a stalled server on 5173 was stopped.
+  The normal development command still uses 5173.
+- No application limitations identified. PR publication pending.
