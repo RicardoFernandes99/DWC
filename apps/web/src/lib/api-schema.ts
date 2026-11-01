@@ -217,10 +217,10 @@ export interface components {
              */
             description: string;
             /**
-             * @description Town, village or administrative locality.
+             * @description City or municipality of the farm.
              * @example Sintra
              */
-            locality: string;
+            city: string;
             /**
              * @description Physical address for order collections and farm visits.
              * @example Rua Principal 12, 2710-001 Sintra
@@ -270,10 +270,10 @@ export interface components {
              */
             description: string;
             /**
-             * @description Town, village or administrative locality.
+             * @description City or municipality of the farm.
              * @example Sintra
              */
-            locality: string;
+            city: string;
             /**
              * @description Physical address for order collections and farm visits.
              * @example Rua Principal 12, 2710-001 Sintra

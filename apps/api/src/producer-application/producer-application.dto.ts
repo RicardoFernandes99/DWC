@@ -44,7 +44,7 @@ export class SubmitProducerApplicationDto {
     example: 'Sintra',
     minLength: 1,
     maxLength: 120,
-    description: 'Town, village or administrative locality.',
+    description: 'City or municipality of the farm.',
   })
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
@@ -52,7 +52,7 @@ export class SubmitProducerApplicationDto {
   @IsString()
   @MinLength(1)
   @MaxLength(120)
-  locality!: string;
+  city!: string;
 
   @ApiProperty({
     example: 'Rua Principal 12, 2710-001 Sintra',
@@ -114,9 +114,9 @@ export class ProducerApplicationDetailsDto {
     example: 'Sintra',
     minLength: 1,
     maxLength: 120,
-    description: 'Town, village or administrative locality.',
+    description: 'City or municipality of the farm.',
   })
-  locality!: string;
+  city!: string;
 
   @ApiProperty({
     example: 'Rua Principal 12, 2710-001 Sintra',

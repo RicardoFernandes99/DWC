@@ -44,7 +44,7 @@ function isApplicationDetails(
     isRecord(value) &&
     typeof value.farmName === 'string' &&
     typeof value.description === 'string' &&
-    typeof value.locality === 'string' &&
+    typeof value.city === 'string' &&
     typeof value.collectionAddress === 'string' &&
     typeof value.latitude === 'number' &&
     Number.isFinite(value.latitude) &&
@@ -116,7 +116,7 @@ function formatCoordinate(value: number): string {
 
 type FieldErrors = {
   farmName?: string;
-  locality?: string;
+  city?: string;
   collectionAddress?: string;
   latitude?: string;
   longitude?: string;
@@ -133,7 +133,7 @@ type ValidatedResult =
 
 function validateApplicationInput(values: {
   farmName: string;
-  locality: string;
+  city: string;
   collectionAddress: string;
   latitude: string;
   longitude: string;
@@ -156,12 +156,12 @@ function validateApplicationInput(values: {
     );
   }
 
-  const locality = values.locality.trim();
-  if (locality.length < 1 || locality.length > 120) {
+  const city = values.city.trim();
+  if (city.length < 1 || city.length > 120) {
     recordError(
-      'locality',
-      'producer-locality',
-      'Enter a city or town between 1 and 120 characters.',
+      'city',
+      'producer-city',
+      'Enter a city between 1 and 120 characters.',
     );
   }
 
@@ -212,7 +212,7 @@ function validateApplicationInput(values: {
     payload: {
       farmName,
       description,
-      locality,
+      city,
       collectionAddress,
       latitude,
       longitude,
@@ -250,8 +250,8 @@ function ApplicationSummaryCard({
           </dd>
         </div>
         <div className="min-w-0">
-          <dt className="text-muted-foreground">City or town</dt>
-          <dd className="mt-1 break-words">{application.locality}</dd>
+          <dt className="text-muted-foreground">City</dt>
+          <dd className="mt-1 break-words">{application.city}</dd>
         </div>
         <div className="min-w-0 sm:col-span-2">
           <dt className="text-muted-foreground">Collection address</dt>
@@ -325,7 +325,7 @@ function ProducerApplicationForm({
   const form = useForm({
     defaultValues: {
       farmName: initialApplication?.farmName ?? '',
-      locality: initialApplication?.locality ?? '',
+      city: initialApplication?.city ?? '',
       collectionAddress: initialApplication?.collectionAddress ?? '',
       latitude:
         initialApplication !== null ? String(initialApplication.latitude) : '',
@@ -435,32 +435,32 @@ function ProducerApplicationForm({
             )}
           </form.Field>
 
-          <form.Field name="locality">
+          <form.Field name="city">
             {(field) => (
               <FormField
-                id="producer-locality"
-                label="City or town"
-                description="City, town or municipality used for local discovery."
-                error={fieldErrors.locality}
+                id="producer-city"
+                label="City"
+                description="City or municipality used for local discovery."
+                error={fieldErrors.city}
               >
                 <Input
-                  id="producer-locality"
+                  id="producer-city"
                   type="text"
                   autoComplete="address-level2"
                   maxLength={120}
                   value={field.state.value}
-                  aria-invalid={!!fieldErrors.locality}
+                  aria-invalid={!!fieldErrors.city}
                   aria-describedby={
                     [
-                      'producer-locality-description',
-                      fieldErrors.locality ? 'producer-locality-error' : '',
+                      'producer-city-description',
+                      fieldErrors.city ? 'producer-city-error' : '',
                     ]
                       .filter(Boolean)
                       .join(' ') || undefined
                   }
                   onBlur={field.handleBlur}
                   onChange={(event) => {
-                    clearFieldError('locality');
+                    clearFieldError('city');
                     field.handleChange(event.target.value);
                   }}
                 />
@@ -914,8 +914,8 @@ export function ProducerOnboarding({
                     <strong className="font-medium text-foreground">
                       Farm identity:
                     </strong>{' '}
-                    Public enterprise name and city or town shown on your
-                    producer page and catalogue items.
+                    Public enterprise name and city shown on your producer page
+                    and catalogue items.
                   </li>
                   <li>
                     <strong className="font-medium text-foreground">

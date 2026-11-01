@@ -649,12 +649,12 @@
             "maxLength": 2000,
             "description": "Detailed overview of farming practices, products, and story."
           },
-          "locality": {
+          "city": {
             "type": "string",
             "example": "Sintra",
             "minLength": 1,
             "maxLength": 120,
-            "description": "Town, village or administrative locality."
+            "description": "City or municipality of the farm."
           },
           "collectionAddress": {
             "type": "string",
@@ -681,7 +681,7 @@
         "required": [
           "farmName",
           "description",
-          "locality",
+          "city",
           "collectionAddress",
           "latitude",
           "longitude"
@@ -749,12 +749,12 @@
             "maxLength": 2000,
             "description": "Detailed overview of farming practices, products, and story."
           },
-          "locality": {
+          "city": {
             "type": "string",
             "example": "Sintra",
             "minLength": 1,
             "maxLength": 120,
-            "description": "Town, village or administrative locality."
+            "description": "City or municipality of the farm."
           },
           "collectionAddress": {
             "type": "string",
@@ -781,7 +781,7 @@
         "required": [
           "farmName",
           "description",
-          "locality",
+          "city",
           "collectionAddress",
           "latitude",
           "longitude"

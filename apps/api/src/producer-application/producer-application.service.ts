@@ -37,7 +37,7 @@ function toResponse(user: UserDocument): ProducerApplicationResponseDto {
       ? {
           farmName: app.farmName,
           description: app.description,
-          locality: app.locality,
+          city: app.city,
           collectionAddress: app.collectionAddress,
           latitude: app.latitude,
           longitude: app.longitude,
@@ -76,7 +76,7 @@ export class ProducerApplicationService {
           producerApplication: {
             farmName: input.farmName,
             description: input.description,
-            locality: input.locality,
+            city: input.city,
             collectionAddress: input.collectionAddress,
             latitude: input.latitude,
             longitude: input.longitude,
@@ -118,7 +118,7 @@ export class ProducerApplicationService {
           producerApplication: {
             farmName: input.farmName,
             description: input.description,
-            locality: input.locality,
+            city: input.city,
             collectionAddress: input.collectionAddress,
             latitude: input.latitude,
             longitude: input.longitude,

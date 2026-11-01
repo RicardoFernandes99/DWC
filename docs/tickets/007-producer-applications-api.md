@@ -21,7 +21,7 @@ Follow [ticket checks and handoff](README.md).
 ## Scope and contract
 
 - Extend the producer data on the existing user; do not create product/order models.
-- Proposed application fields: farm name, description, locality, collection address,
+- Proposed application fields: farm name, description, city, collection address,
   latitude and longitude. Validate bounded text and geographic coordinate ranges;
   return only approved public profile fields from future public endpoints.
 - `GET /api/producer/application` returns the caller's application, current status

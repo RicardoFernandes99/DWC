@@ -22,7 +22,7 @@ export class ProducerApplication {
   description!: string;
 
   @Prop({ required: true, trim: true, minlength: 1, maxlength: 120 })
-  locality!: string;
+  city!: string;
 
   @Prop({ required: true, trim: true, minlength: 1, maxlength: 240 })
   collectionAddress!: string;

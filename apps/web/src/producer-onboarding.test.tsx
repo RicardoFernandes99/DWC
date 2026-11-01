@@ -40,7 +40,7 @@ const baseProducer: User = {
 const sampleApplication = {
   farmName: 'Quinta do Sol',
   description: 'Organic heirloom vegetables and citrus orchard in Sintra.',
-  locality: 'Sintra',
+  city: 'Sintra',
   collectionAddress: 'Rua Principal 12, 2710-001 Sintra',
   latitude: 38.8029,
   longitude: -9.3817,
@@ -98,7 +98,7 @@ describe('producer onboarding and status screens', () => {
     fireEvent.change(screen.getByLabelText('Farm or enterprise name'), {
       target: { value: '  Quinta do Sol  ' },
     });
-    fireEvent.change(screen.getByLabelText('City or town'), {
+    fireEvent.change(screen.getByLabelText('City'), {
       target: { value: 'Sintra' },
     });
     fireEvent.change(screen.getByLabelText('Collection address'), {
