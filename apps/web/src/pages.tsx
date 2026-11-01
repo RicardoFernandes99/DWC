@@ -97,7 +97,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
       }
       const passwordBytes = new TextEncoder().encode(value.password).length;
       if (mode === 'register' && (passwordBytes < 8 || passwordBytes > 72)) {
-        setPasswordError('Password must be between 8 and 72 UTF-8 bytes.');
+        setPasswordError('Password must be between 8 and 72 characters.');
         document.getElementById('password')?.focus();
         return;
       }
@@ -251,11 +251,6 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                     id="password"
                     label="Password"
                     error={passwordError}
-                    description={
-                      mode === 'register'
-                        ? 'Use 8 to 72 UTF-8 bytes.'
-                        : undefined
-                    }
                   >
                     <Input
                       id="password"
