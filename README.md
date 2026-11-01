@@ -24,7 +24,7 @@ MongoDB on 27017, Redis on 6379, and Floci's S3 endpoint on 4566.
 Vite proxies `/api` and `/api-docs` to NestJS. All services use HTTP locally.
 
 ```sh
-pnpm check          # formatting, lint, typecheck, tests, production builds
+pnpm check          # formatting, contract drift, lint, typecheck, tests, production builds
 pnpm smoke          # running API + MongoDB + Redis + storage round trip
 pnpm infra:down     # stop services; retain named data volumes
 pnpm --filter @dwc/web dev
@@ -126,3 +126,8 @@ Secure flag; HTTPS requires `AUTH_COOKIE_SECURE=true`. `WEB_ORIGIN` must be an e
 origin with no path or trailing slash. JWTs use HS256 and validate issuer,
 audience, signature and expiry. Redis stores session IDs, user IDs and SHA-256
 refresh hashes with TTLs, never raw refresh credentials.
+
+The Web auth client uses types generated from the Nest controllers and DTOs. Run
+`pnpm contract:generate` after changing those contracts; `pnpm contract:check`
+checks for drift without requiring the local services. Add newly consumed controllers
+to the contract-only module in `apps/api/src/export-web-contract.ts`.

@@ -1,0 +1,343 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Access JWT and HttpOnly dwc_refresh cookie. Session expires absolutely after 7 days.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or oversized input."
+          },
+          "401": {
+            "description": "Invalid email or password."
+          },
+          "429": {
+            "description": "At most 10 login attempts per IP per minute. Retry after the indicated delay."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "description": "Must equal configured WEB_ORIGIN, including non-browser clients.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rotates the refresh cookie once without extending the original session expiry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired, invalid or reused cookie."
+          },
+          "403": {
+            "description": "Missing or untrusted Origin."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "refresh": []
+          }
+        ],
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "description": "Must equal configured WEB_ORIGIN.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revokes only this cookie session and clears the cookie. Also succeeds for absent or invalid cookies. Do not refresh/retry automatically."
+          },
+          "403": {
+            "description": "Missing or untrusted Origin."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "refresh": []
+          }
+        ],
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired or revoked access JWT, or missing user."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "UsersController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Account created. Registration does not sign the user in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input, unsupported role, or unknown/privileged field."
+          },
+          "409": {
+            "description": "An account already uses this email."
+          }
+        },
+        "summary": "Register a buyer or producer account",
+        "tags": [
+          "auth"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "From Farm to Table API",
+    "description": "",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      },
+      "refresh": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "dwc_refresh"
+      }
+    },
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "example": "ana@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 72
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "671f0f98ac53ba58e26c4789"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ana Silva"
+          },
+          "email": {
+            "type": "string",
+            "example": "ana@example.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "buyer",
+              "producer"
+            ],
+            "example": "buyer"
+          },
+          "producerStatus": {
+            "type": "string",
+            "enum": [
+              null,
+              "pending",
+              "approved",
+              "rejected",
+              "suspended"
+            ],
+            "nullable": true,
+            "example": null
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "producerStatus"
+        ]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 900,
+            "enum": [
+              900
+            ]
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponseDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "user"
+        ]
+      },
+      "RegisterUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Ana Silva",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "example": "ana@example.com",
+            "maxLength": 254
+          },
+          "password": {
+            "type": "string",
+            "example": "long-enough-secret",
+            "description": "Must be between 8 and 72 UTF-8 bytes; whitespace is preserved."
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "buyer",
+              "producer"
+            ],
+            "example": "buyer"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "role"
+        ]
+      }
+    }
+  }
+}

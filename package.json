@@ -17,12 +17,14 @@
     "test": "pnpm -r test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "check": "pnpm format:check && pnpm contract:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "smoke": "pnpm --filter @dwc/api smoke",
     "demo:install": "node .agents/install-demo-browser.ts",
     "demo:record": "node .agents/skills/record-demo/scripts/record-demo.ts",
     "demo:produce": "node .agents/skills/produce-demo/scripts/produce-demo.ts",
-    "demo:test": "node --test .agents/skills/produce-demo/scripts/produce-demo.test.mjs .agents/skills/shared/html/index.test.mjs"
+    "demo:test": "node --test .agents/skills/produce-demo/scripts/produce-demo.test.mjs .agents/skills/shared/html/index.test.mjs",
+    "contract:generate": "pnpm --filter @dwc/api build && node apps/api/dist/export-web-contract.js && pnpm --filter @dwc/web exec openapi-typescript openapi.json -o src/lib/api-schema.ts",
+    "contract:check": "pnpm --filter @dwc/api build && node apps/api/dist/export-web-contract.js --check && pnpm --filter @dwc/web exec openapi-typescript openapi.json -o src/lib/api-schema.ts --check"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
