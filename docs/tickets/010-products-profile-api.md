@@ -1,9 +1,9 @@
 # 010: Manage producer profiles, products and stock
 
 - Macro: M03
-- Status: In progress
+- Status: In review
 - Depends on: 009
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/20
 - Branch / parent: `codex/age-010-products-profile-api` / `codex/age-009-producer-admin-decisions-api` at `92f778065d9ba9928bdd248ff0ebceeaff0752de`
 - Blockers: None (product units, integer quantity precision, categories, production methods and seasons agreed in `docs/product-decisions.md`)
 
@@ -56,14 +56,14 @@ Once product-value choices are agreed, create/edit/archive a product and try a f
 
 ## Delivery notes
 
-- Implemented on `codex/age-010-products-profile-api`, stacked on PR #19 (`codex/age-009-producer-admin-decisions-api` at `92f778065d9ba9928bdd248ff0ebceeaff0752de`).
+- Implemented on `codex/age-010-products-profile-api`, stacked on PR #19 (`codex/age-009-producer-admin-decisions-api` at `92f778065d9ba9928bdd248ff0ebceeaff0752de`). PR #20 is ready for review in stack #18.
 - Agreed product decisions recorded in `docs/product-decisions.md`:
   - Discrete integer units (`unit`, `bunch`, `box`, `jar`, `bottle`, `bag`, `kg`, `g_500`, `g_250`, `l`, `ml_500`) with non-negative integer quantities (`step = 1`).
   - Categories: `vegetables`, `fruits`, `dairy`, `eggs`, `meat`, `bakery`, `pantry`, `beverages`, `other`.
   - Production methods: `organic`, `sustainable`, `conventional`, `artisanal`, `biodynamic`.
   - Seasons: `spring`, `summer`, `autumn`, `winter`, `year_round`.
 - Orchestrator/reviewer: Gemini 4 Argon (Low). Builder subagent: `self` (`Model: 'inherit'` — Gemini 4 Argon Low, `b6d1874c-07c6-4c56-bd7f-802da96f8962`, transcript usage: 165,074 input tokens, 2,929,046 cached tokens, 26,238 output/thinking tokens), with zero subagent correction rounds.
-- Frontier verdict: APPROVED against parent `92f778065d9ba9928bdd248ff0ebceeaff0752de`.
+- Frontier verdict: APPROVED against parent `92f778065d9ba9928bdd248ff0ebceeaff0752de` on reviewed implementation commit `8313a7dbedf8f26c2de6c7b869f3e366c900d0f6`.
 - Static and contract checks passed with Node 24.22.2 and pnpm 11.25.0:
   - `pnpm contract:generate` and `pnpm contract:check`
   - `pnpm typecheck` (`tsconfig.tools.json`, `@dwc/api`, `@dwc/web`)
