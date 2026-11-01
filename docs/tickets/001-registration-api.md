@@ -1,9 +1,9 @@
 # 001: Register buyer and producer accounts
 
 - Macro: M01
-- Status: In progress
+- Status: In review
 - Depends on: None
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/5
 - Branch / parent: `codex/age-001-registration-api` / `main` at `3b122e7f21ce82d17d3af7330c830591298a9f4d`
 - Blockers: None
 
@@ -62,7 +62,7 @@ Register a buyer and producer, retry the same normalized email, and confirm priv
   Token/credit usage unavailable.
 - Frontier verdict: APPROVED. Reviewed the complete ticket diff against parent
   `3b122e7f21ce82d17d3af7330c830591298a9f4d`, including new user feature files.
-  Implementation review revision is the feature commit preceding PR metadata.
+  Reviewed/check revision: `bf525cdcb3ab129151bfebf13ecd6917cbb6e9ca`.
 - Static checks passed: API `typecheck`, `build`, root `lint`, scoped Prettier.
   Existing API tests passed, 4/4. Runtime used Node 24.22.1 and pnpm 11.25.0.
 - Real MongoDB/HTTP checks passed: buyer and pending producer persistence,
