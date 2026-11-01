@@ -44,6 +44,11 @@ const uiDesign = createRoute({
   path: '/ui-design',
   component: UIDesignPage,
 });
+const producerSubroute = createRoute({
+  getParentRoute: () => root,
+  path: '/producer/$',
+  component: Account,
+});
 export const router = createRouter({
   routeTree: root.addChildren([
     index,
@@ -52,6 +57,7 @@ export const router = createRouter({
     registerRoute,
     account,
     producer,
+    producerSubroute,
   ]),
 });
 declare module '@tanstack/react-router' {

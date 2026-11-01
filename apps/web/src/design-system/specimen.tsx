@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const colors = [
   { name: 'Background', className: 'bg-background text-foreground' },
@@ -237,6 +238,14 @@ export function Specimen() {
                       disabled
                       value="Unavailable"
                       readOnly
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="example-textarea">Farm description</Label>
+                    <Textarea
+                      id="example-textarea"
+                      rows={3}
+                      placeholder="Describe farming practices, seasonal produce, and collection arrangements."
                     />
                   </div>
                 </div>
