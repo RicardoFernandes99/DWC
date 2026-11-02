@@ -1,9 +1,9 @@
 # 012: Build producer product and profile management screens
 
 - Macro: M03
-- Status: In progress
+- Status: In review
 - Depends on: 008, 010, 011
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/22
 - Branch / parent: `codex/age-012-producer-products-web` / `codex/age-011-product-images-api` at `2debf8a199b24423bbf131bb6073f434e3f6756d`
 - Blockers: None. Local services and required browser checks passed.
 
@@ -54,5 +54,6 @@ Create/edit/archive a product, upload an image and check a server refusal. Brief
 - Added approved-producer product listing, pagination, create/edit/archive, profile editing, image upload and expiring-preview refresh, integer quantity and exact-cent validation, explicit stale-revision reload, and status-gated pending/rejected/suspended views. Product and profile forms retain entered text after request failures. Suspended accounts do not call the approved-only product/profile endpoints.
 - Static checks passed with Node 24.22.2 and cached pnpm 11.25.0: `pnpm --filter @dwc/web typecheck`, `pnpm --filter @dwc/web build` (including React Compiler verification), `pnpm lint`, `pnpm --filter @dwc/api build`, `node apps/api/dist/export-web-contract.js --check`, `pnpm --filter @dwc/web exec openapi-typescript openapi.json -o src/lib/api-schema.ts --check`, and scoped Prettier check for the five changed files.
 - Frontier verdict: APPROVED after reviewing the implementation and real browser evidence on 2026-11-02. Docker recovered after preserving and recreating only its transient socket directories; `pnpm infra:up` passed and the API readiness endpoint returned 200. No volumes, databases or images were reset.
+- Reviewed implementation revision: `f088b5d`. Published ready for review through `gh stack submit --auto --open` in native stack #18, targeting PR #21. The final committed revision passed the real-flow browser check again; this metadata-only update does not change application behavior. The web build retains a 511.06 kB main-chunk advisory.
 - Real Chrome/API checks passed with isolated test accounts: create a EUR 4.10 product, upload a real image, trigger an image-upload 409 after creation and recover without duplicating the product, edit/archive, reject stale stock with 409, reload current stock while retaining descriptive text, and save the profile twice. Pending/rejected/suspended direct creation URLs show status messaging without editors; authenticated product requests return 403. Keyboard focus and long text were checked.
 - Product list/editor layouts passed at 375, 900 and 1440 px with screenshots inspected and no horizontal overflow. Home, login, registration, `/ui-design` and the specimen passed at those widths with Forest tokens and Fraunces headings verified. Local screenshots are under `demos/ticket-012-review/`; the temporary verification scripts and generated media are excluded from the commit. These focused checks do not prove every concurrency interleaving.
