@@ -50,6 +50,7 @@ Add mixed-producer lines as a guest, refresh, log in as a buyer and adjust/remov
 ## Delivery notes
 
 Implemented multi-producer guest cart persisted in localStorage across refresh and buyer login:
+
 - Safe, resilient parsing for untrusted `localStorage` data (`dwc_cart_v1`) rejecting invalid IDs, negative or fractional numbers, and bounding quantities to 999. Totals and prices are derived strictly dynamically from live `/api/products/:id` data.
 - Live line status detection (`available`, `sold_out`, `insufficient_stock`, `unavailable`) with clear guidance and quick adjustment/removal actions.
 - Producer grouping with per-producer and order-wide subtotals.
@@ -57,6 +58,7 @@ Implemented multi-producer guest cart persisted in localStorage across refresh a
 - Quick add on product cards and full quantity selector on product detail page with dynamic header navigation counter.
 
 ### Frontier Review
+
 - Verdict: APPROVED
 - Checks verified:
   - `pnpm --filter @dwc/web test src/features/cart/`: 11 unit & integration tests passing.
