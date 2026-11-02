@@ -1,37 +1,45 @@
 import { Link } from '@tanstack/react-router';
 import { Minus, Plus, Sprout, Trash2 } from 'lucide-react';
+import type { components } from '@/lib/api-schema';
 import { Button } from '@/components/ui/button';
 import { formatMoney, formatUnit } from '@/lib/format';
-import type { HydratedCartLine } from '../use-hydrated-cart';
+import type { StoredCartItem } from '../cart-storage';
+
+type CatalogueProduct = components['schemas']['CatalogueProductDto'];
 
 interface CartLineItemProps {
-  line: HydratedCartLine;
+  item: StoredCartItem;
+  liveProduct?: CatalogueProduct;
+  isError?: boolean;
+  isPending?: boolean;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemove: (productId: string) => void;
 }
 
 export function CartLineItem({
-  line,
+  item,
+  liveProduct,
+  isError,
+  isPending,
   onUpdateQuantity,
   onRemove,
 }: CartLineItemProps) {
-  const {
-    item,
-    product,
-    status,
-    statusMessage,
-    unitPriceCents,
-    lineTotalCents,
-    availableStock,
-  } = line;
+  const name = liveProduct?.name ?? item.name ?? 'Produce item';
+  const unit = liveProduct?.unit ?? item.unit ?? 'unit';
+  const imageUrl = liveProduct?.imageUrl ?? item.imageUrl;
+  const unitPriceCents = liveProduct?.priceCents ?? item.priceCents ?? 0;
+  const lineTotalCents = unitPriceCents * item.quantity;
+  const availableStock = liveProduct?.availableStock ?? 0;
 
-  const name = product?.name ?? item.name ?? 'Produce item';
-  const unit = product?.unit ?? item.unit ?? 'unit';
-  const imageUrl = product?.imageUrl ?? item.imageUrl;
-
-  const isUnavailable = status === 'unavailable';
-  const isSoldOut = status === 'sold_out';
-  const isInsufficient = status === 'insufficient_stock';
+  const isUnavailable = isError || (!isPending && !liveProduct);
+  const isSoldOut =
+    !isUnavailable && !isPending && liveProduct && availableStock <= 0;
+  const isInsufficient =
+    !isUnavailable &&
+    !isPending &&
+    liveProduct &&
+    item.quantity > availableStock &&
+    availableStock > 0;
 
   return (
     <div
@@ -77,7 +85,7 @@ export function CartLineItem({
               className="mt-1 text-xs font-medium text-destructive"
               role="alert"
             >
-              {statusMessage}
+              Product no longer available or producer is inactive.
             </p>
           )}
           {isSoldOut && (

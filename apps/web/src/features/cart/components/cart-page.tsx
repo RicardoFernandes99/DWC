@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import {
   AlertCircle,
@@ -11,22 +11,24 @@ import { Button } from '@/components/ui/button';
 import { formatMoney } from '@/lib/format';
 import { currentUser, publicRequest } from '@/lib/session';
 import type { components } from '@/lib/api-schema';
-import { useHydratedCart } from '../use-hydrated-cart';
+import { useCart } from '../use-cart';
+import type { StoredCartItem } from '../cart-storage';
 import { ProducerCartSection } from './producer-cart-section';
 
+type CatalogueProduct = components['schemas']['CatalogueProductDto'];
 type ProductList = components['schemas']['CatalogueListDto'];
 
+interface ProducerGroup {
+  producerId: string;
+  producerFarmName: string;
+  producerCity: string;
+  items: StoredCartItem[];
+  subtotalCents: number;
+}
+
 export function CartPage() {
-  const {
-    isEmpty,
-    producerGroups,
-    subtotalCents,
-    totalItemCount,
-    hasAnyIssues,
-    updateQuantity,
-    removeItem,
-    clearCart,
-  } = useHydratedCart();
+  const { items, updateQuantity, removeItem, clearCart, totalItemCount } =
+    useCart();
 
   const userQuery = useQuery({
     queryKey: ['session'],
@@ -39,6 +41,80 @@ export function CartPage() {
     queryFn: () => publicRequest<ProductList>('products?limit=4&sort=newest'),
     staleTime: 60_000,
   });
+
+  const productQueries = useQueries({
+    queries: items.map((item) => ({
+      queryKey: ['cart', 'product', item.productId],
+      queryFn: () =>
+        publicRequest<CatalogueProduct>(`products/${item.productId}`),
+      staleTime: 30_000,
+      retry: false,
+    })),
+  });
+
+  const productMap = new Map<string, CatalogueProduct>();
+  const errorMap = new Map<string, boolean>();
+  const pendingMap = new Map<string, boolean>();
+
+  for (let i = 0; i < items.length; i++) {
+    const q = productQueries[i];
+    if (q?.data) productMap.set(items[i].productId, q.data);
+    if (q?.isError) errorMap.set(items[i].productId, true);
+    if (q?.isPending && !q.data) pendingMap.set(items[i].productId, true);
+  }
+
+  const groupMap = new Map<string, ProducerGroup>();
+  let subtotalCents = 0;
+  let hasStockIssues = false;
+
+  for (const item of items) {
+    const live = productMap.get(item.productId);
+    const isError = errorMap.get(item.productId);
+    const isPending = pendingMap.get(item.productId);
+
+    const producerId =
+      live?.producerId ?? item.producerId ?? 'unknown-producer';
+    const producerFarmName =
+      live?.producerFarmName ?? item.producerFarmName ?? 'Local Farm';
+    const producerCity = live?.producerCity ?? item.producerCity ?? '';
+
+    const unitPrice = live?.priceCents ?? item.priceCents ?? 0;
+    const lineTotal = unitPrice * item.quantity;
+
+    const isUnavailable = isError || (!isPending && !live);
+    const isSoldOut =
+      !isUnavailable && !isPending && live && live.availableStock <= 0;
+    const isInsufficient =
+      !isUnavailable &&
+      !isPending &&
+      live &&
+      item.quantity > live.availableStock &&
+      live.availableStock > 0;
+
+    if (isUnavailable || isSoldOut || isInsufficient) {
+      hasStockIssues = true;
+    }
+
+    let group = groupMap.get(producerId);
+    if (!group) {
+      group = {
+        producerId,
+        producerFarmName,
+        producerCity,
+        items: [],
+        subtotalCents: 0,
+      };
+      groupMap.set(producerId, group);
+    }
+    group.items.push(item);
+    if (!isUnavailable && !isSoldOut) {
+      group.subtotalCents += lineTotal;
+      subtotalCents += lineTotal;
+    }
+  }
+
+  const producerGroups = Array.from(groupMap.values());
+  const isEmpty = items.length === 0;
 
   const user = userQuery.data;
   const isProducer = user?.role === 'producer';
@@ -133,7 +209,14 @@ export function CartPage() {
             {producerGroups.map((group) => (
               <ProducerCartSection
                 key={group.producerId}
-                group={group}
+                producerId={group.producerId}
+                producerFarmName={group.producerFarmName}
+                producerCity={group.producerCity}
+                items={group.items}
+                productMap={productMap}
+                errorMap={errorMap}
+                pendingMap={pendingMap}
+                subtotalCents={group.subtotalCents}
                 onUpdateQuantity={updateQuantity}
                 onRemove={removeItem}
               />
@@ -211,7 +294,7 @@ export function CartPage() {
                   </>
                 ) : null}
 
-                {hasAnyIssues && (
+                {hasStockIssues && (
                   <p className="text-center text-xs text-destructive font-medium">
                     Adjust or remove unavailable items before placing your
                     order.
