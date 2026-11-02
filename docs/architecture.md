@@ -65,6 +65,20 @@ command also exercises database persistence, a Redis value round-trip and TTL,
 and object upload/download/delete. These
 checks do not imply catalogue, order or auction behavior is implemented.
 
+## Realtime transport
+
+Socket.IO runs on the API's existing HTTP server and configured `WEB_ORIGIN`.
+The gateway authenticates the access JWT through `AuthService`, so each
+connection checks JWT claims, the Redis session and current MongoDB user. The
+server derives personal rooms as `user:<userId>` and accepts no client room-join
+commands. Before each private event, it repeats authentication and disconnects
+the socket on revocation, expiry or dependency failure. A small publisher
+exposes only `notification.created` with the persisted notification ID; there
+is no auction event yet. See the [Socket.IO event contract](socket-events.md)
+for handshake errors, event shape and delivery limitations. The gateway keeps
+an in-memory connection registry, cleans it on disconnect and shutdown, and
+does not use a multi-instance adapter; private delivery is process-local.
+
 ## Tooling choices
 
 pnpm workspaces provide filtering and recursive commands without an extra task

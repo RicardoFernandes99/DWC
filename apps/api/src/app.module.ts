@@ -15,6 +15,7 @@ import { ProductsModule } from './products/products.module.js';
 import { CatalogueModule } from './catalogue/catalogue.module.js';
 import { CheckoutModule } from './checkout/checkout.module.js';
 import { OrdersModule } from './orders/orders.module.js';
+import { RealtimeModule } from './realtime/realtime.module.js';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { OrdersModule } from './orders/orders.module.js';
     CatalogueModule,
     CheckoutModule,
     OrdersModule,
+    RealtimeModule,
     UsersModule,
     RedisModule,
     StorageModule,
