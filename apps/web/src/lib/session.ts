@@ -43,16 +43,16 @@ function auth(value: unknown): value is Auth {
     user(value.user)
   );
 }
-async function request(
+async function request<T = unknown>(
   path: string,
   options: RequestInit = {},
   base = '/api/auth',
-): Promise<unknown> {
+): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${base}/${path}`, {
       ...options,
-      credentials: 'include',
+      credentials: options.credentials ?? 'include',
       signal: options.signal ?? AbortSignal.timeout(10000),
       headers:
         options.body instanceof FormData
@@ -69,12 +69,15 @@ async function request(
         ? 'Service temporarily unavailable. Please try again.'
         : 'The request could not be completed.',
     );
-  if (response.status === 204) return undefined;
+  if (response.status === 204) return undefined as T;
   try {
-    return (await response.json()) as unknown;
+    return (await response.json()) as T;
   } catch {
     throw new ApiError(0, 'The server returned an invalid response.');
   }
+}
+export function publicRequest<T = unknown>(path: string): Promise<T> {
+  return request<T>(path, { credentials: 'omit' }, '/api');
 }
 let token: string | undefined;
 let signedOut = false;
@@ -163,15 +166,15 @@ export async function me(): Promise<User> {
   return result;
 }
 /** Makes one authenticated API request, refreshing and retrying at most once. */
-export async function authenticatedRequest(
+export async function authenticatedRequest<T = unknown>(
   path: string,
   options: RequestInit = {},
-): Promise<unknown> {
+): Promise<T> {
   const current = generation;
   const used = token;
   if (!used) throw new ApiError(401, 'Please sign in.');
   const send = (accessToken: string) =>
-    request(
+    request<T>(
       path,
       {
         ...options,
@@ -179,7 +182,7 @@ export async function authenticatedRequest(
       },
       '/api',
     );
-  const ensureCurrent = (result: unknown) => {
+  const ensureCurrent = (result: T) => {
     if (generation !== current) throw new ApiError(401, 'Session changed.');
     return result;
   };

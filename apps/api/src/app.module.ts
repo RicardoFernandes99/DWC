@@ -13,6 +13,7 @@ import { PaymentMethodsModule } from './payment-methods/payment-methods.module.j
 import { ProducerApplicationModule } from './producer-application/producer-application.module.js';
 import { ProductsModule } from './products/products.module.js';
 import { CatalogueModule } from './catalogue/catalogue.module.js';
+import { CheckoutModule } from './checkout/checkout.module.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CatalogueModule } from './catalogue/catalogue.module.js';
     ProducerApplicationModule,
     ProductsModule,
     CatalogueModule,
+    CheckoutModule,
     UsersModule,
     RedisModule,
     StorageModule,

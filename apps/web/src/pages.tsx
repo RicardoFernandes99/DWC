@@ -24,9 +24,11 @@ import {
   register,
   type User,
 } from '@/lib/session';
+import { useCart } from '@/features/cart/use-cart';
 
 const sessionKey = ['session'] as const;
 export function Shell() {
+  const { totalItemCount } = useCart();
   const query = useQuery({
     queryKey: sessionKey,
     queryFn: currentUser,
@@ -48,6 +50,23 @@ export function Shell() {
           <div className="site-nav-links">
             <Link to="/" className="home-link">
               Home
+            </Link>
+            <Link
+              to="/cart"
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              aria-label={
+                totalItemCount > 0
+                  ? `Shopping cart with ${totalItemCount} items`
+                  : 'Shopping cart, empty'
+              }
+            >
+              <ShoppingBasket aria-hidden="true" className="size-4" />
+              <span>Cart</span>
+              {totalItemCount > 0 && (
+                <span className="inline-flex items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground min-w-5 h-5 tabular-nums">
+                  {totalItemCount}
+                </span>
+              )}
             </Link>
             {query.data ? (
               <Link

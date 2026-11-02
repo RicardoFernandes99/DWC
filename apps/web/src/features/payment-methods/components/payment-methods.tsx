@@ -13,39 +13,15 @@ type CreatePaymentMethod = components['schemas']['CreatePaymentMethodDto'];
 const paymentMethodsKey = (buyerId: string) =>
   ['payment-methods', buyerId] as const;
 
-function isMethod(value: unknown): value is PaymentMethod {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'id' in value &&
-    typeof value.id === 'string' &&
-    'last4' in value &&
-    typeof value.last4 === 'string' &&
-    /^\d{4}$/.test(value.last4) &&
-    'expiryMonth' in value &&
-    typeof value.expiryMonth === 'number' &&
-    'expiryYear' in value &&
-    typeof value.expiryYear === 'number' &&
-    'expired' in value &&
-    typeof value.expired === 'boolean'
-  );
+function listMethods(): Promise<PaymentMethod[]> {
+  return authenticatedRequest<PaymentMethod[]>('payment-methods');
 }
 
-async function listMethods(): Promise<PaymentMethod[]> {
-  const result: unknown = await authenticatedRequest('payment-methods');
-  if (!Array.isArray(result) || !result.every(isMethod))
-    throw new ApiError(0, 'The server returned an invalid response.');
-  return result;
-}
-
-async function saveMethod(input: CreatePaymentMethod): Promise<PaymentMethod> {
-  const result: unknown = await authenticatedRequest('payment-methods', {
+function saveMethod(input: CreatePaymentMethod): Promise<PaymentMethod> {
+  return authenticatedRequest<PaymentMethod>('payment-methods', {
     method: 'POST',
     body: JSON.stringify(input),
   });
-  if (!isMethod(result))
-    throw new ApiError(0, 'The server returned an invalid response.');
-  return result;
 }
 
 function currentUtcMonth() {
