@@ -68,6 +68,21 @@ export function Shell() {
                 </span>
               )}
             </Link>
+            {query.data && (
+              <Link
+                to={
+                  query.data.role === 'producer'
+                    ? '/producer/orders'
+                    : '/orders'
+                }
+                search={{ page: 1 }}
+                activeProps={{
+                  className: 'text-primary underline underline-offset-4',
+                }}
+              >
+                Orders
+              </Link>
+            )}
             {query.data ? (
               <Link
                 to={query.data.role === 'producer' ? '/producer' : '/account'}

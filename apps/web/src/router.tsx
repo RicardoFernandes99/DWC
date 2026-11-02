@@ -8,6 +8,7 @@ import { Shell, AuthPage, Account } from './pages';
 import { UIDesignPage } from './pages/ui-design';
 import { CartPage } from './features/cart/components/cart-page';
 import { CheckoutPage } from './features/checkout/components/checkout-page';
+import { OrderTrackingPage } from './features/orders/components/order-tracking-page';
 import {
   CataloguePage,
   ProductDetailRoute,
@@ -21,6 +22,11 @@ import {
 } from './lib/format';
 
 const sorts = ['newest', 'price_asc', 'price_desc', 'name_asc'] as const;
+function validateOrdersSearch(search: Record<string, unknown>) {
+  return {
+    page: numberValue(search.page, 1, 10_000) ?? 1,
+  };
+}
 function enumValue<T extends readonly string[]>(
   value: unknown,
   values: T,
@@ -85,6 +91,30 @@ const checkoutRoute = createRoute({
   path: '/checkout',
   component: CheckoutPage,
 });
+const buyerOrdersRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/orders',
+  validateSearch: validateOrdersSearch,
+  component: () => <OrderTrackingPage audience="buyer" />,
+});
+const buyerOrderDetailRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/orders/$orderId',
+  validateSearch: validateOrdersSearch,
+  component: () => <OrderTrackingPage audience="buyer" />,
+});
+const producerOrdersRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/producer/orders',
+  validateSearch: validateOrdersSearch,
+  component: () => <OrderTrackingPage audience="producer" />,
+});
+const producerOrderDetailRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/producer/orders/$orderId',
+  validateSearch: validateOrdersSearch,
+  component: () => <OrderTrackingPage audience="producer" />,
+});
 const publicProducerRoute = createRoute({
   getParentRoute: () => root,
   path: '/farm/$producerId',
@@ -143,6 +173,10 @@ export const router = createRouter({
     productRoute,
     cartRoute,
     checkoutRoute,
+    buyerOrdersRoute,
+    buyerOrderDetailRoute,
+    producerOrdersRoute,
+    producerOrderDetailRoute,
     publicProducerRoute,
     uiDesign,
     loginRoute,
