@@ -53,8 +53,11 @@ async function request(
     response = await fetch(`${base}/${path}`, {
       ...options,
       credentials: 'include',
-      signal: AbortSignal.timeout(10000),
-      headers: { 'Content-Type': 'application/json', ...options.headers },
+      signal: options.signal ?? AbortSignal.timeout(10000),
+      headers:
+        options.body instanceof FormData
+          ? options.headers
+          : { 'Content-Type': 'application/json', ...options.headers },
     });
   } catch {
     throw new ApiError(0, 'Could not connect. Please try again.');

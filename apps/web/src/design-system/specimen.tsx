@@ -14,6 +14,10 @@ const colors = [
   { name: 'Muted', className: 'bg-muted text-muted-foreground' },
   { name: 'Accent', className: 'bg-accent text-accent-foreground' },
   {
+    name: 'Highlight / Orchard orange',
+    className: 'bg-highlight text-highlight-foreground',
+  },
+  {
     name: 'Destructive',
     className: 'bg-destructive text-destructive-foreground',
   },

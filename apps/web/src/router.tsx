@@ -7,11 +7,17 @@ import {
 import { UIDesignPage } from '@/pages/ui-design';
 import { App } from '@/app';
 import { Shell, AuthPage, Account } from './pages';
+import { UIDesignPage } from './pages/ui-design';
 const root = createRootRoute({ component: Shell });
 const index = createRoute({
   getParentRoute: () => root,
   path: '/',
   component: App,
+});
+const uiDesign = createRoute({
+  getParentRoute: () => root,
+  path: '/ui-design',
+  component: UIDesignPage,
 });
 const loginRoute = createRoute({
   getParentRoute: () => root,
@@ -49,6 +55,16 @@ const producerSubroute = createRoute({
   path: '/producer/$',
   component: Account,
 });
+const producerProductRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/producer/products/$productId/edit',
+  component: Account,
+});
+const producerNewProductRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/producer/products/new',
+  component: Account,
+});
 export const router = createRouter({
   routeTree: root.addChildren([
     index,
@@ -58,6 +74,8 @@ export const router = createRouter({
     account,
     producer,
     producerSubroute,
+    producerProductRoute,
+    producerNewProductRoute,
   ]),
 });
 declare module '@tanstack/react-router' {

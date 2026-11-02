@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/form-field';
 import { PaymentMethods } from '@/features/payment-methods/components/payment-methods';
 import { ProducerOnboarding } from '@/features/producer-onboarding/components/producer-onboarding';
+import { ProducerProducts } from '@/features/producer-products/components/producer-products';
 import {
   ApiError,
   login,
@@ -468,11 +469,14 @@ export function Account() {
         </div>
       )}
       {current.role === 'producer' && (
-        <ProducerOnboarding
-          key={current.id}
-          user={current}
-          requestedSellingPath={requestedSellingPath}
-        />
+        <>
+          <ProducerOnboarding
+            key={current.id}
+            user={current}
+            requestedSellingPath={requestedSellingPath}
+          />
+          <ProducerProducts status={current.producerStatus} />
+        </>
       )}
       {current.role === 'buyer' && (
         <PaymentMethods key={current.id} buyerId={current.id} />
