@@ -4,7 +4,6 @@ import {
   createRoute,
   createRouter,
 } from '@tanstack/react-router';
-import { UIDesignPage } from '@/pages/ui-design';
 import { App } from '@/app';
 import { Shell, AuthPage, Account } from './pages';
 import { UIDesignPage } from './pages/ui-design';
@@ -44,11 +43,6 @@ const producer = createRoute({
   getParentRoute: () => root,
   path: '/producer',
   component: Account,
-});
-const uiDesign = createRoute({
-  getParentRoute: () => root,
-  path: '/ui-design',
-  component: UIDesignPage,
 });
 const producerSubroute = createRoute({
   getParentRoute: () => root,

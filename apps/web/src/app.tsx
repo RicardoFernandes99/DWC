@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ArrowUpRight, RefreshCw } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Link } from '@tanstack/react-router';
 
@@ -39,11 +38,6 @@ export function App() {
           Local produce, orders, and live auctions. We are getting the
           marketplace ready.
         </p>
-        <Button asChild variant="outline" className="mt-6">
-          <Link to="/ui-design">
-            UI Design <ArrowUpRight />
-          </Link>
-        </Button>
         <section
           aria-labelledby="connection-title"
           className="mt-12 rounded-xl border border-border bg-card p-6 md:max-w-xl"
