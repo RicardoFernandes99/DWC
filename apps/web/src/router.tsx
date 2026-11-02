@@ -82,7 +82,14 @@ const root = createRootRoute({
   errorComponent: ({ reset }) => (
     <main role="alert" className="p-8">
       <p>Could not restore your session. Please try again.</p>
-      <button onClick={reset}>Try again</button>
+      <button
+        onClick={() => {
+          void router.invalidate();
+          reset();
+        }}
+      >
+        Try again
+      </button>
     </main>
   ),
   beforeLoad: async ({ location }) => {
