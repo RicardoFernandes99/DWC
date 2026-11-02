@@ -25,27 +25,20 @@ import {
   OrderStatusHistoryEntry,
 } from './order.schema.js';
 
-const DELIVERY_TRANSITIONS: Readonly<Record<OrderStatus, OrderStatus | null>> =
-  {
+const NEXT_ORDER_STATUS: Record<
+  FulfilmentMethod,
+  Partial<Record<OrderStatus, OrderStatus>>
+> = {
+  [FulfilmentMethod.Delivery]: {
     [OrderStatus.Pending]: OrderStatus.Confirmed,
     [OrderStatus.Confirmed]: OrderStatus.Shipped,
     [OrderStatus.Shipped]: OrderStatus.Delivered,
-    [OrderStatus.Delivered]: null,
-    [OrderStatus.ReadyForCollection]: null,
-    [OrderStatus.Collected]: null,
-    [OrderStatus.Cancelled]: null,
-  };
-
-const COLLECTION_TRANSITIONS: Readonly<
-  Record<OrderStatus, OrderStatus | null>
-> = {
-  [OrderStatus.Pending]: OrderStatus.Confirmed,
-  [OrderStatus.Confirmed]: OrderStatus.ReadyForCollection,
-  [OrderStatus.ReadyForCollection]: OrderStatus.Collected,
-  [OrderStatus.Collected]: null,
-  [OrderStatus.Shipped]: null,
-  [OrderStatus.Delivered]: null,
-  [OrderStatus.Cancelled]: null,
+  },
+  [FulfilmentMethod.Collection]: {
+    [OrderStatus.Pending]: OrderStatus.Confirmed,
+    [OrderStatus.Confirmed]: OrderStatus.ReadyForCollection,
+    [OrderStatus.ReadyForCollection]: OrderStatus.Collected,
+  },
 };
 
 @Injectable()
@@ -183,12 +176,8 @@ export class OrdersService {
     }
 
     // Determine expected next step in state machine
-    const transitions =
-      order.fulfilmentMethod === FulfilmentMethod.Delivery
-        ? DELIVERY_TRANSITIONS
-        : COLLECTION_TRANSITIONS;
-
-    const expectedNextStatus = transitions[currentStatus];
+    const expectedNextStatus =
+      NEXT_ORDER_STATUS[order.fulfilmentMethod]?.[currentStatus];
 
     if (!expectedNextStatus || targetStatus !== expectedNextStatus) {
       throw new ConflictException({
