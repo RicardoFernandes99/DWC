@@ -1,9 +1,9 @@
 # 013: Search the public catalogue and view producer profiles
 
 - Macro: M03
-- Status: In progress
+- Status: In review
 - Depends on: 010, 011
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/23
 - Branch / parent: `codex/age-013-public-catalogue-api` / `codex/age-012-producer-products-web` at `6edf8e2d89b27cdbab28c0d238c5c1b54ebe6d5e`
 - Blockers: None beyond dependencies
 
@@ -84,3 +84,5 @@ Implemented on `codex/age-013-public-catalogue-api`, stacked on PR #22. Frontier
     entry points were used for the remaining checks. Web production build reported
     a 500 kB chunk-size advisory and completed successfully.
 - Executor: Luna, Medium. Review round: 1. Token usage: unavailable.
+
+- Ready-for-review PR #23 is in native stack #18, parent PR #22. Reviewed implementation commit: `9f89bb8`. Parent SHA: `6edf8e2d89b27cdbab28c0d238c5c1b54ebe6d5e`. Final metadata-only update does not alter the reviewed runtime revision.
