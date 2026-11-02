@@ -1,9 +1,9 @@
 # 020: Request refunds and cancel Pending orders safely
 
 - Macro: M04
-- Status: In progress
+- Status: In review
 - Depends on: 019
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/32
 - Branch / parent: `codex/age-020-refunds-api` / `main`
 - Blockers: None beyond dependencies
 
@@ -56,6 +56,8 @@ Request/decline/accept a refund and repeat the decision; verify product stock an
   are unavailable, including orchestration and review.
 - Parent: `main` at `3924477699908af6baf5f583c61a1735d5f64ec9`. No open feature
   stack existed. Frontier verdict: APPROVED after reviewing the ticket-only diff.
+- Reviewed implementation/check revision: `5799f362e7f0a91c9d228af146fcd1593c2765b4`.
+  The subsequent delivery update changes ticket metadata only.
 - Passed with Node 24.19.0 and pnpm 11.25.0:
   - `pnpm --filter @dwc/api typecheck` and `pnpm --filter @dwc/api build`.
   - API test TypeScript compilation and 11 focused order-tracking tests.
