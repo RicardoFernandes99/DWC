@@ -1,9 +1,9 @@
 # 014: Build catalogue and public producer pages
 
 - Macro: M03
-- Status: In progress
+- Status: In review
 - Depends on: 004, 013
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/24
 - Branch / parent: `codex/age-014-public-catalogue-web` / `origin/main` (`f07f37d887e86d930fde9dcdd8728bd3f2f092a9`)
 - Blockers: None beyond dependencies
 
@@ -55,3 +55,4 @@ Browse/filter a producer catalogue, reload a filter URL and inspect empty/error 
 - The public producer map uses OpenStreetMap's export iframe; browsers need access to `openstreetmap.org`, and the page links to the required [OpenStreetMap attribution](https://www.openstreetmap.org/copyright). The embed needs no API key. Profiles remain readable when coordinates are absent, with a clear unavailable-map message.
 - Browser checks and scoped local fixtures (`demos/ticket-014-review/`) verified: responsive product-grid columns (2/3/4) and no horizontal overflow at 375, 900 and 1440px across catalogue, product detail and producer pages; debounced search URL reload/back/forward and preserved keyboard focus; multiword location filter typing; valid and inverted price ranges, invalid decimal input alert and Clear filters draft reset; producer search/selection and shareable pagination; signed S3 product image rendering; 120-character product and farm names; OpenStreetMap embed and missing-coordinate fallback; unpublished and suspended direct-link 404 refusals; and retry recovery after an injected 503. All temporary MongoDB and S3 review fixtures were removed using only the IDs in `fixture.json`.
 - Static checks passed with Node 24.22.2: `pnpm --filter @dwc/web typecheck`, `pnpm --filter @dwc/web build` (including React Compiler verification; existing ~543 kB main-chunk Vite advisory noted), `pnpm lint`, and scoped Prettier check on all ticket files.
+- Published ready-for-review PR #24 (`https://github.com/RicardoFernandes99/DWC/pull/24`) via `gh stack submit --auto --open` against `main` (`f07f37d887e86d930fde9dcdd8728bd3f2f092a9`). Reviewed implementation commit: `5d934aa`.
