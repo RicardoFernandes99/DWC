@@ -5,6 +5,7 @@ import { Search } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { SelectPill } from '@/components/ui/select-pill';
 import {
   formatLabel,
   PRODUCT_CATEGORIES,
@@ -108,9 +109,9 @@ export function CatalogueFilters({ scope }: { scope: string }) {
         </div>
 
         <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 md:contents">
-          <select
+          <SelectPill
             aria-label="Category"
-            className={cn(pill, 'hidden md:block')}
+            containerClassName="hidden md:inline-flex"
             value={search.category ?? ''}
             onChange={(event) =>
               update({
@@ -125,11 +126,11 @@ export function CatalogueFilters({ scope }: { scope: string }) {
                 {formatLabel(value)}
               </option>
             ))}
-          </select>
+          </SelectPill>
           {isMarket && (
-            <select
+            <SelectPill
               aria-label="Producer"
-              className={cn(pill, 'max-w-56')}
+              className="max-w-52"
               value={search.producerId ?? ''}
               onChange={(event) =>
                 update({ producerId: event.target.value || undefined })
@@ -141,7 +142,7 @@ export function CatalogueFilters({ scope }: { scope: string }) {
                   {producer.farmName}
                 </option>
               ))}
-            </select>
+            </SelectPill>
           )}
           {isMarket && (
             <label className="shrink-0">
@@ -155,9 +156,8 @@ export function CatalogueFilters({ scope }: { scope: string }) {
               />
             </label>
           )}
-          <select
+          <SelectPill
             aria-label="Season"
-            className={pill}
             value={search.season ?? ''}
             onChange={(event) =>
               update({
@@ -172,10 +172,9 @@ export function CatalogueFilters({ scope }: { scope: string }) {
                 {formatLabel(value)}
               </option>
             ))}
-          </select>
-          <select
+          </SelectPill>
+          <SelectPill
             aria-label="Production method"
-            className={pill}
             value={search.productionMethod ?? ''}
             onChange={(event) =>
               update({
@@ -190,7 +189,7 @@ export function CatalogueFilters({ scope }: { scope: string }) {
                 {formatLabel(value)}
               </option>
             ))}
-          </select>
+          </SelectPill>
           <PriceInput
             key={`min-${search.minPriceCents}`}
             label="Minimum price in EUR"
@@ -205,9 +204,8 @@ export function CatalogueFilters({ scope }: { scope: string }) {
             cents={search.maxPriceCents}
             onCommit={(value) => update({ maxPriceCents: value })}
           />
-          <select
+          <SelectPill
             aria-label="Sort by"
-            className={pill}
             value={search.sort}
             onChange={(event) =>
               update({ sort: event.target.value as SearchState['sort'] })
@@ -217,7 +215,7 @@ export function CatalogueFilters({ scope }: { scope: string }) {
             <option value="price_asc">Price: low to high</option>
             <option value="price_desc">Price: high to low</option>
             <option value="name_asc">Name</option>
-          </select>
+          </SelectPill>
           {hasFilters && (
             <button
               type="button"
