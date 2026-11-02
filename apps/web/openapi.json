@@ -1991,6 +1991,234 @@
           "Orders"
         ]
       }
+    },
+    "/api/orders/{orderId}/refund-requests": {
+      "post": {
+        "operationId": "OrdersController_requestRefund",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Unique 24-character hexadecimal MongoDB ObjectId of the order.",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b01",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundReasonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Creates or returns the open refund request for this Pending catalogue order.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed order ID or invalid refund reason."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Only the order buyer may request a refund."
+          },
+          "404": {
+            "description": "Order not found or does not belong to the buyer."
+          },
+          "409": {
+            "description": "Order is not eligible for a refund request."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/orders/{orderId}/refund-requests/accept": {
+      "post": {
+        "operationId": "OrdersController_acceptRefund",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Unique 24-character hexadecimal MongoDB ObjectId of the order.",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accepts the open request and refunds the exact order total.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed order ID."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Only the order producer may accept a refund."
+          },
+          "404": {
+            "description": "Order not found or does not belong to the producer."
+          },
+          "409": {
+            "description": "No eligible open refund request or payment allocation is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/orders/{orderId}/refund-requests/decline": {
+      "post": {
+        "operationId": "OrdersController_declineRefund",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Unique 24-character hexadecimal MongoDB ObjectId of the order.",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b01",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundReasonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Declines the request with a required producer reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed order ID or blank/invalid decline reason."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Only the order producer may decline a refund."
+          },
+          "404": {
+            "description": "Order not found or does not belong to the producer."
+          },
+          "409": {
+            "description": "No eligible open refund request."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/orders/{orderId}/cancel-refund": {
+      "post": {
+        "operationId": "OrdersController_cancelAndRefund",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Unique 24-character hexadecimal MongoDB ObjectId of the order.",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancels a Pending catalogue order and refunds it once.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed order ID."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Only the order producer may cancel and refund it."
+          },
+          "404": {
+            "description": "Order not found or does not belong to the producer."
+          },
+          "409": {
+            "description": "Order is not eligible for cancellation and refund."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Orders"
+        ]
+      }
     }
   },
   "info": {
@@ -4235,6 +4463,46 @@
           "amountCents"
         ]
       },
+      "RefundRequestResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "declined",
+              "accepted"
+            ]
+          },
+          "requestedAt": {
+            "type": "string",
+            "example": "2026-11-02T14:30:00.000Z"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "example": "Unable to collect the order."
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2026-11-02T15:00:00.000Z"
+          },
+          "refundedCents": {
+            "type": "number",
+            "nullable": true,
+            "example": 4000
+          }
+        },
+        "required": [
+          "status",
+          "requestedAt",
+          "reason",
+          "decidedAt",
+          "refundedCents"
+        ]
+      },
       "OrderResponseDto": {
         "type": "object",
         "properties": {
@@ -4365,6 +4633,16 @@
                 "$ref": "#/components/schemas/OrderPaymentSummaryDto"
               }
             ]
+          },
+          "refundRequest": {
+            "nullable": true,
+            "description": "Latest buyer refund request and producer decision.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RefundRequestResponseDto"
+              }
+            ]
           }
         },
         "required": [
@@ -4455,6 +4733,20 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "RefundReasonDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "example": "I can no longer collect this order."
+          }
+        },
+        "required": [
+          "reason"
         ]
       }
     }

@@ -45,6 +45,9 @@ export class Payment {
     default: PaymentStatus.Succeeded,
   })
   status!: PaymentStatus;
+
+  @Prop({ required: true, min: 0, default: 0 })
+  refundedCents!: number;
 }
 
 export type PaymentDocument = HydratedDocument<Payment> & {

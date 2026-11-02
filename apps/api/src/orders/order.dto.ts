@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsInt,
   IsMongoId,
+  MinLength,
   IsOptional,
   IsString,
   Max,
@@ -12,7 +13,12 @@ import {
 } from 'class-validator';
 import { ProductUnit } from '../products/product.schema.js';
 import { UserRole } from '../users/user.schema.js';
-import { FulfilmentMethod, OrderOrigin, OrderStatus } from './order.schema.js';
+import {
+  FulfilmentMethod,
+  OrderOrigin,
+  OrderStatus,
+  RefundRequestStatus,
+} from './order.schema.js';
 import { PaymentStatus } from '../checkout/payment.schema.js';
 
 export class OrderIdParamDto {
@@ -195,6 +201,26 @@ export class OrderPaymentSummaryDto {
   amountCents!: number;
 }
 
+export class RefundRequestResponseDto {
+  @ApiProperty({ enum: RefundRequestStatus }) status!: RefundRequestStatus;
+  @ApiProperty({ example: '2026-11-02T14:30:00.000Z' }) requestedAt!: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'Unable to collect the order.',
+  })
+  reason!: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-11-02T15:00:00.000Z',
+  })
+  decidedAt!: string | null;
+  @ApiProperty({ type: Number, nullable: true, example: 4000 }) refundedCents!:
+    number | null;
+}
+
 export class OrderResponseDto {
   @ApiProperty({
     example: '60d5ecb8b392d13b48f10d01',
@@ -319,6 +345,25 @@ export class OrderResponseDto {
     nullable: true,
   })
   payment!: OrderPaymentSummaryDto | null;
+
+  @ApiPropertyOptional({
+    type: RefundRequestResponseDto,
+    nullable: true,
+    description: 'Latest buyer refund request and producer decision.',
+  })
+  refundRequest!: RefundRequestResponseDto | null;
+}
+
+export class RefundReasonDto {
+  @ApiProperty({
+    minLength: 1,
+    maxLength: 500,
+    example: 'I can no longer collect this order.',
+  })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(500)
+  reason!: string;
 }
 
 export class OrderListResponseDto {

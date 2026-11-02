@@ -6,7 +6,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { Model, Types } from 'mongoose';
+import { Model, Mongoose, Types } from 'mongoose';
 import { OrdersService } from '../dist/orders/orders.service.js';
 import {
   FulfilmentMethod,
@@ -25,7 +25,15 @@ import {
   UserRole,
 } from '../dist/users/user.schema.js';
 import { UserResponseDto } from '../dist/users/user-response.dto.js';
-import { ProductUnit } from '../dist/products/product.schema.js';
+import {
+  Product,
+  ProductSchema,
+  ProductUnit,
+} from '../dist/products/product.schema.js';
+import {
+  RefundAllocation,
+  RefundAllocationSchema,
+} from '../dist/orders/refund-allocation.schema.js';
 
 interface TestOrderData {
   _id: Types.ObjectId;
@@ -196,10 +204,21 @@ function createMockEnvironment(initialOrders: TestOrderData[]) {
     }),
   };
 
+  const testMongoose = new Mongoose();
+  const productModel = testMongoose.model<Product>(Product.name, ProductSchema);
+  const refundAllocationModel = testMongoose.model<RefundAllocation>(
+    RefundAllocation.name,
+    RefundAllocationSchema,
+  );
+  const connection = testMongoose.createConnection();
+
   const service = new OrdersService(
     orderModel as unknown as Model<OrderDocument>,
     paymentModel as unknown as Model<PaymentDocument>,
     userModel as unknown as Model<UserDocument>,
+    productModel,
+    refundAllocationModel,
+    connection,
   );
 
   return { service, orders };

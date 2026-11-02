@@ -437,6 +437,70 @@ export interface paths {
         patch: operations["OrdersController_advanceOrderStatus"];
         trace?: never;
     };
+    "/api/orders/{orderId}/refund-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OrdersController_requestRefund"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orders/{orderId}/refund-requests/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OrdersController_acceptRefund"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orders/{orderId}/refund-requests/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OrdersController_declineRefund"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orders/{orderId}/cancel-refund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OrdersController_cancelAndRefund"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1576,6 +1640,21 @@ export interface components {
              */
             amountCents: number;
         };
+        RefundRequestResponseDto: {
+            /** @enum {string} */
+            status: "open" | "declined" | "accepted";
+            /** @example 2026-11-02T14:30:00.000Z */
+            requestedAt: string;
+            /** @example Unable to collect the order. */
+            reason: string | null;
+            /**
+             * Format: date-time
+             * @example 2026-11-02T15:00:00.000Z
+             */
+            decidedAt: string | null;
+            /** @example 4000 */
+            refundedCents: number | null;
+        };
         OrderResponseDto: {
             /**
              * @description Unique order identifier.
@@ -1663,6 +1742,8 @@ export interface components {
             updatedAt: string;
             /** @description Simulated card payment summary. */
             payment?: components["schemas"]["OrderPaymentSummaryDto"] | null;
+            /** @description Latest buyer refund request and producer decision. */
+            refundRequest?: components["schemas"]["RefundRequestResponseDto"] | null;
         };
         OrderListResponseDto: {
             /** @description List of order records for the current page. */
@@ -1705,6 +1786,10 @@ export interface components {
              * @example Dispatched via carrier tracking #PT-12345
              */
             note?: string;
+        };
+        RefundReasonDto: {
+            /** @example I can no longer collect this order. */
+            reason: string;
         };
     };
     responses: never;
@@ -3425,6 +3510,246 @@ export interface operations {
                 content?: never;
             };
             /** @description State transition violation (invalid_status_transition), optimistic revision mismatch (revision_conflict), or blocked by open refund (confirmation_blocked_by_refund). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrdersController_requestRefund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique 24-character hexadecimal MongoDB ObjectId of the order. */
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefundReasonDto"];
+            };
+        };
+        responses: {
+            /** @description Creates or returns the open refund request for this Pending catalogue order. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponseDto"];
+                };
+            };
+            /** @description Malformed order ID or invalid refund reason. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the order buyer may request a refund. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order not found or does not belong to the buyer. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order is not eligible for a refund request. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrdersController_acceptRefund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique 24-character hexadecimal MongoDB ObjectId of the order. */
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepts the open request and refunds the exact order total. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponseDto"];
+                };
+            };
+            /** @description Malformed order ID. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the order producer may accept a refund. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order not found or does not belong to the producer. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No eligible open refund request or payment allocation is unavailable. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrdersController_declineRefund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique 24-character hexadecimal MongoDB ObjectId of the order. */
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefundReasonDto"];
+            };
+        };
+        responses: {
+            /** @description Declines the request with a required producer reason. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponseDto"];
+                };
+            };
+            /** @description Malformed order ID or blank/invalid decline reason. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the order producer may decline a refund. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order not found or does not belong to the producer. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No eligible open refund request. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrdersController_cancelAndRefund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique 24-character hexadecimal MongoDB ObjectId of the order. */
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cancels a Pending catalogue order and refunds it once. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponseDto"];
+                };
+            };
+            /** @description Malformed order ID. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the order producer may cancel and refund it. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order not found or does not belong to the producer. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order is not eligible for cancellation and refund. */
             409: {
                 headers: {
                     [name: string]: unknown;

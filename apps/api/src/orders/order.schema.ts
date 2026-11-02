@@ -24,6 +24,38 @@ export enum OrderOrigin {
   Auction = 'auction',
 }
 
+export enum RefundRequestStatus {
+  Open = 'open',
+  Declined = 'declined',
+  Accepted = 'accepted',
+}
+
+@Schema({ _id: false })
+export class RefundRequest {
+  @Prop({ required: true, enum: Object.values(RefundRequestStatus) })
+  status!: RefundRequestStatus;
+
+  @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'User' })
+  requestedBy!: Types.ObjectId;
+
+  @Prop({ required: true, default: Date.now })
+  requestedAt!: Date;
+
+  @Prop({ type: String, trim: true, maxlength: 500, default: null })
+  reason!: string | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
+  decidedBy!: Types.ObjectId | null;
+
+  @Prop({ type: Date, default: null })
+  decidedAt!: Date | null;
+
+  @Prop({ type: Number, min: 0, default: null })
+  refundedCents!: number | null;
+}
+
+export const RefundRequestSchema = SchemaFactory.createForClass(RefundRequest);
+
 @Schema({ _id: false })
 export class OrderLineSnapshot {
   @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'Product' })
@@ -121,6 +153,9 @@ export class Order {
 
   @Prop({ type: Number, required: true, default: 1, min: 1 })
   revision!: number;
+
+  @Prop({ type: RefundRequestSchema, default: null })
+  refundRequest!: RefundRequest | null;
 }
 
 export type OrderDocument = HydratedDocument<Order> & {
