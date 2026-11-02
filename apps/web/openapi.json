@@ -1698,6 +1698,54 @@
           "Public catalogue"
         ]
       }
+    },
+    "/api/checkout/quote": {
+      "post": {
+        "operationId": "CheckoutController_quote",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteCheckoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Calculated advisory quote with canonical line items, grouped producer totals, delivery fees and issues.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutQuoteResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid item bounds, quantities, invalid product ID format, or missing delivery address."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only buyers may quote or complete checkout."
+          },
+          "503": {
+            "description": "Authentication or database storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Checkout"
+        ]
+      }
     }
   },
   "info": {
@@ -3146,6 +3194,407 @@
           "total",
           "page",
           "limit"
+        ]
+      },
+      "QuoteCheckoutItemDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "example": "60d5ecb8b392d13b48f10b01",
+            "description": "Unique Mongo identifier of the catalog product."
+          },
+          "quantity": {
+            "type": "number",
+            "example": 2,
+            "description": "Quantity of the item (strictly positive integer).",
+            "minimum": 1,
+            "maximum": 999
+          }
+        },
+        "required": [
+          "productId",
+          "quantity"
+        ]
+      },
+      "DeliveryAddressDto": {
+        "type": "object",
+        "properties": {
+          "recipientName": {
+            "type": "string",
+            "example": "Maria Silva",
+            "description": "Name of the recipient receiving delivery."
+          },
+          "street": {
+            "type": "string",
+            "example": "Rua das Flores 123",
+            "description": "Street address including house or apartment number."
+          },
+          "city": {
+            "type": "string",
+            "example": "Porto",
+            "description": "City or municipality for delivery."
+          },
+          "postalCode": {
+            "type": "string",
+            "example": "4000-001",
+            "description": "Postal code."
+          },
+          "country": {
+            "type": "string",
+            "example": "Portugal",
+            "description": "Country for delivery. Defaults to Portugal."
+          },
+          "notes": {
+            "type": "string",
+            "example": "Leave at front gate",
+            "description": "Optional delivery instructions or access notes."
+          }
+        },
+        "required": [
+          "recipientName",
+          "street",
+          "city",
+          "postalCode"
+        ]
+      },
+      "QuoteCheckoutDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "List of product items to quote (1 to 50 items).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteCheckoutItemDto"
+            }
+          },
+          "fulfilmentMethod": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "collection"
+            ],
+            "example": "delivery",
+            "description": "Chosen fulfilment method for the checkout."
+          },
+          "deliveryAddress": {
+            "description": "Delivery address. Required when fulfilmentMethod is delivery.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryAddressDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "fulfilmentMethod"
+        ]
+      },
+      "CheckoutQuoteLineIssueDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "insufficient_stock",
+              "unavailable_product",
+              "producer_suspended"
+            ],
+            "example": "insufficient_stock",
+            "description": "Standard issue code."
+          },
+          "message": {
+            "type": "string",
+            "example": "Requested 5 units, but only 2 units are available.",
+            "description": "Human-readable description of the issue."
+          },
+          "availableStock": {
+            "type": "number",
+            "example": 2,
+            "description": "Current available stock if applicable."
+          },
+          "requestedQuantity": {
+            "type": "number",
+            "example": 5,
+            "description": "Requested quantity that triggered the issue."
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CheckoutQuoteLineDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "example": "60d5ecb8b392d13b48f10b01",
+            "description": "Product identifier."
+          },
+          "productName": {
+            "type": "string",
+            "example": "Fresh Organic Carrots",
+            "description": "Product display name."
+          },
+          "productUnit": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "bunch",
+              "box",
+              "jar",
+              "bottle",
+              "bag",
+              "kg",
+              "g_500",
+              "g_250",
+              "l",
+              "ml_500"
+            ],
+            "example": "kg",
+            "description": "Unit of measure."
+          },
+          "quantity": {
+            "type": "number",
+            "example": 3,
+            "description": "Normalized requested quantity."
+          },
+          "unitPriceCents": {
+            "type": "number",
+            "example": 250,
+            "description": "Unit price in integer EUR cents."
+          },
+          "lineTotalCents": {
+            "type": "number",
+            "example": 750,
+            "description": "Line total in integer EUR cents (unitPriceCents * quantity)."
+          },
+          "producerId": {
+            "type": "string",
+            "example": "60d5ecb8b392d13b48f10b99",
+            "description": "Producer user identifier."
+          },
+          "producerName": {
+            "type": "string",
+            "example": "Valley Green Farm",
+            "description": "Producer farm or business name."
+          },
+          "availableStock": {
+            "type": "number",
+            "example": 10,
+            "description": "Current available stock."
+          },
+          "issues": {
+            "description": "Issues affecting this line, if any.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckoutQuoteLineIssueDto"
+            }
+          }
+        },
+        "required": [
+          "productId",
+          "productName",
+          "productUnit",
+          "quantity",
+          "unitPriceCents",
+          "lineTotalCents",
+          "producerId",
+          "producerName",
+          "availableStock",
+          "issues"
+        ]
+      },
+      "CheckoutQuoteProducerGroupDto": {
+        "type": "object",
+        "properties": {
+          "producerId": {
+            "type": "string",
+            "example": "60d5ecb8b392d13b48f10b99",
+            "description": "Producer user identifier."
+          },
+          "producerName": {
+            "type": "string",
+            "example": "Valley Green Farm",
+            "description": "Producer farm or business name."
+          },
+          "city": {
+            "type": "object",
+            "example": "Braga",
+            "description": "Producer farm city."
+          },
+          "collectionAddress": {
+            "type": "object",
+            "example": "Quinta das Macas, Braga",
+            "description": "Producer collection address if available."
+          },
+          "items": {
+            "description": "Canonical product lines belonging to this producer.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckoutQuoteLineDto"
+            }
+          },
+          "subtotalCents": {
+            "type": "number",
+            "example": 4500,
+            "description": "Subtotal for this producer in integer EUR cents."
+          },
+          "deliveryFeeCents": {
+            "type": "number",
+            "example": 500,
+            "description": "Delivery fee for this producer in integer EUR cents. EUR 5 (500 cents) if subtotal < 5000 cents; 0 if subtotal >= 5000 cents or collection."
+          },
+          "totalCents": {
+            "type": "number",
+            "example": 5000,
+            "description": "Total for this producer in integer EUR cents (subtotalCents + deliveryFeeCents)."
+          },
+          "qualifiesForFreeDelivery": {
+            "type": "boolean",
+            "example": true,
+            "description": "True if delivery is free (subtotal >= 5000 cents or collection)."
+          },
+          "hasIssues": {
+            "type": "boolean",
+            "example": false,
+            "description": "True if any line in this group has an issue."
+          }
+        },
+        "required": [
+          "producerId",
+          "producerName",
+          "items",
+          "subtotalCents",
+          "deliveryFeeCents",
+          "totalCents",
+          "qualifiesForFreeDelivery",
+          "hasIssues"
+        ]
+      },
+      "CheckoutQuoteIssueDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "example": "60d5ecb8b392d13b48f10b01",
+            "description": "Product identifier with the issue."
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "insufficient_stock",
+              "unavailable_product",
+              "producer_suspended"
+            ],
+            "example": "insufficient_stock",
+            "description": "Issue code."
+          },
+          "message": {
+            "type": "string",
+            "example": "Requested 5 units, but only 2 units are available.",
+            "description": "Detailed explanation."
+          },
+          "availableStock": {
+            "type": "number",
+            "example": 2,
+            "description": "Available stock at quote time."
+          },
+          "requestedQuantity": {
+            "type": "number",
+            "example": 5,
+            "description": "Requested quantity."
+          }
+        },
+        "required": [
+          "productId",
+          "code",
+          "message"
+        ]
+      },
+      "CheckoutQuoteResponseDto": {
+        "type": "object",
+        "properties": {
+          "fulfilmentMethod": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "collection"
+            ],
+            "example": "delivery",
+            "description": "Quoted fulfilment method."
+          },
+          "deliveryAddress": {
+            "description": "Delivery address if delivery was quoted.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryAddressDto"
+              }
+            ]
+          },
+          "groups": {
+            "description": "Quote lines grouped by producer.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckoutQuoteProducerGroupDto"
+            }
+          },
+          "subtotalCents": {
+            "type": "number",
+            "example": 4500,
+            "description": "Combined product subtotal in integer EUR cents."
+          },
+          "deliveryFeeCents": {
+            "type": "number",
+            "example": 500,
+            "description": "Combined delivery fee in integer EUR cents."
+          },
+          "totalCents": {
+            "type": "number",
+            "example": 5000,
+            "description": "Combined checkout total in integer EUR cents (subtotalCents + deliveryFeeCents)."
+          },
+          "itemCount": {
+            "type": "number",
+            "example": 3,
+            "description": "Total number of items across all lines."
+          },
+          "isOrderable": {
+            "type": "boolean",
+            "example": true,
+            "description": "True if all items are valid, in stock, no producers suspended, and address complete."
+          },
+          "issues": {
+            "description": "Structured list of all issues found across the quote.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckoutQuoteIssueDto"
+            }
+          },
+          "fingerprint": {
+            "type": "string",
+            "example": "a6c8...39f",
+            "description": "Deterministic SHA-256 fingerprint representing quoted prices, revisions and fees."
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-02T13:00:00.000Z",
+            "description": "ISO timestamp when the quote was computed."
+          }
+        },
+        "required": [
+          "fulfilmentMethod",
+          "groups",
+          "subtotalCents",
+          "deliveryFeeCents",
+          "totalCents",
+          "itemCount",
+          "isOrderable",
+          "issues",
+          "fingerprint",
+          "createdAt"
         ]
       }
     }

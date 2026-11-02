@@ -6,6 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { readFile, writeFile } from 'node:fs/promises';
 import { AdminGuard } from './auth/admin.guard.js';
+import { RoleGuard } from './auth/role.guard.js';
 import { AuthController } from './auth/auth.controller.js';
 import { AuthService } from './auth/auth.service.js';
 import { UsersController } from './users/users.controller.js';
@@ -20,6 +21,8 @@ import { ProducerProductsController } from './products/producer-products.control
 import { ProductsService } from './products/products.service.js';
 import { CatalogueController } from './catalogue/catalogue.controller.js';
 import { CatalogueService } from './catalogue/catalogue.service.js';
+import { CheckoutController } from './checkout/checkout.controller.js';
+import { CheckoutService } from './checkout/checkout.service.js';
 
 // Contract-only module: controllers and DTO metadata are real; no service is called.
 @Module({
@@ -33,15 +36,18 @@ import { CatalogueService } from './catalogue/catalogue.service.js';
     AdminProducerApplicationsController,
     ProducerProductsController,
     CatalogueController,
+    CheckoutController,
   ],
   providers: [
     { provide: AuthService, useValue: {} },
     { provide: AdminGuard, useValue: { canActivate: () => true } },
+    { provide: RoleGuard, useValue: { canActivate: () => true } },
     { provide: UsersService, useValue: {} },
     { provide: PaymentMethodsService, useValue: {} },
     { provide: ProducerApplicationService, useValue: {} },
     { provide: ProductsService, useValue: {} },
     { provide: CatalogueService, useValue: {} },
+    { provide: CheckoutService, useValue: {} },
     {
       provide: ConfigService,
       useValue: { getOrThrow: () => 'http://localhost' },

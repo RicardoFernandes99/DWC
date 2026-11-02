@@ -1,10 +1,10 @@
 # 016: Quote a multi-producer checkout with delivery fees
 
 - Macro: M04
-- Status: Draft
+- Status: In progress
 - Depends on: 010, 013, 003
 - PR: Not opened
-- Branch / parent: Not assigned
+- Branch / parent: codex/age-016-checkout-quote-api / codex/age-015-guest-cart-web (#25)
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -36,11 +36,11 @@ delivery charge before submitting payment.
 
 ## Acceptance criteria
 
-- [ ] EUR 49.99 incurs EUR 5; EUR 50.00 is free independently per producer.
-- [ ] Mixed-producer totals and free collection are correct and client totals ignored.
-- [ ] Insufficient stock/suspended products map to stable line-level issue codes.
-- [ ] Duplicate lines cannot evade quantity checks; quote makes no persistent writes.
-- [ ] Producer/guest requests, bad quantities and incomplete delivery addresses fail.
+- [x] EUR 49.99 incurs EUR 5; EUR 50.00 is free independently per producer.
+- [x] Mixed-producer totals and free collection are correct and client totals ignored.
+- [x] Insufficient stock/suspended products map to stable line-level issue codes.
+- [x] Duplicate lines cannot evade quantity checks; quote makes no persistent writes.
+- [x] Producer/guest requests, bad quantities and incomplete delivery addresses fail.
 
 ## Checks
 

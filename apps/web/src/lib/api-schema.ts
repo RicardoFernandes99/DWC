@@ -357,6 +357,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/checkout/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CheckoutController_quote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1012,6 +1028,261 @@ export interface components {
             total: number;
             page: number;
             limit: number;
+        };
+        QuoteCheckoutItemDto: {
+            /**
+             * @description Unique Mongo identifier of the catalog product.
+             * @example 60d5ecb8b392d13b48f10b01
+             */
+            productId: string;
+            /**
+             * @description Quantity of the item (strictly positive integer).
+             * @example 2
+             */
+            quantity: number;
+        };
+        DeliveryAddressDto: {
+            /**
+             * @description Name of the recipient receiving delivery.
+             * @example Maria Silva
+             */
+            recipientName: string;
+            /**
+             * @description Street address including house or apartment number.
+             * @example Rua das Flores 123
+             */
+            street: string;
+            /**
+             * @description City or municipality for delivery.
+             * @example Porto
+             */
+            city: string;
+            /**
+             * @description Postal code.
+             * @example 4000-001
+             */
+            postalCode: string;
+            /**
+             * @description Country for delivery. Defaults to Portugal.
+             * @example Portugal
+             */
+            country?: string;
+            /**
+             * @description Optional delivery instructions or access notes.
+             * @example Leave at front gate
+             */
+            notes?: string;
+        };
+        QuoteCheckoutDto: {
+            /** @description List of product items to quote (1 to 50 items). */
+            items: components["schemas"]["QuoteCheckoutItemDto"][];
+            /**
+             * @description Chosen fulfilment method for the checkout.
+             * @example delivery
+             * @enum {string}
+             */
+            fulfilmentMethod: "delivery" | "collection";
+            /** @description Delivery address. Required when fulfilmentMethod is delivery. */
+            deliveryAddress?: components["schemas"]["DeliveryAddressDto"];
+        };
+        CheckoutQuoteLineIssueDto: {
+            /**
+             * @description Standard issue code.
+             * @example insufficient_stock
+             * @enum {string}
+             */
+            code: "insufficient_stock" | "unavailable_product" | "producer_suspended";
+            /**
+             * @description Human-readable description of the issue.
+             * @example Requested 5 units, but only 2 units are available.
+             */
+            message: string;
+            /**
+             * @description Current available stock if applicable.
+             * @example 2
+             */
+            availableStock?: number;
+            /**
+             * @description Requested quantity that triggered the issue.
+             * @example 5
+             */
+            requestedQuantity?: number;
+        };
+        CheckoutQuoteLineDto: {
+            /**
+             * @description Product identifier.
+             * @example 60d5ecb8b392d13b48f10b01
+             */
+            productId: string;
+            /**
+             * @description Product display name.
+             * @example Fresh Organic Carrots
+             */
+            productName: string;
+            /**
+             * @description Unit of measure.
+             * @example kg
+             * @enum {string}
+             */
+            productUnit: "unit" | "bunch" | "box" | "jar" | "bottle" | "bag" | "kg" | "g_500" | "g_250" | "l" | "ml_500";
+            /**
+             * @description Normalized requested quantity.
+             * @example 3
+             */
+            quantity: number;
+            /**
+             * @description Unit price in integer EUR cents.
+             * @example 250
+             */
+            unitPriceCents: number;
+            /**
+             * @description Line total in integer EUR cents (unitPriceCents * quantity).
+             * @example 750
+             */
+            lineTotalCents: number;
+            /**
+             * @description Producer user identifier.
+             * @example 60d5ecb8b392d13b48f10b99
+             */
+            producerId: string;
+            /**
+             * @description Producer farm or business name.
+             * @example Valley Green Farm
+             */
+            producerName: string;
+            /**
+             * @description Current available stock.
+             * @example 10
+             */
+            availableStock: number;
+            /** @description Issues affecting this line, if any. */
+            issues: components["schemas"]["CheckoutQuoteLineIssueDto"][];
+        };
+        CheckoutQuoteProducerGroupDto: {
+            /**
+             * @description Producer user identifier.
+             * @example 60d5ecb8b392d13b48f10b99
+             */
+            producerId: string;
+            /**
+             * @description Producer farm or business name.
+             * @example Valley Green Farm
+             */
+            producerName: string;
+            /**
+             * @description Producer farm city.
+             * @example Braga
+             */
+            city?: Record<string, never>;
+            /**
+             * @description Producer collection address if available.
+             * @example Quinta das Macas, Braga
+             */
+            collectionAddress?: Record<string, never>;
+            /** @description Canonical product lines belonging to this producer. */
+            items: components["schemas"]["CheckoutQuoteLineDto"][];
+            /**
+             * @description Subtotal for this producer in integer EUR cents.
+             * @example 4500
+             */
+            subtotalCents: number;
+            /**
+             * @description Delivery fee for this producer in integer EUR cents. EUR 5 (500 cents) if subtotal < 5000 cents; 0 if subtotal >= 5000 cents or collection.
+             * @example 500
+             */
+            deliveryFeeCents: number;
+            /**
+             * @description Total for this producer in integer EUR cents (subtotalCents + deliveryFeeCents).
+             * @example 5000
+             */
+            totalCents: number;
+            /**
+             * @description True if delivery is free (subtotal >= 5000 cents or collection).
+             * @example true
+             */
+            qualifiesForFreeDelivery: boolean;
+            /**
+             * @description True if any line in this group has an issue.
+             * @example false
+             */
+            hasIssues: boolean;
+        };
+        CheckoutQuoteIssueDto: {
+            /**
+             * @description Product identifier with the issue.
+             * @example 60d5ecb8b392d13b48f10b01
+             */
+            productId: string;
+            /**
+             * @description Issue code.
+             * @example insufficient_stock
+             * @enum {string}
+             */
+            code: "insufficient_stock" | "unavailable_product" | "producer_suspended";
+            /**
+             * @description Detailed explanation.
+             * @example Requested 5 units, but only 2 units are available.
+             */
+            message: string;
+            /**
+             * @description Available stock at quote time.
+             * @example 2
+             */
+            availableStock?: number;
+            /**
+             * @description Requested quantity.
+             * @example 5
+             */
+            requestedQuantity?: number;
+        };
+        CheckoutQuoteResponseDto: {
+            /**
+             * @description Quoted fulfilment method.
+             * @example delivery
+             * @enum {string}
+             */
+            fulfilmentMethod: "delivery" | "collection";
+            /** @description Delivery address if delivery was quoted. */
+            deliveryAddress?: components["schemas"]["DeliveryAddressDto"];
+            /** @description Quote lines grouped by producer. */
+            groups: components["schemas"]["CheckoutQuoteProducerGroupDto"][];
+            /**
+             * @description Combined product subtotal in integer EUR cents.
+             * @example 4500
+             */
+            subtotalCents: number;
+            /**
+             * @description Combined delivery fee in integer EUR cents.
+             * @example 500
+             */
+            deliveryFeeCents: number;
+            /**
+             * @description Combined checkout total in integer EUR cents (subtotalCents + deliveryFeeCents).
+             * @example 5000
+             */
+            totalCents: number;
+            /**
+             * @description Total number of items across all lines.
+             * @example 3
+             */
+            itemCount: number;
+            /**
+             * @description True if all items are valid, in stock, no producers suspended, and address complete.
+             * @example true
+             */
+            isOrderable: boolean;
+            /** @description Structured list of all issues found across the quote. */
+            issues: components["schemas"]["CheckoutQuoteIssueDto"][];
+            /**
+             * @description Deterministic SHA-256 fingerprint representing quoted prices, revisions and fees.
+             * @example a6c8...39f
+             */
+            fingerprint: string;
+            /**
+             * @description ISO timestamp when the quote was computed.
+             * @example 2026-11-02T13:00:00.000Z
+             */
+            createdAt: string;
         };
     };
     responses: never;
@@ -2466,6 +2737,58 @@ export interface operations {
             };
             /** @description Invalid producer identifier or catalogue filters. */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CheckoutController_quote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteCheckoutDto"];
+            };
+        };
+        responses: {
+            /** @description Calculated advisory quote with canonical line items, grouped producer totals, delivery fees and issues. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutQuoteResponseDto"];
+                };
+            };
+            /** @description Invalid item bounds, quantities, invalid product ID format, or missing delivery address. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only buyers may quote or complete checkout. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication or database storage unavailable. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
