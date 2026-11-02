@@ -58,3 +58,21 @@ export function formatLabel(value: string): string {
     .replaceAll('_', ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
+
+const unitLabels: Record<Product['unit'], string> = {
+  unit: 'unit',
+  bunch: 'bunch',
+  box: 'box',
+  jar: 'jar',
+  bottle: 'bottle',
+  bag: 'bag',
+  kg: 'kg',
+  g_500: '500 g',
+  g_250: '250 g',
+  l: 'L',
+  ml_500: '500 ml',
+};
+
+export function formatUnit(unit: Product['unit']): string {
+  return unitLabels[unit];
+}

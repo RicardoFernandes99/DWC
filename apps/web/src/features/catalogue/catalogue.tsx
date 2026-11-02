@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, MapPin, Sprout } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import { ProductGrid } from '@/components/shared/product-card';
 import { Button } from '@/components/ui/button';
-import { formatLabel, formatMoney } from '@/lib/format';
+import { formatLabel, formatMoney, formatUnit } from '@/lib/format';
 import { ApiError, publicRequest } from '@/lib/session';
 import { CatalogueFilters } from './components/catalogue-filters';
 import {
@@ -136,37 +136,32 @@ function ListingResults({ scope }: { scope: string }) {
 
 export function CataloguePage() {
   return (
-    <main className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 md:py-10 xl:px-12">
-      <section className="mb-8 grid grid-cols-[minmax(0,1.2fr)_minmax(100px,.8fr)] overflow-hidden rounded-xl bg-primary text-primary-foreground md:grid-cols-[1.1fr_.9fr]">
-        <div className="flex flex-col justify-center p-4 md:p-10 xl:p-14">
-          <p className="text-sm text-primary-foreground/80">
-            Local food, from the people who grow it
-          </p>
-          <h1 className="mt-3 max-w-xl text-2xl leading-tight md:text-5xl">
-            Good things grow close to home.
+    <main className="pb-12">
+      <section className="relative isolate overflow-hidden bg-secondary">
+        <img
+          src="/design/orchard-landscape.png"
+          alt=""
+          width="1536"
+          height="512"
+          fetchPriority="high"
+          className="absolute inset-0 -z-10 h-full w-full object-cover object-center"
+        />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-background/95 via-background/70 to-background/0 md:via-background/50" />
+        <div className="mx-auto flex min-h-40 max-w-[1440px] flex-col justify-center px-4 py-8 md:min-h-56 md:px-8 xl:min-h-64 xl:px-12">
+          <h1 className="max-w-[14ch] text-3xl leading-tight md:max-w-none md:text-5xl xl:text-6xl">
+            Fresh from your region
           </h1>
-          <p className="mt-4 max-w-lg text-sm leading-relaxed text-primary-foreground/85">
-            Browse seasonal produce and meet the farms behind it.
+          <p className="mt-2 max-w-[28ch] text-sm text-foreground/80 md:max-w-none md:text-lg">
+            Local farmers. Real food. Stronger communities.
           </p>
         </div>
-        <img
-          src="/images/countryside.jpg"
-          alt="Green fields and rolling countryside"
-          width="1400"
-          height="933"
-          fetchPriority="high"
-          className="h-full min-h-60 w-full object-cover md:min-h-64"
-        />
       </section>
-      <div className="mb-6">
-        <h2 className="text-2xl">The market</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Find something fresh from a nearby producer.
-        </p>
-      </div>
-      <div className="space-y-5">
+      <div className="mx-auto max-w-[1440px] space-y-6 px-4 pt-5 md:px-8 md:pt-6 xl:px-12">
         <CatalogueFilters scope="all" />
-        <ListingResults scope="all" />
+        <div className="rounded-xl border bg-card/60 p-3 md:p-5">
+          <h2 className="mb-4 text-xl md:text-2xl">Fresh produce</h2>
+          <ListingResults scope="all" />
+        </div>
       </div>
     </main>
   );
@@ -240,7 +235,7 @@ export function ProductPage({ productId }: { productId: string }) {
           <p className="mt-4 text-2xl font-semibold tabular-nums">
             {formatMoney(product.priceCents)}{' '}
             <span className="text-base font-normal text-muted-foreground">
-              / {formatLabel(product.unit)}
+              / {formatUnit(product.unit)}
             </span>
           </p>
           <p className="mt-6 break-words whitespace-pre-line leading-relaxed">
