@@ -1,9 +1,9 @@
 # 022: Authenticate Socket.io sessions and isolate personal rooms
 
 - Macro: M06
-- Status: In progress
+- Status: In review
 - Depends on: 003
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/36
 - Branch / parent: `codex/age-022-socketio-transport` / `codex/route-guards` at `ce62e589bbf22b0c25959bbe3719ec2fb8c61b31`
 - Blockers: None beyond dependencies
 
@@ -68,7 +68,7 @@ client; it does not interrupt the shared Redis service. The registry and
 delivery are local to one API process. A logout racing between session check
 and synchronous socket emit can overlap one event, as described in the contract.
 
-Frontier verdict: APPROVED after one correction round. Reviewed implementation is the ticket-only diff against parent `ce62e589bbf22b0c25959bbe3719ec2fb8c61b31`; PR publication pending.
+Frontier verdict: APPROVED after one correction round. Reviewed implementation/check revision: `30c010b896fc8debe392e570d89d28b862490491`, compared only against parent PR #35 at `ce62e589bbf22b0c25959bbe3719ec2fb8c61b31`. Published ready for review through native `gh stack` in stack #34. Not merged.
 
 The review script also passes this standalone strict typecheck:
 `pnpm exec tsc --noEmit --target ES2023 --module NodeNext --moduleResolution NodeNext --strict --experimentalDecorators --emitDecoratorMetadata --esModuleInterop --skipLibCheck --types node apps/api/scripts/realtime-review.ts`.
