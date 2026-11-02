@@ -52,7 +52,7 @@ async function request(
   try {
     response = await fetch(`${base}/${path}`, {
       ...options,
-      credentials: 'include',
+      credentials: options.credentials ?? 'include',
       signal: options.signal ?? AbortSignal.timeout(10000),
       headers:
         options.body instanceof FormData
@@ -75,6 +75,9 @@ async function request(
   } catch {
     throw new ApiError(0, 'The server returned an invalid response.');
   }
+}
+export function publicRequest(path: string): Promise<unknown> {
+  return request(path, { credentials: 'omit' }, '/api');
 }
 let token: string | undefined;
 let signedOut = false;
