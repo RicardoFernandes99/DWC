@@ -4,6 +4,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
 import { Archive, Pencil, Plus, Sprout } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
+import {
+  formatLabel as label,
+  PRODUCT_CATEGORIES as categories,
+  PRODUCT_SEASONS as seasons,
+  PRODUCT_UNITS as units,
+  PRODUCTION_METHODS as methods,
+} from '@/lib/format';
 import { ApiError, authenticatedRequest } from '@/lib/session';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,6 +19,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/shared/form-field';
 
 type Product = components['schemas']['ProducerProductResponseDto'];
+type ProductListResponse =
+  components['schemas']['ProducerProductListResponseDto'];
 type ProductInput = components['schemas']['CreateProducerProductDto'];
 type UpdateInput = components['schemas']['UpdateProducerProductDto'];
 type Profile = components['schemas']['ProducerProfileResponseDto'];
@@ -23,137 +32,25 @@ type Unit = Product['unit'];
 
 const productKey = ['producer-products'] as const;
 const profileKey = ['producer-profile'] as const;
-const categories: Category[] = [
-  'vegetables',
-  'fruits',
-  'dairy',
-  'eggs',
-  'meat',
-  'bakery',
-  'pantry',
-  'beverages',
-  'other',
-];
-const methods: Method[] = [
-  'organic',
-  'sustainable',
-  'conventional',
-  'artisanal',
-  'biodynamic',
-];
-const seasons: Season[] = [
-  'spring',
-  'summer',
-  'autumn',
-  'winter',
-  'year_round',
-];
-const units: Unit[] = [
-  'unit',
-  'bunch',
-  'box',
-  'jar',
-  'bottle',
-  'bag',
-  'kg',
-  'g_500',
-  'g_250',
-  'l',
-  'ml_500',
-];
-const label = (value: string) =>
-  value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function isProduct(value: unknown): value is Product {
-  return (
-    isRecord(value) &&
-    typeof value.id === 'string' &&
-    typeof value.producerId === 'string' &&
-    typeof value.name === 'string' &&
-    typeof value.description === 'string' &&
-    categories.includes(value.category as Category) &&
-    methods.includes(value.productionMethod as Method) &&
-    Array.isArray(value.seasons) &&
-    value.seasons.every((season: unknown) =>
-      seasons.includes(season as Season),
-    ) &&
-    typeof value.priceCents === 'number' &&
-    Number.isInteger(value.priceCents) &&
-    units.includes(value.unit as Unit) &&
-    typeof value.availableStock === 'number' &&
-    Number.isInteger(value.availableStock) &&
-    typeof value.lowStockThreshold === 'number' &&
-    Number.isInteger(value.lowStockThreshold) &&
-    typeof value.published === 'boolean' &&
-    typeof value.isLowStock === 'boolean' &&
-    typeof value.hasImage === 'boolean' &&
-    (value.imageUrl === null || typeof value.imageUrl === 'string') &&
-    typeof value.revision === 'number' &&
-    Number.isInteger(value.revision) &&
-    (value.archivedAt === null || typeof value.archivedAt === 'string') &&
-    (value.moderatedAt === null || typeof value.moderatedAt === 'string') &&
-    (value.imageMeta === null || isRecord(value.imageMeta))
-  );
-}
-
-function isProductList(
-  value: unknown,
-): value is components['schemas']['ProducerProductListResponseDto'] {
-  return (
-    isRecord(value) &&
-    Array.isArray(value.items) &&
-    value.items.every(isProduct) &&
-    typeof value.total === 'number' &&
-    Number.isInteger(value.total) &&
-    typeof value.page === 'number' &&
-    Number.isInteger(value.page) &&
-    typeof value.limit === 'number' &&
-    Number.isInteger(value.limit)
-  );
-}
-
-function isProfile(value: unknown): value is Profile {
-  return (
-    isRecord(value) &&
-    typeof value.farmName === 'string' &&
-    typeof value.description === 'string' &&
-    typeof value.city === 'string' &&
-    typeof value.collectionAddress === 'string' &&
-    typeof value.latitude === 'number' &&
-    typeof value.longitude === 'number' &&
-    typeof value.revision === 'number'
-  );
-}
-
-async function fetchProducts(page: number) {
-  const value: unknown = await authenticatedRequest(
+function fetchProducts(page: number) {
+  return authenticatedRequest<ProductListResponse>(
     `producer/products?page=${page}&limit=50`,
   );
-  if (!isProductList(value))
-    throw new ApiError(0, 'The server returned an invalid product list.');
-  return value;
 }
 
-async function fetchProfile() {
-  const value: unknown = await authenticatedRequest('producer/profile');
-  if (!isProfile(value))
-    throw new ApiError(0, 'The server returned an invalid profile.');
-  return value;
+function fetchProfile() {
+  return authenticatedRequest<Profile>('producer/profile');
 }
 
-async function fetchProduct(id: string) {
+function fetchProduct(id: string) {
   if (!/^[a-f\d]{24}$/i.test(id))
-    throw new ApiError(400, 'This product identifier is invalid.');
-  const value: unknown = await authenticatedRequest(
+    return Promise.reject(
+      new ApiError(400, 'This product identifier is invalid.'),
+    );
+  return authenticatedRequest<Product>(
     `producer/products/${encodeURIComponent(id)}`,
   );
-  if (!isProduct(value))
-    throw new ApiError(0, 'The server returned an invalid product.');
-  return value;
 }
 
 function errorCopy(error: unknown, action: string) {
@@ -186,8 +83,8 @@ function ProductEditor({
   const [imageUploadFailed, setImageUploadFailed] = useState(false);
   const client = useQueryClient();
   const save = useMutation({
-    mutationFn: async (input: ProductInput | UpdateInput) => {
-      const value: unknown = await authenticatedRequest(
+    mutationFn: (input: ProductInput | UpdateInput) =>
+      authenticatedRequest<Product>(
         baseProduct
           ? `producer/products/${baseProduct.id}`
           : 'producer/products',
@@ -197,11 +94,7 @@ function ProductEditor({
             baseProduct ? { ...input, revision: baseProduct.revision } : input,
           ),
         },
-      );
-      if (!isProduct(value))
-        throw new ApiError(0, 'The server returned an invalid product.');
-      return value;
-    },
+      ),
     onSuccess: async (saved) => {
       setBaseProduct(saved);
       setImageUploadFailed(false);
@@ -210,7 +103,7 @@ function ProductEditor({
         body.set('revision', String(saved.revision));
         body.set('file', selectedFile);
         try {
-          const uploaded: unknown = await authenticatedRequest(
+          const uploaded = await authenticatedRequest<Product>(
             `producer/products/${saved.id}/image`,
             {
               method: 'POST',
@@ -218,11 +111,6 @@ function ProductEditor({
               signal: AbortSignal.timeout(30000),
             },
           );
-          if (!isProduct(uploaded))
-            throw new ApiError(
-              0,
-              'The server returned an invalid image response.',
-            );
           setBaseProduct(uploaded);
         } catch (error) {
           setImageUploadFailed(true);
@@ -646,12 +534,10 @@ function ProductImage({ product }: { product: Product }) {
           return;
         }
         setRetried(true);
-        void authenticatedRequest(`producer/products/${product.id}/image`)
-          .then((value: unknown) => {
-            if (isRecord(value) && typeof value.url === 'string')
-              setImageUrl(value.url);
-            else setImageUrl('');
-          })
+        void authenticatedRequest<{ url?: string }>(
+          `producer/products/${product.id}/image`,
+        )
+          .then((value) => setImageUrl(value.url ?? ''))
           .catch(() => setImageUrl(''));
       }}
     />
@@ -672,17 +558,11 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
     retry: false,
   });
   const archive = useMutation({
-    mutationFn: async (product: Product) => {
-      const result: unknown = await authenticatedRequest(
-        `producer/products/${product.id}/archive`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ revision: product.revision }),
-        },
-      );
-      if (!isProduct(result))
-        throw new ApiError(0, 'The server returned an invalid product.');
-    },
+    mutationFn: (product: Product) =>
+      authenticatedRequest<Product>(`producer/products/${product.id}/archive`, {
+        method: 'POST',
+        body: JSON.stringify({ revision: product.revision }),
+      }),
     onSuccess: () => client.invalidateQueries({ queryKey: productKey }),
   });
   if (query.isPending)
@@ -930,21 +810,17 @@ function ProfileForm({ profile }: { profile: Profile }) {
   const client = useQueryClient();
   const [notice, setNotice] = useState('');
   const mutation = useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       profile,
       input,
     }: {
       profile: Profile;
       input: Omit<ProfileInput, 'revision'>;
-    }) => {
-      const result: unknown = await authenticatedRequest('producer/profile', {
+    }) =>
+      authenticatedRequest<Profile>('producer/profile', {
         method: 'PATCH',
         body: JSON.stringify({ ...input, revision: profile.revision }),
-      });
-      if (!isProfile(result))
-        throw new ApiError(0, 'The server returned an invalid profile.');
-      return result;
-    },
+      }),
     onSuccess: async (profile) => {
       await client.cancelQueries({ queryKey: profileKey });
       client.setQueryData(profileKey, profile);

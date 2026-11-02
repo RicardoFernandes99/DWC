@@ -12,26 +12,12 @@ import {
   ProducerDetailRoute,
   type SearchState,
 } from './features/catalogue/catalogue';
+import {
+  PRODUCT_CATEGORIES,
+  PRODUCT_SEASONS,
+  PRODUCTION_METHODS,
+} from './lib/format';
 
-const categories = [
-  'vegetables',
-  'fruits',
-  'dairy',
-  'eggs',
-  'meat',
-  'bakery',
-  'pantry',
-  'beverages',
-  'other',
-] as const;
-const seasons = ['spring', 'summer', 'autumn', 'winter', 'year_round'] as const;
-const methods = [
-  'organic',
-  'sustainable',
-  'conventional',
-  'artisanal',
-  'biodynamic',
-] as const;
 const sorts = ['newest', 'price_asc', 'price_desc', 'name_asc'] as const;
 function enumValue<T extends readonly string[]>(
   value: unknown,
@@ -54,15 +40,15 @@ function validateCatalogueSearch(search: Record<string, unknown>): SearchState {
       : undefined;
   return {
     q: stringValue('q', 100),
-    category: enumValue(search.category, categories),
+    category: enumValue(search.category, PRODUCT_CATEGORIES),
     location: stringValue('location', 100),
     producerId:
       typeof search.producerId === 'string' &&
       /^[a-f\d]{24}$/i.test(search.producerId)
         ? search.producerId
         : undefined,
-    season: enumValue(search.season, seasons),
-    productionMethod: enumValue(search.productionMethod, methods),
+    season: enumValue(search.season, PRODUCT_SEASONS),
+    productionMethod: enumValue(search.productionMethod, PRODUCTION_METHODS),
     minPriceCents:
       search.minPriceCents === undefined
         ? undefined

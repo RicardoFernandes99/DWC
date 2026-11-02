@@ -24,83 +24,34 @@ const producerApplicationKey = (userId: string) =>
 const SUSPENDED_PRODUCER_BANNER_COPY =
   'Your account is suspended until the issue is resolved. You cannot create new auctions or register new products.';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function isProducerStatus(value: unknown): value is ProducerStatus {
-  return (
-    value === 'pending' ||
-    value === 'approved' ||
-    value === 'rejected' ||
-    value === 'suspended'
+function fetchProducerApplication(): Promise<ProducerApplicationResponse> {
+  return authenticatedRequest<ProducerApplicationResponse>(
+    'producer/application',
   );
 }
 
-function isApplicationDetails(
-  value: unknown,
-): value is ProducerApplicationDetails {
-  return (
-    isRecord(value) &&
-    typeof value.farmName === 'string' &&
-    typeof value.description === 'string' &&
-    typeof value.city === 'string' &&
-    typeof value.collectionAddress === 'string' &&
-    typeof value.latitude === 'number' &&
-    Number.isFinite(value.latitude) &&
-    typeof value.longitude === 'number' &&
-    Number.isFinite(value.longitude)
-  );
-}
-
-function isProducerApplicationResponse(
-  value: unknown,
-): value is ProducerApplicationResponse {
-  return (
-    isRecord(value) &&
-    isProducerStatus(value.status) &&
-    (value.rejectionReason === null ||
-      typeof value.rejectionReason === 'string') &&
-    (value.submittedAt === null || typeof value.submittedAt === 'string') &&
-    (value.decidedAt === undefined ||
-      value.decidedAt === null ||
-      typeof value.decidedAt === 'string') &&
-    (value.application === null || isApplicationDetails(value.application))
-  );
-}
-
-async function fetchProducerApplication(): Promise<ProducerApplicationResponse> {
-  const result: unknown = await authenticatedRequest('producer/application');
-  if (!isProducerApplicationResponse(result))
-    throw new ApiError(0, 'The server returned an invalid response.');
-  return result;
-}
-
-async function putProducerApplication(
+function putProducerApplication(
   input: SubmitProducerApplication,
 ): Promise<ProducerApplicationResponse> {
-  const result: unknown = await authenticatedRequest('producer/application', {
-    method: 'PUT',
-    body: JSON.stringify(input),
-  });
-  if (!isProducerApplicationResponse(result))
-    throw new ApiError(0, 'The server returned an invalid response.');
-  return result;
+  return authenticatedRequest<ProducerApplicationResponse>(
+    'producer/application',
+    {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    },
+  );
 }
 
-async function postResubmitProducerApplication(
+function postResubmitProducerApplication(
   input: SubmitProducerApplication,
 ): Promise<ProducerApplicationResponse> {
-  const result: unknown = await authenticatedRequest(
+  return authenticatedRequest<ProducerApplicationResponse>(
     'producer/application/resubmit',
     {
       method: 'POST',
       body: JSON.stringify(input),
     },
   );
-  if (!isProducerApplicationResponse(result))
-    throw new ApiError(0, 'The server returned an invalid response.');
-  return result;
 }
 
 function formatSubmittedTimestamp(iso: string): string {
