@@ -1,11 +1,23 @@
+import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Leaf, Sprout } from 'lucide-react';
+import { Check, Leaf, ShoppingBasket, Sprout } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import { formatMoney, formatUnit } from '@/lib/format';
+import { useCart } from '@/features/cart/use-cart';
 
 export type CatalogueProduct = components['schemas']['CatalogueProductDto'];
 
 export function ProductCard({ product }: { product: CatalogueProduct }) {
+  const { addItem } = useCart();
+  const [added, setAdded] = useState(false);
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addItem(product, 1);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1200);
+  };
+
   return (
     <article className="group relative flex min-w-0 flex-col overflow-hidden rounded-lg border bg-card shadow-xs transition-shadow hover:shadow-md motion-reduce:transition-none">
       <div className="relative aspect-[16/11] overflow-hidden bg-secondary">
@@ -42,15 +54,40 @@ export function ProductCard({ product }: { product: CatalogueProduct }) {
         <p className="mt-0.5 truncate text-xs text-muted-foreground md:text-sm">
           {product.producerFarmName}
         </p>
-        <p className="mt-auto pt-3 tabular-nums">
-          <span className="text-lg font-semibold">
-            {formatMoney(product.priceCents)}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {' '}
-            / {formatUnit(product.unit)}
-          </span>
-        </p>
+        <div className="mt-auto pt-3 flex items-center justify-between gap-2">
+          <p className="tabular-nums">
+            <span className="text-base font-semibold md:text-lg">
+              {formatMoney(product.priceCents)}
+            </span>
+            <span className="text-xs text-muted-foreground md:text-sm">
+              {' '}
+              / {formatUnit(product.unit)}
+            </span>
+          </p>
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={product.availableStock <= 0}
+            className="relative z-10 inline-flex items-center gap-1 rounded-md bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            aria-label={`Add ${product.name} to cart`}
+          >
+            {added ? (
+              <>
+                <Check
+                  aria-hidden="true"
+                  className="size-3.5 text-primary-foreground"
+                />{' '}
+                Added
+              </>
+            ) : product.availableStock <= 0 ? (
+              'Sold out'
+            ) : (
+              <>
+                <ShoppingBasket aria-hidden="true" className="size-3.5" /> Add
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </article>
   );

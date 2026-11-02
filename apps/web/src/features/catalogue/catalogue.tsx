@@ -1,11 +1,22 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
-import { ArrowLeft, ArrowRight, MapPin, Sprout } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  MapPin,
+  Minus,
+  Plus,
+  ShoppingBasket,
+  Sprout,
+} from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import { ProductGrid } from '@/components/shared/product-card';
 import { Button } from '@/components/ui/button';
 import { formatLabel, formatMoney, formatUnit } from '@/lib/format';
 import { ApiError, publicRequest } from '@/lib/session';
+import { useCart } from '@/features/cart/use-cart';
 import { CatalogueFilters } from './components/catalogue-filters';
 import {
   producerKey,
@@ -245,6 +256,7 @@ export function ProductPage({ productId }: { productId: string }) {
             {formatLabel(product.productionMethod)} production ·{' '}
             {product.availableStock} available
           </p>
+          <ProductAddToCart product={product} />
           <Link
             to="/farm/$producerId"
             params={{ producerId: product.producerId }}
@@ -261,6 +273,102 @@ export function ProductPage({ productId }: { productId: string }) {
         </div>
       </article>
     </main>
+  );
+}
+
+function ProductAddToCart({ product }: { product: Product }) {
+  const { items, addItem } = useCart();
+  const [quantity, setQuantity] = useState(1);
+  const [feedback, setFeedback] = useState(false);
+
+  const cartItem = items.find((item) => item.productId === product.id);
+  const inCartQty = cartItem?.quantity ?? 0;
+  const isOutOfStock = product.availableStock <= 0;
+
+  const handleAdd = () => {
+    if (isOutOfStock) return;
+    addItem(product, quantity);
+    setFeedback(true);
+    setTimeout(() => setFeedback(false), 3000);
+  };
+
+  return (
+    <div className="mt-6 rounded-lg border bg-card p-4 shadow-2xs">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-9 rounded-md"
+            disabled={quantity <= 1 || isOutOfStock}
+            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            aria-label="Decrease quantity"
+          >
+            <Minus aria-hidden="true" className="size-4" />
+          </Button>
+          <span
+            className="min-w-10 text-center font-medium tabular-nums"
+            aria-label={`Quantity: ${quantity}`}
+          >
+            {quantity}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-9 rounded-md"
+            disabled={quantity >= product.availableStock || isOutOfStock}
+            onClick={() =>
+              setQuantity((q) => Math.min(product.availableStock, q + 1))
+            }
+            aria-label="Increase quantity"
+          >
+            <Plus aria-hidden="true" className="size-4" />
+          </Button>
+        </div>
+
+        <Button
+          type="button"
+          onClick={handleAdd}
+          disabled={isOutOfStock}
+          className="rounded-md flex-1 min-w-[140px]"
+        >
+          {isOutOfStock ? (
+            'Out of stock'
+          ) : (
+            <>
+              <ShoppingBasket aria-hidden="true" className="size-4" />
+              Add to cart
+            </>
+          )}
+        </Button>
+      </div>
+
+      {inCartQty > 0 && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          {inCartQty} currently in your{' '}
+          <Link to="/cart" className="text-primary underline">
+            cart
+          </Link>
+        </p>
+      )}
+
+      {feedback && (
+        <div
+          role="status"
+          className="mt-3 flex items-center justify-between rounded-md bg-secondary/80 px-3 py-2 text-xs font-medium text-secondary-foreground"
+        >
+          <span className="flex items-center gap-1.5">
+            <Check aria-hidden="true" className="size-3.5 text-primary" />
+            Added {quantity} to cart
+          </span>
+          <Link to="/cart" className="text-primary underline font-semibold">
+            View cart
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }
 

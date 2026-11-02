@@ -1,10 +1,10 @@
 # 015: Keep a multi-producer cart across refresh and buyer login
 
 - Macro: M03
-- Status: Draft
+- Status: In progress
 - Depends on: 014
 - PR: Not opened
-- Branch / parent: Not assigned
+- Branch / parent: codex/age-015-guest-cart-web (stacked on codex/age-014-public-catalogue-web)
 - Blockers: None beyond dependencies
 
 ## Outcome

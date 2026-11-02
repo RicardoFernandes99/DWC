@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-router';
 import { Shell, AuthPage, Account } from './pages';
 import { UIDesignPage } from './pages/ui-design';
+import { CartPage } from './features/cart/components/cart-page';
 import {
   CataloguePage,
   ProductDetailRoute,
@@ -73,6 +74,11 @@ const productRoute = createRoute({
   path: '/product/$productId',
   component: ProductDetailRoute,
 });
+const cartRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/cart',
+  component: CartPage,
+});
 const publicProducerRoute = createRoute({
   getParentRoute: () => root,
   path: '/farm/$producerId',
@@ -129,6 +135,7 @@ export const router = createRouter({
   routeTree: root.addChildren([
     index,
     productRoute,
+    cartRoute,
     publicProducerRoute,
     uiDesign,
     loginRoute,
