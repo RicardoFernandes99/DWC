@@ -389,6 +389,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["OrdersController_listOrders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orders/{orderId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["OrdersController_getOrderById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orders/{orderId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["OrdersController_advanceOrderStatus"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1418,6 +1466,245 @@ export interface components {
             /** @example Pricing, availability or fees have changed since the quote was generated. */
             message: string;
             currentQuote: components["schemas"]["CheckoutQuoteResponseDto"];
+        };
+        OrderLineItemDto: {
+            /**
+             * @description Product identifier at purchase time.
+             * @example 60d5ecb8b392d13b48f10a01
+             */
+            productId: string;
+            /**
+             * @description Immutable product name snapshot at purchase time.
+             * @example Organic Gala Apples
+             */
+            productName: string;
+            /**
+             * @description Unit of measure.
+             * @example kg
+             * @enum {string}
+             */
+            productUnit: "unit" | "bunch" | "box" | "jar" | "bottle" | "bag" | "kg" | "g_500" | "g_250" | "l" | "ml_500";
+            /**
+             * @description Quantity ordered in integer units.
+             * @example 2
+             */
+            quantity: number;
+            /**
+             * @description Historical unit price in integer EUR cents.
+             * @example 350
+             */
+            unitPriceCents: number;
+            /**
+             * @description Historical line total in integer EUR cents.
+             * @example 700
+             */
+            lineTotalCents: number;
+        };
+        OrderDeliveryAddressDto: {
+            /** @example Maria Silva */
+            recipientName: string;
+            /** @example Rua das Flores 123 */
+            street: string;
+            /** @example 4000-001 */
+            postalCode: string;
+            /** @example Porto */
+            city: string;
+            /** @example Portugal */
+            country: string;
+            /** @example Leave at front gate */
+            notes?: Record<string, never> | null;
+        };
+        OrderStatusHistoryDto: {
+            /**
+             * @description Fulfilment status recorded in this step.
+             * @example pending
+             * @enum {string}
+             */
+            status: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+            /**
+             * @description ISO-8601 timestamp when this transition occurred.
+             * @example 2026-11-02T14:30:00.000Z
+             */
+            timestamp: string;
+            /**
+             * @description User identifier who authored the transition.
+             * @example 60d5ecb8b392d13b48f10b01
+             */
+            actorId: string;
+            /**
+             * @description Role of the actor who executed the transition.
+             * @example buyer
+             * @enum {string}
+             */
+            actorRole: "buyer" | "producer" | "admin";
+            /**
+             * @description Optional note or tracking details.
+             * @example Dispatched via carrier tracking #PT-12345
+             */
+            note?: Record<string, never> | null;
+        };
+        OrderPaymentSummaryDto: {
+            /**
+             * @description Unique payment identifier.
+             * @example 60d5ecb8b392d13b48f10c01
+             */
+            paymentId: string;
+            /**
+             * @description Status of the payment.
+             * @example succeeded
+             * @enum {string}
+             */
+            status: "succeeded" | "failed";
+            /**
+             * @description Last 4 digits of the payment card.
+             * @example 4242
+             */
+            cardLast4: string;
+            /**
+             * @description Expiry month of the card (1-12).
+             * @example 12
+             */
+            cardExpiryMonth: number;
+            /**
+             * @description Expiry year of the card.
+             * @example 2028
+             */
+            cardExpiryYear: number;
+            /**
+             * @description Total amount paid for this checkout transaction in integer EUR cents.
+             * @example 4500
+             */
+            amountCents: number;
+        };
+        OrderResponseDto: {
+            /**
+             * @description Unique order identifier.
+             * @example 60d5ecb8b392d13b48f10d01
+             */
+            id: string;
+            /**
+             * @description Associated multi-producer checkout session identifier.
+             * @example 60d5ecb8b392d13b48f10e01
+             */
+            checkoutId: string;
+            /**
+             * @description Buyer user identifier.
+             * @example 60d5ecb8b392d13b48f10f01
+             */
+            buyerId: string;
+            /**
+             * @description Name of the buyer.
+             * @example Maria Silva
+             */
+            buyerName?: Record<string, never> | null;
+            /**
+             * @description Producer user identifier.
+             * @example 60d5ecb8b392d13b48f10f02
+             */
+            producerId: string;
+            /**
+             * @description Farm name or legal name of the producer.
+             * @example Quinta do Sol
+             */
+            producerName?: Record<string, never> | null;
+            /** @description Immutable item snapshots purchased from this producer. */
+            items: components["schemas"]["OrderLineItemDto"][];
+            /**
+             * @description Fulfilment method selected by the buyer at checkout.
+             * @example delivery
+             * @enum {string}
+             */
+            fulfilmentMethod: "delivery" | "collection";
+            /** @description Delivery destination address, or null for collection orders. */
+            deliveryAddress?: components["schemas"]["OrderDeliveryAddressDto"] | null;
+            /**
+             * @description Subtotal for this producer in integer EUR cents.
+             * @example 3500
+             */
+            subtotalCents: number;
+            /**
+             * @description Delivery fee in integer EUR cents (0 for collection or free delivery).
+             * @example 500
+             */
+            deliveryFeeCents: number;
+            /**
+             * @description Total order amount in integer EUR cents.
+             * @example 4000
+             */
+            totalCents: number;
+            /**
+             * @description Current fulfilment status.
+             * @example pending
+             * @enum {string}
+             */
+            status: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+            /** @description Chronological audit trail of all status transitions for this order. */
+            statusHistory: components["schemas"]["OrderStatusHistoryDto"][];
+            /**
+             * @description Origin of the order (catalogue checkout or auction win).
+             * @example catalogue
+             * @enum {string}
+             */
+            origin: "catalogue" | "auction";
+            /**
+             * @description Monotonically increasing revision counter for optimistic concurrency.
+             * @example 1
+             */
+            revision: number;
+            /**
+             * @description Creation timestamp.
+             * @example 2026-11-02T14:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @description Last update timestamp.
+             * @example 2026-11-02T14:30:00.000Z
+             */
+            updatedAt: string;
+            /** @description Simulated card payment summary. */
+            payment?: components["schemas"]["OrderPaymentSummaryDto"] | null;
+        };
+        OrderListResponseDto: {
+            /** @description List of order records for the current page. */
+            items: components["schemas"]["OrderResponseDto"][];
+            /**
+             * @description Total number of orders matching the query.
+             * @example 12
+             */
+            total: number;
+            /**
+             * @description Current 1-based page number.
+             * @example 1
+             */
+            page: number;
+            /**
+             * @description Maximum items per page.
+             * @example 20
+             */
+            limit: number;
+            /**
+             * @description Total number of pages.
+             * @example 1
+             */
+            totalPages: number;
+        };
+        UpdateOrderStatusDto: {
+            /**
+             * @description Target fulfilment status. Must follow strict sequential state progression.
+             * @example confirmed
+             * @enum {string}
+             */
+            status: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+            /**
+             * @description Expected current revision of the order for optimistic concurrency control.
+             * @example 1
+             */
+            expectedRevision?: number;
+            /**
+             * @description Optional note or tracking details recorded in the transition history.
+             * @example Dispatched via carrier tracking #PT-12345
+             */
+            note?: string;
         };
     };
     responses: never;
@@ -2985,6 +3272,160 @@ export interface operations {
             };
             /** @description Authentication or database storage unavailable. */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrdersController_listOrders: {
+        parameters: {
+            query?: {
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Maximum number of orders returned per page (1 to 100). */
+                limit?: number;
+                /** @description Filter orders by fulfilment status. */
+                status?: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of orders strictly scoped to the authenticated buyer or producer. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderListResponseDto"];
+                };
+            };
+            /** @description Invalid pagination bounds or query parameters. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Role does not allow order listing. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrdersController_getOrderById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique 24-character hexadecimal MongoDB ObjectId of the order. */
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Complete order details including immutable snapshots, fulfilment address, integer EUR totals, and full status transition history. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponseDto"];
+                };
+            };
+            /** @description Invalid order ID format. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order not found or does not belong to the authenticated user. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrdersController_advanceOrderStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique 24-character hexadecimal MongoDB ObjectId of the order. */
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrderStatusDto"];
+            };
+        };
+        responses: {
+            /** @description Order status advanced successfully one linear step or returned idempotently if already in target state. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponseDto"];
+                };
+            };
+            /** @description Invalid status enum, malformed payload, or invalid order ID. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only producers may advance order fulfilment. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order not found or does not belong to the producer. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description State transition violation (invalid_status_transition), optimistic revision mismatch (revision_conflict), or blocked by open refund (confirmation_blocked_by_refund). */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -1,10 +1,10 @@
 # 019: List orders and enforce sequential fulfilment
 
 - Macro: M04
-- Status: Draft
+- Status: In progress
 - Depends on: 017
 - PR: Not opened
-- Branch / parent: Not assigned
+- Branch / parent: codex/age-019-order-tracking-api / codex/age-018-checkout-web (PR #29)
 - Blockers: None beyond dependencies
 
 ## Outcome

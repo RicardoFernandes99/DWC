@@ -23,6 +23,8 @@ import { CatalogueController } from './catalogue/catalogue.controller.js';
 import { CatalogueService } from './catalogue/catalogue.service.js';
 import { CheckoutController } from './checkout/checkout.controller.js';
 import { CheckoutService } from './checkout/checkout.service.js';
+import { OrdersController } from './orders/orders.controller.js';
+import { OrdersService } from './orders/orders.service.js';
 
 // Contract-only module: controllers and DTO metadata are real; no service is called.
 @Module({
@@ -37,6 +39,7 @@ import { CheckoutService } from './checkout/checkout.service.js';
     ProducerProductsController,
     CatalogueController,
     CheckoutController,
+    OrdersController,
   ],
   providers: [
     { provide: AuthService, useValue: {} },
@@ -48,6 +51,7 @@ import { CheckoutService } from './checkout/checkout.service.js';
     { provide: ProductsService, useValue: {} },
     { provide: CatalogueService, useValue: {} },
     { provide: CheckoutService, useValue: {} },
+    { provide: OrdersService, useValue: {} },
     {
       provide: ConfigService,
       useValue: { getOrThrow: () => 'http://localhost' },
