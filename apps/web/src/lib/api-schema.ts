@@ -277,6 +277,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CatalogueController_listProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CatalogueController_getProduct"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CatalogueController_listProducers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CatalogueController_getProducer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producers/{id}/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CatalogueController_listProducerProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -893,6 +973,45 @@ export interface components {
              * @example 300
              */
             expiresInSeconds: number;
+        };
+        Object: Record<string, never>;
+        CatalogueProductDto: {
+            id: string;
+            producerId: string;
+            producerFarmName: string;
+            producerCity: string;
+            name: string;
+            description: string;
+            /** @enum {string} */
+            category: "vegetables" | "fruits" | "dairy" | "eggs" | "meat" | "bakery" | "pantry" | "beverages" | "other";
+            /** @enum {string} */
+            productionMethod: "organic" | "sustainable" | "conventional" | "artisanal" | "biodynamic";
+            seasons: ("spring" | "summer" | "autumn" | "winter" | "year_round")[];
+            priceCents: number;
+            /** @enum {string} */
+            unit: "unit" | "bunch" | "box" | "jar" | "bottle" | "bag" | "kg" | "g_500" | "g_250" | "l" | "ml_500";
+            availableStock: number;
+            imageUrl: string | null;
+        };
+        CatalogueListDto: {
+            items: components["schemas"]["CatalogueProductDto"][];
+            total: number;
+            page: number;
+            limit: number;
+        };
+        ProducerPublicDto: {
+            id: string;
+            farmName: string;
+            description: string;
+            city: string;
+            latitude: number;
+            longitude: number;
+        };
+        ProducerListDto: {
+            items: components["schemas"]["ProducerPublicDto"][];
+            total: number;
+            page: number;
+            limit: number;
         };
     };
     responses: never;
@@ -2169,6 +2288,184 @@ export interface operations {
             };
             /** @description Authentication or product image storage unavailable. */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CatalogueController_listProducts: {
+        parameters: {
+            query?: {
+                q?: string;
+                category?: "vegetables" | "fruits" | "dairy" | "eggs" | "meat" | "bakery" | "pantry" | "beverages" | "other";
+                producerId?: string;
+                location?: string;
+                season?: "spring" | "summer" | "autumn" | "winter" | "year_round";
+                productionMethod?: "organic" | "sustainable" | "conventional" | "artisanal" | "biodynamic";
+                minPriceCents?: number;
+                maxPriceCents?: number;
+                sort?: "newest" | "price_asc" | "price_desc" | "name_asc";
+                page?: components["schemas"]["Object"];
+                limit?: components["schemas"]["Object"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueListDto"];
+                };
+            };
+            /** @description Invalid filters, price range, pagination or query fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CatalogueController_getProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueProductDto"];
+                };
+            };
+            /** @description Invalid product identifier. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product not found or unavailable. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CatalogueController_listProducers: {
+        parameters: {
+            query?: {
+                q?: string;
+                page?: components["schemas"]["Object"];
+                limit?: components["schemas"]["Object"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerListDto"];
+                };
+            };
+            /** @description Invalid search or pagination. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CatalogueController_getProducer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerPublicDto"];
+                };
+            };
+            /** @description Invalid producer identifier. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Producer not found or unavailable. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CatalogueController_listProducerProducts: {
+        parameters: {
+            query?: {
+                q?: string;
+                category?: "vegetables" | "fruits" | "dairy" | "eggs" | "meat" | "bakery" | "pantry" | "beverages" | "other";
+                producerId?: string;
+                location?: string;
+                season?: "spring" | "summer" | "autumn" | "winter" | "year_round";
+                productionMethod?: "organic" | "sustainable" | "conventional" | "artisanal" | "biodynamic";
+                minPriceCents?: number;
+                maxPriceCents?: number;
+                sort?: "newest" | "price_asc" | "price_desc" | "name_asc";
+                page?: components["schemas"]["Object"];
+                limit?: components["schemas"]["Object"];
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueListDto"];
+                };
+            };
+            /** @description Invalid producer identifier or catalogue filters. */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

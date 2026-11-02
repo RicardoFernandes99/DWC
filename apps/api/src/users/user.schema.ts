@@ -98,3 +98,9 @@ UserSchema.index({
   producerStatus: 1,
   'producerApplication.submittedAt': -1,
 });
+UserSchema.index({
+  role: 1,
+  producerStatus: 1,
+  'producerApplication.farmName': 1,
+  _id: 1,
+});

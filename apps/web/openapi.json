@@ -1220,6 +1220,484 @@
           "Producer products"
         ]
       }
+    },
+    "/api/products": {
+      "get": {
+        "operationId": "CatalogueController_listProducts",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vegetables",
+                "fruits",
+                "dairy",
+                "eggs",
+                "meat",
+                "bakery",
+                "pantry",
+                "beverages",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "producerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "mongo-id",
+              "type": "string"
+            }
+          },
+          {
+            "name": "location",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "season",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          {
+            "name": "productionMethod",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organic",
+                "sustainable",
+                "conventional",
+                "artisanal",
+                "biodynamic"
+              ]
+            }
+          },
+          {
+            "name": "minPriceCents",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "maximum": 10000000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPriceCents",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "maximum": 10000000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "newest",
+              "type": "string",
+              "enum": [
+                "newest",
+                "price_asc",
+                "price_desc",
+                "name_asc"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueListDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filters, price range, pagination or query fields."
+          }
+        },
+        "tags": [
+          "Public catalogue"
+        ]
+      }
+    },
+    "/api/products/{id}": {
+      "get": {
+        "operationId": "CatalogueController_getProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueProductDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid product identifier."
+          },
+          "404": {
+            "description": "Product not found or unavailable."
+          }
+        },
+        "tags": [
+          "Public catalogue"
+        ]
+      }
+    },
+    "/api/producers": {
+      "get": {
+        "operationId": "CatalogueController_listProducers",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerListDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search or pagination."
+          }
+        },
+        "tags": [
+          "Public catalogue"
+        ]
+      }
+    },
+    "/api/producers/{id}": {
+      "get": {
+        "operationId": "CatalogueController_getProducer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerPublicDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid producer identifier."
+          },
+          "404": {
+            "description": "Producer not found or unavailable."
+          }
+        },
+        "tags": [
+          "Public catalogue"
+        ]
+      }
+    },
+    "/api/producers/{id}/products": {
+      "get": {
+        "operationId": "CatalogueController_listProducerProducts",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vegetables",
+                "fruits",
+                "dairy",
+                "eggs",
+                "meat",
+                "bakery",
+                "pantry",
+                "beverages",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "producerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "mongo-id",
+              "type": "string"
+            }
+          },
+          {
+            "name": "location",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "season",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          {
+            "name": "productionMethod",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organic",
+                "sustainable",
+                "conventional",
+                "artisanal",
+                "biodynamic"
+              ]
+            }
+          },
+          {
+            "name": "minPriceCents",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "maximum": 10000000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPriceCents",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "maximum": 10000000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "newest",
+              "type": "string",
+              "enum": [
+                "newest",
+                "price_asc",
+                "price_desc",
+                "name_asc"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueListDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid producer identifier or catalogue filters."
+          }
+        },
+        "tags": [
+          "Public catalogue"
+        ]
+      }
     }
   },
   "info": {
@@ -2480,6 +2958,194 @@
           "uploadedAt",
           "url",
           "expiresInSeconds"
+        ]
+      },
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "CatalogueProductDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "producerId": {
+            "type": "string"
+          },
+          "producerFarmName": {
+            "type": "string"
+          },
+          "producerCity": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "vegetables",
+              "fruits",
+              "dairy",
+              "eggs",
+              "meat",
+              "bakery",
+              "pantry",
+              "beverages",
+              "other"
+            ]
+          },
+          "productionMethod": {
+            "type": "string",
+            "enum": [
+              "organic",
+              "sustainable",
+              "conventional",
+              "artisanal",
+              "biodynamic"
+            ]
+          },
+          "seasons": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          "priceCents": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "bunch",
+              "box",
+              "jar",
+              "bottle",
+              "bag",
+              "kg",
+              "g_500",
+              "g_250",
+              "l",
+              "ml_500"
+            ]
+          },
+          "availableStock": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "producerId",
+          "producerFarmName",
+          "producerCity",
+          "name",
+          "description",
+          "category",
+          "productionMethod",
+          "seasons",
+          "priceCents",
+          "unit",
+          "availableStock",
+          "imageUrl"
+        ]
+      },
+      "CatalogueListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogueProductDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "ProducerPublicDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "farmName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "farmName",
+          "description",
+          "city",
+          "latitude",
+          "longitude"
+        ]
+      },
+      "ProducerListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProducerPublicDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
         ]
       }
     }

@@ -164,3 +164,24 @@ ProductSchema.index({
   category: 1,
   createdAt: -1,
 });
+ProductSchema.index({
+  published: 1,
+  archivedAt: 1,
+  moderatedAt: 1,
+  priceCents: 1,
+  _id: 1,
+});
+ProductSchema.index({
+  published: 1,
+  archivedAt: 1,
+  moderatedAt: 1,
+  name: 1,
+  _id: 1,
+});
+ProductSchema.index({
+  published: 1,
+  archivedAt: 1,
+  moderatedAt: 1,
+  createdAt: -1,
+  _id: -1,
+});

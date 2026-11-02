@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module.js';
 import { ProducerApplicationModule } from './producer-application/producer-application.module.js';
 import { ProductsModule } from './products/products.module.js';
+import { CatalogueModule } from './catalogue/catalogue.module.js';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ProductsModule } from './products/products.module.js';
     PaymentMethodsModule,
     ProducerApplicationModule,
     ProductsModule,
+    CatalogueModule,
     UsersModule,
     RedisModule,
     StorageModule,

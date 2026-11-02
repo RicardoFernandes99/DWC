@@ -157,3 +157,15 @@ Authenticated administrators can inspect and decide submitted producer applicati
 - `GET /api/admin/producer-applications/:id` — application review details and current `revision`.
 - `POST /api/admin/producer-applications/:id/approve` — atomically approves a pending application matching `{ revision }`.
 - `POST /api/admin/producer-applications/:id/reject` — atomically rejects a pending application matching `{ revision, reason }`.
+
+## Public catalogue
+
+Catalogue browsing does not require authentication. `GET /api/products` accepts
+bounded text, category, producer, city, season, production method, integer-cent
+price range, sort (`newest`, `price_asc`, `price_desc`, `name_asc`), page and limit
+filters. Product details are available at `GET /api/products/:id`. Producer
+profiles use `GET /api/producers` and `GET /api/producers/:id`; public products for
+one producer use `GET /api/producers/:id/products`. Public results include only
+published, unarchived, unmoderated products belonging to currently approved
+producers with a producer application. Responses expose allowlisted profile and
+product fields; stored product images receive short-lived signed URLs.
