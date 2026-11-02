@@ -131,3 +131,9 @@ The Web auth client uses types generated from the Nest controllers and DTOs. Run
 `pnpm contract:generate` after changing those contracts; `pnpm contract:check`
 checks for drift without requiring the local services. Add newly consumed controllers
 to the contract-only module in `apps/api/src/export-web-contract.ts`.
+
+## UI Design
+
+Open `/ui-design` from the home page for the selected Orchard desktop/mobile
+concept board and source images. These visual references establish the UI
+baseline for future shadcn/ui and ReUI implementation.
