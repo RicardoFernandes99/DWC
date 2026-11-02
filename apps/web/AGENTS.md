@@ -31,12 +31,16 @@ Read `design-engineering` for UI details, `animate` for deliberate motion, and
 - Derive values during render; effects synchronize external systems. Do not add
   `memo`, `useMemo`, `useCallback`, or `use no memo` by default. Use them only for
   a concrete compatibility/correctness requirement or measured issue, and explain.
-- Reuse `src/components/ui`, `cn`, and semantic CSS tokens. Prefer composition and
-  explicit variants over many boolean props. Keep state near its consumers.
+- Reuse `src/components/ui`, `cn`, and semantic CSS tokens. Match the Orchard
+  aesthetic with standard rounded components (`rounded-lg` / `rounded-md`) consistent
+  with catalogue filters, product cards, and header; avoid arbitrary pill or sharp-corner
+  divergences unless specified. Prefer composition and explicit variants over many boolean props.
+  Keep state near its consumers.
 - Read `docs/ui-guidelines.md` and reuse the design-system specimen once 045 is
   implemented. `src/index.css` owns theme values; consume semantic utilities.
   Keep primitives in `components/ui`, repeated project patterns in
-  `components/shared`, and feature-only components with their feature. Repeated
+  `components/shared` (e.g. `@/components/shared/product-card.tsx`), shared formatters/constants
+  in `src/lib/` (e.g. `@/lib/format.ts`), and feature-only components with their feature. Repeated
   controls/behavior deserve typed props rather than copied markup.
 - Use shadcn/ReUI rather than parallel direct Radix application components.
   Registry commands run in `apps/web`; inspect generated code and dependencies.
@@ -59,7 +63,14 @@ Read `design-engineering` for UI details, `animate` for deliberate motion, and
   preserves entered data. Put server field errors near the relevant inputs.
 - Centralize `/api/...` calls through a small shared HTTP client using Vite's proxy.
   Normalize errors there; keep authentication handling out of individual views.
-  Swagger/OpenAPI defines the boundary. Do not invent backend success.
+  Swagger/OpenAPI defines the boundary. Rely on OpenAPI-generated types and typed
+  request helpers (`authenticatedRequest<T>`, `publicRequest<T>`). Do not write redundant,
+  50-line field-by-field runtime validator type guards for responses already typed by OpenAPI schema.
+  Keep parsing of `localStorage` data (e.g. cart items) focused, safe, and lightweight
+  (bounded arrays, valid IDs, positive integer quantities). Do not invent backend success.
+- For cart and checkout errors, distinctly style out-of-stock items ("Out of stock" /
+  "Only X available") without clearing the cart. Surface price change conflicts (409)
+  with an inline prompt to review updated totals.
 
 ## UX, security and real-time state
 

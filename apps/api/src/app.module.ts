@@ -14,6 +14,7 @@ import { ProducerApplicationModule } from './producer-application/producer-appli
 import { ProductsModule } from './products/products.module.js';
 import { CatalogueModule } from './catalogue/catalogue.module.js';
 import { CheckoutModule } from './checkout/checkout.module.js';
+import { OrdersModule } from './orders/orders.module.js';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { CheckoutModule } from './checkout/checkout.module.js';
     ProductsModule,
     CatalogueModule,
     CheckoutModule,
+    OrdersModule,
     UsersModule,
     RedisModule,
     StorageModule,

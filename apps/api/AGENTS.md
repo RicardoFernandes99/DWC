@@ -46,8 +46,19 @@ do not describe them as implemented.
 - MongoDB is a replica set. Stock availability, allowed prior state, and current
   auction price/increment/status/server deadline must hold in the acceptance write.
   An earlier read-check-save sequence is insufficient under concurrency.
-- Use a shared transaction/session when auction state and bid history must commit
-  together. Every participating operation uses that session. Keep transaction
+- Atomic checkout transactions: Execute all order creations, stock decrements, and simulated
+  payment records inside a real MongoDB session transaction (`withTransaction`). Use conditional
+  stock updates (`availableStock: { $gte: quantity }`). Any single failure (insufficient stock,
+  suspended producer, or unpublished item) must abort the transaction completely, leaving no
+  partial orders or stock writes.
+- Quote fingerprint reconfirmation: Recompute current quote fingerprints against live DB state.
+  If prices, product revisions, or delivery fees shift between quote and checkout, return
+  `409 Conflict` (`price_changed`) requiring explicit buyer reconfirmation.
+- Checkout idempotency: Scope idempotency per buyer. Retries with the same key and payload
+  must return the original checkout result without duplicating orders, stock deductions, or
+  simulated payment records; payload mismatches with a reused key return a conflict (`409 Conflict`).
+- Use a shared transaction/session when order state, stock decrements, or auction state and bid
+  history must commit together. Every participating operation uses that session. Keep transaction
   operations sequential; do not run them in `Promise.all`.
 - Callbacks may retry: keep broadcasts, emails and S3 calls outside them. A database
   rollback cannot undo an external side effect. Publish only after commit.

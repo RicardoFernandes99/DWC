@@ -268,7 +268,7 @@ export function CartPage() {
               <div className="mt-6 space-y-2">
                 {!user ? (
                   <Button asChild className="w-full rounded-md" size="lg">
-                    <Link to="/login" search={{ returnTo: '/cart' }}>
+                    <Link to="/login" search={{ returnTo: '/checkout' }}>
                       Sign in as buyer to check out
                     </Link>
                   </Button>
@@ -277,21 +277,18 @@ export function CartPage() {
                     Producer account (Checkout disabled)
                   </Button>
                 ) : isBuyer ? (
-                  <>
-                    <Button
-                      disabled
-                      aria-disabled="true"
-                      className="w-full rounded-md"
-                      size="lg"
-                      title="Checkout is gated until Ticket 018"
-                    >
-                      Proceed to checkout
-                    </Button>
-                    <p className="text-center text-xs text-muted-foreground">
-                      Checkout will be available in the next release (Ticket
-                      018). Your cart is saved.
-                    </p>
-                  </>
+                  <Button
+                    asChild={!hasStockIssues}
+                    disabled={hasStockIssues}
+                    className="w-full rounded-md"
+                    size="lg"
+                  >
+                    {hasStockIssues ? (
+                      <span>Resolve issues to checkout</span>
+                    ) : (
+                      <Link to="/checkout">Proceed to checkout</Link>
+                    )}
+                  </Button>
                 ) : null}
 
                 {hasStockIssues && (

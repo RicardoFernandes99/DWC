@@ -1,10 +1,10 @@
 # 018: Complete checkout with one fulfilment choice and card payment
 
 - Macro: M04
-- Status: Draft
+- Status: In review
 - Depends on: 006, 015, 016, 017
-- PR: Not opened
-- Branch / parent: Not assigned
+- PR: https://github.com/RicardoFernandes99/DWC/pull/29
+- Branch / parent: codex/age-018-checkout-web / codex/age-017-atomic-checkout-api
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -34,11 +34,11 @@ card UI and receive confirmation of each producer order.
 
 ## Acceptance criteria
 
-- [ ] Both fulfilment modes, grouped fees and saved/new method flows work.
-- [ ] Failed checkout creates no success screen or lost cart; line errors are actionable.
-- [ ] Network retry/double click cannot create duplicate orders or payment records.
-- [ ] Address validation, expired methods and session expiry are handled clearly.
-- [ ] Keyboard, accessible payment feedback and all responsive ranges work.
+- [x] Both fulfilment modes, grouped fees and saved/new method flows work.
+- [x] Failed checkout creates no success screen or lost cart; line errors are actionable.
+- [x] Network retry/double click cannot create duplicate orders or payment records.
+- [x] Address validation, expired methods and session expiry are handled clearly.
+- [x] Keyboard, accessible payment feedback and all responsive ranges work.
 
 ## Checks
 
@@ -48,4 +48,14 @@ Complete a multi-producer checkout with dummy payment metadata, then try a stock
 
 ## Delivery notes
 
-Not implemented. Record actual evidence and PR/stack metadata here.
+Implemented `/checkout` page with:
+
+- One-page review grouped by producer.
+- Delivery vs Farm Collection toggle with automatic fee computation (€5.00/producer or free for orders over €50.00 / collection).
+- Single delivery address form with validation, country defaults to Portugal, optional notes, and client storage persistence for returning buyers.
+- Saved payment method selector with active/unexpired filtering and seamless new card entry saving directly via 005 API without exposing full card details or CVV.
+- Single-attempt client idempotency key with in-flight disable state preventing double submission.
+- Inline actionable line issue alerts for stock shortage / unavailable produce without discarding cart contents.
+- Handling for 409 `price_changed` conflict requiring explicit buyer acknowledgement of updated totals.
+- Confirmation screen presenting separate per-producer order references, item counts, statuses, and payment summary with link back to catalogue and account.
+- Cart clearing of purchased items upon confirmed checkout success.

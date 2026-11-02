@@ -7,6 +7,7 @@ import {
 import { Shell, AuthPage, Account } from './pages';
 import { UIDesignPage } from './pages/ui-design';
 import { CartPage } from './features/cart/components/cart-page';
+import { CheckoutPage } from './features/checkout/components/checkout-page';
 import {
   CataloguePage,
   ProductDetailRoute,
@@ -79,6 +80,11 @@ const cartRoute = createRoute({
   path: '/cart',
   component: CartPage,
 });
+const checkoutRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/checkout',
+  component: CheckoutPage,
+});
 const publicProducerRoute = createRoute({
   getParentRoute: () => root,
   path: '/farm/$producerId',
@@ -136,6 +142,7 @@ export const router = createRouter({
     index,
     productRoute,
     cartRoute,
+    checkoutRoute,
     publicProducerRoute,
     uiDesign,
     loginRoute,

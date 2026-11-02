@@ -6,10 +6,11 @@ export type Login = components['schemas']['LoginDto'];
 export type Registration = components['schemas']['RegisterUserDto'];
 export type { User };
 
-export class ApiError extends Error {
+export class ApiError<T = unknown> extends Error {
   constructor(
     public status: number,
     message: string,
+    public data?: T,
   ) {
     super(message);
   }
@@ -62,13 +63,22 @@ async function request<T = unknown>(
   } catch {
     throw new ApiError(0, 'Could not connect. Please try again.');
   }
-  if (!response.ok)
-    throw new ApiError(
-      response.status,
-      response.status === 503
+  if (!response.ok) {
+    let payload: unknown = undefined;
+    try {
+      payload = await response.json();
+    } catch {
+      // non-json body
+    }
+    const message =
+      (payload && typeof (payload as { message?: unknown }).message === 'string'
+        ? (payload as { message: string }).message
+        : undefined) ||
+      (response.status === 503
         ? 'Service temporarily unavailable. Please try again.'
-        : 'The request could not be completed.',
-    );
+        : 'The request could not be completed.');
+    throw new ApiError(response.status, message, payload);
+  }
   if (response.status === 204) return undefined as T;
   try {
     return (await response.json()) as T;
