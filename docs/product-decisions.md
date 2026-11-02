@@ -15,6 +15,13 @@ replaced are not requirements.
 - Roles follow the guide's separation: buyers purchase and bid; producers sell
   and create auctions. Producers cannot purchase or bid using their producer
   account. This replaces the earlier proposal to give producers buyer abilities.
+- Resolve the session before checking route access. Signed-in users visiting
+  another role's routes, or sign-in/registration pages, return to the homepage.
+  Guests visiting protected pages sign in with a return path checked against
+  their role after login. Public browsing and guest carts remain available.
+- Producer navigation and product pages hide cart and purchase controls. Signing
+  in as a producer preserves any existing guest cart. Suspended producers retain
+  access to existing orders and refunds while selling restrictions remain intact.
 - New producers await administrator approval before using selling tools. They
   can sign in and see their status, but cannot prepare product drafts, publish
   products or create auctions. Selling pages show "Pending approval" instead of

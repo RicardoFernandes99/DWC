@@ -1,8 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { router } from './router';
+import { queryClient as client } from './lib/session-query';
 import './index.css';
 const root = createRoot(document.getElementById('root')!);
 if (
@@ -17,7 +18,6 @@ if (
     ),
   );
 } else {
-  const client = new QueryClient();
   root.render(
     <StrictMode>
       <QueryClientProvider client={client}>

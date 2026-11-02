@@ -1,4 +1,5 @@
 import { safeReturn } from './safe-return';
+import { routeAccess, canPurchase } from './route-access';
 import { useState } from 'react';
 import {
   ArrowRight,
@@ -9,7 +10,14 @@ import {
 } from 'lucide-react';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, Outlet, useNavigate, useSearch } from '@tanstack/react-router';
+import {
+  Link,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+  useSearch,
+} from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/form-field';
@@ -24,17 +32,20 @@ import {
   register,
   type User,
 } from '@/lib/session';
+import { sessionOptions } from './lib/session-query';
 import { useCart } from '@/features/cart/use-cart';
 
 const sessionKey = ['session'] as const;
 export function Shell() {
   const { totalItemCount } = useCart();
-  const query = useQuery({
-    queryKey: sessionKey,
-    queryFn: currentUser,
-    retry: false,
-    staleTime: 0,
-  });
+  const query = useQuery(sessionOptions);
+  const location = useLocation();
+  const access =
+    query.data === undefined
+      ? 'allow'
+      : routeAccess(location.pathname, query.data);
+  const changingAuth =
+    location.pathname === '/login' || location.pathname === '/register';
   return (
     <>
       <header className="site-header">
@@ -51,24 +62,26 @@ export function Shell() {
             <Link to="/" className="home-link">
               Home
             </Link>
-            <Link
-              to="/cart"
-              className="inline-flex items-center gap-1.5 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-              aria-label={
-                totalItemCount > 0
-                  ? `Shopping cart with ${totalItemCount} items`
-                  : 'Shopping cart, empty'
-              }
-            >
-              <ShoppingBasket aria-hidden="true" className="size-4" />
-              <span>Cart</span>
-              {totalItemCount > 0 && (
-                <span className="inline-flex items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground min-w-5 h-5 tabular-nums">
-                  {totalItemCount}
-                </span>
-              )}
-            </Link>
-            {query.data && (
+            {canPurchase(query.data) && (
+              <Link
+                to="/cart"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                aria-label={
+                  totalItemCount > 0
+                    ? `Shopping cart with ${totalItemCount} items`
+                    : 'Shopping cart, empty'
+                }
+              >
+                <ShoppingBasket aria-hidden="true" className="size-4" />
+                <span>Cart</span>
+                {totalItemCount > 0 && (
+                  <span className="inline-flex items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground min-w-5 h-5 tabular-nums">
+                    {totalItemCount}
+                  </span>
+                )}
+              </Link>
+            )}
+            {query.data && query.data.role !== 'admin' && (
               <Link
                 to={
                   query.data.role === 'producer'
@@ -102,7 +115,13 @@ export function Shell() {
           </div>
         </nav>
       </header>
-      <Outlet />
+      {!changingAuth && access === 'home' ? (
+        <Navigate to="/" replace />
+      ) : access === 'login' ? (
+        <Navigate to="/login" search={{ returnTo: location.href }} replace />
+      ) : (
+        <Outlet />
+      )}
     </>
   );
 }
@@ -156,7 +175,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
         void queryClient.invalidateQueries({ queryKey: sessionKey });
         await navigate({
           href:
-            safeReturn(search.returnTo) ??
+            safeReturn(search.returnTo, signedIn) ??
             (signedIn.role === 'producer' ? '/producer' : '/account'),
         });
       } catch (err) {

@@ -1,5 +1,8 @@
 import { safeReturn } from './safe-return';
+import { queryClient, sessionOptions } from './lib/session-query';
+import { routeAccess } from './route-access';
 import {
+  redirect,
   createRootRoute,
   createRoute,
   createRouter,
@@ -69,7 +72,31 @@ function validateCatalogueSearch(search: Record<string, unknown>): SearchState {
     page: numberValue(search.page, 1, 1000) ?? 1,
   };
 }
-const root = createRootRoute({ component: Shell });
+const root = createRootRoute({
+  component: Shell,
+  pendingComponent: () => (
+    <main role="status" className="p-8">
+      Restoring your session…
+    </main>
+  ),
+  errorComponent: ({ reset }) => (
+    <main role="alert" className="p-8">
+      <p>Could not restore your session. Please try again.</p>
+      <button onClick={reset}>Try again</button>
+    </main>
+  ),
+  beforeLoad: async ({ location }) => {
+    const user = await queryClient.fetchQuery(sessionOptions);
+    const access = routeAccess(location.pathname, user);
+    if (access === 'home') throw redirect({ to: '/', replace: true });
+    if (access === 'login')
+      throw redirect({
+        to: '/login',
+        search: { returnTo: location.href },
+        replace: true,
+      });
+  },
+});
 const index = createRoute({
   getParentRoute: () => root,
   path: '/',
@@ -168,6 +195,7 @@ const producerNewProductRoute = createRoute({
   component: Account,
 });
 export const router = createRouter({
+  defaultPendingMs: 0,
   routeTree: root.addChildren([
     index,
     productRoute,

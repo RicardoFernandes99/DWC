@@ -1,4 +1,7 @@
-export function safeReturn(value: unknown): string | undefined {
+import type { User } from './lib/session';
+import { routeAccess } from './route-access';
+
+export function safeReturn(value: unknown, user?: User): string | undefined {
   if (
     typeof value !== 'string' ||
     !value.startsWith('/') ||
@@ -9,7 +12,8 @@ export function safeReturn(value: unknown): string | undefined {
     return undefined;
   try {
     const url = new URL(value, window.location.origin);
-    return url.origin === window.location.origin
+    return url.origin === window.location.origin &&
+      (!user || routeAccess(url.pathname, user) === 'allow')
       ? `${url.pathname}${url.search}${url.hash}`
       : undefined;
   } catch {

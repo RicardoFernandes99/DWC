@@ -1,11 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  ShoppingBasket,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShoppingBasket } from 'lucide-react';
 import { ProductGrid } from '@/components/shared/product-card';
 import { Button } from '@/components/ui/button';
 import { formatMoney } from '@/lib/format';
@@ -117,7 +112,6 @@ export function CartPage() {
   const isEmpty = items.length === 0;
 
   const user = userQuery.data;
-  const isProducer = user?.role === 'producer';
   const isBuyer = user?.role === 'buyer';
 
   return (
@@ -138,27 +132,6 @@ export function CartPage() {
           {producerGroups.length === 1 ? 'producer' : 'producers'}
         </p>
       </div>
-
-      {isProducer && (
-        <div
-          role="status"
-          className="mb-6 flex items-start gap-3 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm text-warning-foreground"
-        >
-          <AlertCircle
-            aria-hidden="true"
-            className="size-5 shrink-0 text-warning"
-          />
-          <div>
-            <p className="font-semibold">
-              Producer accounts cannot purchase products
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Your cart is preserved. To place an order, please sign in with a
-              buyer account.
-            </p>
-          </div>
-        </div>
-      )}
 
       {isEmpty ? (
         <div className="space-y-12">
@@ -271,10 +244,6 @@ export function CartPage() {
                     <Link to="/login" search={{ returnTo: '/checkout' }}>
                       Sign in as buyer to check out
                     </Link>
-                  </Button>
-                ) : isProducer ? (
-                  <Button disabled className="w-full rounded-md" size="lg">
-                    Producer account (Checkout disabled)
                   </Button>
                 ) : isBuyer ? (
                   <Button

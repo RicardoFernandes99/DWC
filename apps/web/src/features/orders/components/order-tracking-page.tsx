@@ -5,12 +5,7 @@ import {
   useQueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearch,
-} from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import {
   AlertCircle,
   ArrowLeft,
@@ -224,36 +219,7 @@ function OrderTrackingContent({
       </main>
     );
   const user: User | null | undefined = session.data;
-  if (!user)
-    return (
-      <main className="mx-auto max-w-5xl px-4 py-12 md:px-6">
-        <h1 className="text-2xl font-semibold">Sign in to view orders</h1>
-        <Link
-          className="mt-4 inline-flex min-h-11 items-center text-primary underline"
-          to="/login"
-          search={{ returnTo: window.location.pathname }}
-        >
-          Sign in
-        </Link>
-      </main>
-    );
-  if (user.role !== audience)
-    return (
-      <main className="mx-auto max-w-5xl px-4 py-12 md:px-6">
-        <h1 className="text-2xl font-semibold">
-          Orders are unavailable for this account
-        </h1>
-        <p className="mt-3 text-muted-foreground">
-          Sign in with a {audience} account to continue.
-        </p>
-        <Link
-          className="mt-4 inline-flex min-h-11 items-center text-primary underline"
-          to="/account"
-        >
-          Go to your account
-        </Link>
-      </main>
-    );
+  if (!user || user.role !== audience) return null;
 
   if (id && !/^[a-f\d]{24}$/i.test(id))
     return (

@@ -525,66 +525,8 @@ export function CheckoutPage() {
     );
   }
 
-  // AUTH CHECKS
-  if (!user) {
-    return (
-      <main className="mx-auto max-w-xl px-4 py-16 text-center">
-        <div className="rounded-lg border bg-card p-8 shadow-2xs">
-          <ShoppingBag
-            aria-hidden="true"
-            className="mx-auto size-12 text-muted-foreground"
-          />
-          <h1 className="mt-4 font-editorial text-2xl font-bold">
-            Sign in to complete checkout
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Please sign in with your buyer account to review orders, choose
-            delivery, and complete payment.
-          </p>
-          <div className="mt-6 flex justify-center gap-3">
-            <Button asChild variant="outline" className="rounded-md">
-              <Link to="/cart">Return to cart</Link>
-            </Button>
-            <Button asChild className="rounded-md">
-              <Link to="/login" search={{ returnTo: '/checkout' }}>
-                Sign in
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (user.role === 'producer') {
-    return (
-      <main className="mx-auto max-w-xl px-4 py-16 text-center">
-        <div className="rounded-lg border bg-card p-8 shadow-2xs">
-          <AlertCircle
-            aria-hidden="true"
-            className="mx-auto size-12 text-warning"
-          />
-          <h1 className="mt-4 font-editorial text-2xl font-bold">
-            Producer accounts cannot purchase products
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            To place orders with other local producers, please sign in with a
-            registered buyer account. Your cart contents are preserved.
-          </p>
-          <div className="mt-6 flex justify-center gap-3">
-            <Button asChild variant="outline" className="rounded-md">
-              <Link to="/cart">Return to cart</Link>
-            </Button>
-            <Button asChild className="rounded-md">
-              <Link to="/login" search={{ returnTo: '/checkout' }}>
-                Sign in as buyer
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  // Access is resolved by the shared route guard.
+  if (!user || user.role !== 'buyer') return null;
 
   // EMPTY CART
   if (items.length === 0) {

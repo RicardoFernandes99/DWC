@@ -209,51 +209,6 @@ describe('Cart page interactions and multi-producer behavior', () => {
     });
   });
 
-  it('shows producer role warning banner and disables checkout for producer accounts without deleting cart', async () => {
-    saveCart({
-      version: 1,
-      items: [
-        {
-          productId: mockProductA.id,
-          quantity: 1,
-          producerId: mockProductA.producerId,
-          producerFarmName: mockProductA.producerFarmName,
-          name: mockProductA.name,
-          priceCents: mockProductA.priceCents,
-          unit: mockProductA.unit,
-        },
-      ],
-    });
-
-    vi.mocked(publicRequest).mockResolvedValue(mockProductA);
-
-    renderCart('producer');
-
-    expect(await screen.findByText('Organic Tomatoes')).toBeInTheDocument();
-
-    // Producer account banner
-    expect(
-      screen.getByText('Producer accounts cannot purchase products'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /Your cart is preserved. To place an order, please sign in with a buyer account./i,
-      ),
-    ).toBeInTheDocument();
-
-    // Checkout disabled
-    expect(
-      screen.getByRole('button', {
-        name: /Producer account \(Checkout disabled\)/i,
-      }),
-    ).toBeDisabled();
-
-    // Cart in localStorage is still preserved
-    expect(
-      JSON.parse(localStorage.getItem(CART_STORAGE_KEY) ?? '{}').items,
-    ).toHaveLength(1);
-  });
-
   it('displays out of stock and unavailable warnings distinctly with clear guidance', async () => {
     saveCart({
       version: 1,

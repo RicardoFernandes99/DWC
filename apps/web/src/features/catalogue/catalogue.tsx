@@ -1,3 +1,5 @@
+import { sessionOptions } from '@/lib/session-query';
+import { canPurchase } from '@/route-access';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
@@ -278,8 +280,11 @@ export function ProductPage({ productId }: { productId: string }) {
 
 function ProductAddToCart({ product }: { product: Product }) {
   const { items, addItem } = useCart();
+  const session = useQuery(sessionOptions);
   const [quantity, setQuantity] = useState(1);
   const [feedback, setFeedback] = useState(false);
+
+  if (!canPurchase(session.data)) return null;
 
   const cartItem = items.find((item) => item.productId === product.id);
   const inCartQty = cartItem?.quantity ?? 0;
