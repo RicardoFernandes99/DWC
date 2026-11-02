@@ -21,24 +21,75 @@ import {
 function literal(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+const SORT_ORDERS: Record<CatalogueSort, Record<string, 1 | -1>> = {
+  [CatalogueSort.Newest]: { createdAt: -1, _id: -1 },
+  [CatalogueSort.PriceAsc]: { priceCents: 1, _id: 1 },
+  [CatalogueSort.PriceDesc]: { priceCents: -1, _id: 1 },
+  [CatalogueSort.NameAsc]: { name: 1, _id: 1 },
+};
+
+const ELIGIBLE_PRODUCER_LOOKUP = {
+  $lookup: {
+    from: 'users',
+    localField: 'producerId',
+    foreignField: '_id',
+    pipeline: [
+      {
+        $match: {
+          role: UserRole.Producer,
+          producerStatus: ProducerStatus.Approved,
+          producerApplication: { $ne: null },
+        },
+      },
+      {
+        $project: {
+          'producerApplication.farmName': 1,
+          'producerApplication.city': 1,
+        },
+      },
+    ],
+    as: 'producer',
+  },
+} satisfies PipelineStage.Lookup;
+
+const PUBLIC_PRODUCT_PROJECTION = {
+  _id: 1,
+  producerId: 1,
+  name: 1,
+  description: 1,
+  category: 1,
+  productionMethod: 1,
+  seasons: 1,
+  priceCents: 1,
+  unit: 1,
+  availableStock: 1,
+  image: 1,
+  producerFarmName: '$producer.producerApplication.farmName',
+  producerCity: '$producer.producerApplication.city',
+};
+
 interface PublicProducerRecord {
   _id: Types.ObjectId;
   producerApplication: NonNullable<User['producerApplication']>;
 }
-interface ProductAggregateRow {
+type ProductAggregateRow = Pick<
+  Product,
+  | 'name'
+  | 'description'
+  | 'category'
+  | 'productionMethod'
+  | 'seasons'
+  | 'priceCents'
+  | 'unit'
+  | 'availableStock'
+  | 'image'
+> & {
   _id: Types.ObjectId;
   producerId: Types.ObjectId;
-  name: string;
-  description: string;
-  category: Product['category'];
-  productionMethod: Product['productionMethod'];
-  seasons: Product['seasons'];
-  priceCents: number;
-  unit: Product['unit'];
-  availableStock: number;
-  image: Product['image'];
-  producer: { producerApplication: NonNullable<User['producerApplication']> };
-}
+  producerFarmName: string;
+  producerCity: string;
+};
 function profile(user: PublicProducerRecord): ProducerPublicDto {
   const application = user.producerApplication;
   return {
@@ -59,7 +110,7 @@ export class CatalogueService {
     private readonly storage: StorageService,
   ) {}
 
-  private pipeline(query: CatalogueQueryDto): PipelineStage[] {
+  async list(query: CatalogueQueryDto): Promise<CatalogueListDto> {
     if (
       query.minPriceCents !== undefined &&
       query.maxPriceCents !== undefined &&
@@ -87,51 +138,28 @@ export class CatalogueService {
       if (query.maxPriceCents !== undefined) price.$lte = query.maxPriceCents;
       match.priceCents = price;
     }
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
     const pipeline: PipelineStage[] = [
       { $match: match },
-      {
-        $lookup: {
-          from: 'users',
-          let: { producerId: '$producerId' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ['$_id', '$$producerId'] },
-                    { $eq: ['$role', UserRole.Producer] },
-                    { $eq: ['$producerStatus', ProducerStatus.Approved] },
-                    { $ne: ['$producerApplication', null] },
-                  ],
-                },
-              },
-            },
-            {
-              $project: {
-                'producerApplication.farmName': 1,
-                'producerApplication.city': 1,
-              },
-            },
-          ],
-          as: 'producer',
-        },
-      },
+      { $sort: SORT_ORDERS[query.sort ?? CatalogueSort.Newest] },
+      ELIGIBLE_PRODUCER_LOOKUP,
       { $unwind: '$producer' },
     ];
     if (query.q) {
-      const regex = { $regex: literal(query.q), $options: 'i' };
+      const search = { $regex: literal(query.q), $options: 'i' };
       pipeline.push({
         $match: {
           $or: [
-            { name: regex },
-            { description: regex },
-            { 'producer.producerApplication.farmName': regex },
-            { 'producer.producerApplication.city': regex },
+            { name: search },
+            { description: search },
+            { 'producer.producerApplication.farmName': search },
+            { 'producer.producerApplication.city': search },
           ],
         },
       });
     }
-    if (query.location)
+    if (query.location) {
       pipeline.push({
         $match: {
           'producer.producerApplication.city': {
@@ -140,53 +168,20 @@ export class CatalogueService {
           },
         },
       });
-    const sort: Record<string, 1 | -1> =
-      query.sort === CatalogueSort.PriceAsc
-        ? { priceCents: 1, _id: 1 }
-        : query.sort === CatalogueSort.PriceDesc
-          ? { priceCents: -1, _id: 1 }
-          : query.sort === CatalogueSort.NameAsc
-            ? { name: 1, _id: 1 }
-            : { createdAt: -1, _id: -1 };
-    pipeline.splice(1, 0, { $sort: sort });
-    return pipeline;
-  }
-
-  async list(query: CatalogueQueryDto): Promise<CatalogueListDto> {
-    const page = query.page ?? 1,
-      limit = query.limit ?? 20;
-    const pipeline = this.pipeline(query);
-    const [result] = await this.products.aggregate<{
-      items: ProductAggregateRow[];
-      total: Array<{ value: number }>;
-    }>([
-      ...pipeline,
+    }
+    pipeline.push(
+      { $project: PUBLIC_PRODUCT_PROJECTION },
       {
         $facet: {
-          items: [
-            { $skip: (page - 1) * limit },
-            { $limit: limit },
-            {
-              $project: {
-                _id: 1,
-                producerId: 1,
-                name: 1,
-                description: 1,
-                category: 1,
-                productionMethod: 1,
-                seasons: 1,
-                priceCents: 1,
-                unit: 1,
-                availableStock: 1,
-                image: 1,
-                producer: 1,
-              },
-            },
-          ],
+          items: [{ $skip: (page - 1) * limit }, { $limit: limit }],
           total: [{ $count: 'value' }],
         },
       },
-    ]);
+    );
+    const [result] = await this.products.aggregate<{
+      items: ProductAggregateRow[];
+      total: Array<{ value: number }>;
+    }>(pipeline);
     const items = (result?.items ?? []).map((item) => this.toProduct(item));
     return { items, total: result?.total?.[0]?.value ?? 0, page, limit };
   }
@@ -201,36 +196,21 @@ export class CatalogueService {
           moderatedAt: null,
         },
       },
-      ...this.pipeline(new CatalogueQueryDto()).slice(1),
+      ELIGIBLE_PRODUCER_LOOKUP,
+      { $unwind: '$producer' },
+      { $project: PUBLIC_PRODUCT_PROJECTION },
       { $limit: 1 },
-      {
-        $project: {
-          _id: 1,
-          producerId: 1,
-          name: 1,
-          description: 1,
-          category: 1,
-          productionMethod: 1,
-          seasons: 1,
-          priceCents: 1,
-          unit: 1,
-          availableStock: 1,
-          image: 1,
-          producer: 1,
-        },
-      },
     ]);
     if (!item) throw new NotFoundException('Product not found.');
     return this.toProduct(item);
   }
 
   private toProduct(item: ProductAggregateRow): CatalogueProductDto {
-    const producer = item.producer;
     return {
       id: String(item._id),
       producerId: String(item.producerId),
-      producerFarmName: producer.producerApplication.farmName,
-      producerCity: producer.producerApplication.city,
+      producerFarmName: item.producerFarmName,
+      producerCity: item.producerCity,
       name: item.name,
       description: item.description,
       category: item.category,
@@ -246,6 +226,8 @@ export class CatalogueService {
   }
 
   async listProducers(query: ProducerQueryDto): Promise<ProducerListDto> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
     const filter: Record<string, unknown> = {
       role: UserRole.Producer,
       producerStatus: ProducerStatus.Approved,
@@ -264,25 +246,26 @@ export class CatalogueService {
         .find(filter)
         .select({ _id: 1, producerApplication: 1 })
         .sort({ 'producerApplication.farmName': 1, _id: 1 })
-        .skip(((query.page ?? 1) - 1) * (query.limit ?? 20))
-        .limit(query.limit ?? 20)
+        .skip((page - 1) * limit)
+        .limit(limit)
         .lean(),
       this.users.countDocuments(filter),
     ]);
+    const items: ProducerPublicDto[] = [];
+    for (const user of docs) {
+      if (!user.producerApplication) continue;
+      items.push(
+        profile({
+          _id: user._id,
+          producerApplication: user.producerApplication,
+        }),
+      );
+    }
     return {
-      items: docs.flatMap((user) =>
-        user.producerApplication
-          ? [
-              profile({
-                _id: user._id,
-                producerApplication: user.producerApplication,
-              }),
-            ]
-          : [],
-      ),
+      items,
       total,
-      page: query.page ?? 1,
-      limit: query.limit ?? 20,
+      page,
+      limit,
     };
   }
 
@@ -296,8 +279,7 @@ export class CatalogueService {
       })
       .select({ _id: 1, producerApplication: 1 })
       .lean();
-    if (!user) throw new NotFoundException('Producer not found.');
-    if (!user.producerApplication)
+    if (!user?.producerApplication)
       throw new NotFoundException('Producer not found.');
     return profile({
       _id: user._id,

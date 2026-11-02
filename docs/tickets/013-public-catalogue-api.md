@@ -66,7 +66,10 @@ Implemented on `codex/age-013-public-catalogue-api`, stacked on PR #22. Frontier
   the stored bytes. Literal `[` and `.*` searches returned no false matches.
   Invalid page/limit/enums, repeated season, Mongo-style unknown query property,
   inverted price range and malformed ID returned 400. Empty unauthenticated
-  results returned 200.
+  results returned 200. After the service readability refactor, a fresh fixture
+  rerun reconfirmed combined filters/sort, stable pagination totals with no
+  duplicate products, eligible detail allowlisting, hidden direct-ID refusals,
+  and producer suspension/restoration behavior.
 - API typecheck and Nest build passed. Web typecheck and production build passed;
   React Compiler output was verified. Root ESLint and scoped Prettier checks passed.
   OpenAPI export and generated Web schema drift checks passed.
