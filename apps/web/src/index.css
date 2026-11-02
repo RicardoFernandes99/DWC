@@ -103,6 +103,9 @@
     color: var(--foreground);
     background: var(--background);
   }
+  body[data-scroll-locked] {
+    margin-right: 0 !important;
+  }
   * {
     border-color: var(--border);
   }

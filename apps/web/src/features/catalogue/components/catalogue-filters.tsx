@@ -4,8 +4,14 @@ import { useNavigate } from '@tanstack/react-router';
 import { Search } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { SelectPill } from '@/components/ui/select-pill';
 import {
   formatLabel,
   PRODUCT_CATEGORIES,
@@ -24,8 +30,8 @@ type ProducerList = Omit<components['schemas']['ProducerListDto'], 'items'> & {
   items: PublicProducer[];
 };
 
-const pill =
-  'h-10 shrink-0 rounded-full border border-input bg-card px-4 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-ring';
+const chip =
+  'h-9 shrink-0 rounded-lg border border-input bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring';
 
 export function CatalogueFilters({ scope }: { scope: string }) {
   const { search, update } = useListingSearch(scope);
@@ -70,25 +76,26 @@ export function CatalogueFilters({ scope }: { scope: string }) {
 
   return (
     <section aria-label="Catalogue filters" className="space-y-3">
-      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:gap-2">
+      <div className="flex flex-col gap-2.5 md:flex-row md:flex-wrap md:items-center md:gap-2">
         <label className="relative block md:w-72">
           <span className="sr-only">Search products</span>
           <Search
             aria-hidden="true"
-            className="absolute left-4 top-3 size-4 text-muted-foreground"
+            className="absolute left-3.5 top-3 size-4 text-muted-foreground"
           />
           <SearchControl
             initialValue={search.q ?? ''}
             from={from}
-            placeholder="Search for produce, farmers, or keywords…"
-            className="h-10 rounded-full bg-card pl-10 text-sm"
+            placeholder="Search produce, farmers, or keywords…"
+            className="h-10 rounded-lg bg-card pl-9.5 text-sm"
           />
         </label>
 
+        {/* Mobile horizontal category chip scroller */}
         <div
           role="group"
           aria-label="Categories"
-          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:hidden"
+          className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 md:hidden"
         >
           {[undefined, ...PRODUCT_CATEGORIES].map((value) => (
             <button
@@ -97,53 +104,75 @@ export function CatalogueFilters({ scope }: { scope: string }) {
               aria-pressed={search.category === value}
               onClick={() => update({ category: value })}
               className={cn(
-                pill,
-                'h-9',
+                chip,
                 search.category === value &&
-                  'border-primary bg-primary text-primary-foreground',
+                  'border-primary bg-primary text-primary-foreground hover:bg-primary/90',
               )}
             >
-              {value ? formatLabel(value) : 'All'}
+              {value ? formatLabel(value) : 'All categories'}
             </button>
           ))}
         </div>
 
+        {/* Filter controls toolbar */}
         <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 md:contents">
-          <SelectPill
-            aria-label="Category"
-            containerClassName="hidden md:inline-flex"
-            value={search.category ?? ''}
-            onChange={(event) =>
-              update({
-                category: (event.target.value ||
-                  undefined) as SearchState['category'],
-              })
-            }
-          >
-            <option value="">Category</option>
-            {PRODUCT_CATEGORIES.map((value) => (
-              <option key={value} value={value}>
-                {formatLabel(value)}
-              </option>
-            ))}
-          </SelectPill>
-          {isMarket && (
-            <SelectPill
-              aria-label="Producer"
-              className="max-w-52"
-              value={search.producerId ?? ''}
-              onChange={(event) =>
-                update({ producerId: event.target.value || undefined })
+          {/* Desktop Category Dropdown */}
+          <div className="hidden shrink-0 md:block">
+            <Select
+              value={search.category ?? 'all'}
+              onValueChange={(val) =>
+                update({
+                  category: (val === 'all'
+                    ? undefined
+                    : val) as SearchState['category'],
+                })
               }
             >
-              <option value="">Producer</option>
-              {producerOptions.map((producer) => (
-                <option key={producer.id} value={producer.id}>
-                  {producer.farmName}
-                </option>
-              ))}
-            </SelectPill>
+              <SelectTrigger
+                aria-label="Category"
+                className="h-10 w-[140px] rounded-lg"
+              >
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {PRODUCT_CATEGORIES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {formatLabel(value)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Producer Dropdown */}
+          {isMarket && (
+            <div className="shrink-0">
+              <Select
+                value={search.producerId ?? 'all'}
+                onValueChange={(val) =>
+                  update({ producerId: val === 'all' ? undefined : val })
+                }
+              >
+                <SelectTrigger
+                  aria-label="Producer"
+                  className="h-10 w-44 rounded-lg"
+                >
+                  <SelectValue placeholder="Producer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All producers</SelectItem>
+                  {producerOptions.map((producer) => (
+                    <SelectItem key={producer.id} value={producer.id}>
+                      {producer.farmName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
+
+          {/* Location Search Input */}
           {isMarket && (
             <label className="shrink-0">
               <span className="sr-only">Location</span>
@@ -151,45 +180,71 @@ export function CatalogueFilters({ scope }: { scope: string }) {
                 initialValue={search.location ?? ''}
                 from="/"
                 field="location"
-                placeholder="Location"
-                className="h-10 w-36 rounded-full bg-card px-4 text-sm"
+                placeholder="City or region"
+                className="h-10 w-36 rounded-lg bg-card px-3 text-sm"
               />
             </label>
           )}
-          <SelectPill
-            aria-label="Season"
-            value={search.season ?? ''}
-            onChange={(event) =>
-              update({
-                season: (event.target.value ||
-                  undefined) as SearchState['season'],
-              })
-            }
-          >
-            <option value="">Season</option>
-            {PRODUCT_SEASONS.map((value) => (
-              <option key={value} value={value}>
-                {formatLabel(value)}
-              </option>
-            ))}
-          </SelectPill>
-          <SelectPill
-            aria-label="Production method"
-            value={search.productionMethod ?? ''}
-            onChange={(event) =>
-              update({
-                productionMethod: (event.target.value ||
-                  undefined) as SearchState['productionMethod'],
-              })
-            }
-          >
-            <option value="">Production</option>
-            {PRODUCTION_METHODS.map((value) => (
-              <option key={value} value={value}>
-                {formatLabel(value)}
-              </option>
-            ))}
-          </SelectPill>
+
+          {/* Season Dropdown */}
+          <div className="shrink-0">
+            <Select
+              value={search.season ?? 'all'}
+              onValueChange={(val) =>
+                update({
+                  season: (val === 'all'
+                    ? undefined
+                    : val) as SearchState['season'],
+                })
+              }
+            >
+              <SelectTrigger
+                aria-label="Season"
+                className="h-10 w-32 rounded-lg"
+              >
+                <SelectValue placeholder="Season" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All seasons</SelectItem>
+                {PRODUCT_SEASONS.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {formatLabel(value)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Production Method Dropdown */}
+          <div className="shrink-0">
+            <Select
+              value={search.productionMethod ?? 'all'}
+              onValueChange={(val) =>
+                update({
+                  productionMethod: (val === 'all'
+                    ? undefined
+                    : val) as SearchState['productionMethod'],
+                })
+              }
+            >
+              <SelectTrigger
+                aria-label="Production method"
+                className="h-10 w-36 rounded-lg"
+              >
+                <SelectValue placeholder="Method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All methods</SelectItem>
+                {PRODUCTION_METHODS.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {formatLabel(value)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Price Range */}
           <PriceInput
             key={`min-${search.minPriceCents}`}
             label="Minimum price in EUR"
@@ -204,22 +259,34 @@ export function CatalogueFilters({ scope }: { scope: string }) {
             cents={search.maxPriceCents}
             onCommit={(value) => update({ maxPriceCents: value })}
           />
-          <SelectPill
-            aria-label="Sort by"
-            value={search.sort}
-            onChange={(event) =>
-              update({ sort: event.target.value as SearchState['sort'] })
-            }
-          >
-            <option value="newest">Newest</option>
-            <option value="price_asc">Price: low to high</option>
-            <option value="price_desc">Price: high to low</option>
-            <option value="name_asc">Name</option>
-          </SelectPill>
+
+          {/* Sort Dropdown */}
+          <div className="shrink-0">
+            <Select
+              value={search.sort}
+              onValueChange={(val) =>
+                update({ sort: val as SearchState['sort'] })
+              }
+            >
+              <SelectTrigger
+                aria-label="Sort by"
+                className="h-10 w-44 rounded-lg"
+              >
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="price_asc">Price: low to high</SelectItem>
+                <SelectItem value="price_desc">Price: high to low</SelectItem>
+                <SelectItem value="name_asc">Name: A to Z</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {hasFilters && (
             <button
               type="button"
-              className="h-10 shrink-0 px-2 text-sm text-primary underline underline-offset-4"
+              className="h-10 shrink-0 px-2 text-sm font-medium text-primary hover:underline underline-offset-4"
               onClick={() =>
                 update({
                   q: undefined,
@@ -289,7 +356,7 @@ function PriceInput({
       onKeyDown={(event) => {
         if (event.key === 'Enter') commit();
       }}
-      className="h-10 w-24 shrink-0 rounded-full bg-card px-4 text-sm"
+      className="h-10 w-24 shrink-0 rounded-lg bg-card px-3 text-sm"
     />
   );
 }
