@@ -1,10 +1,10 @@
 # 017: Create paid producer orders atomically at checkout
 
 - Macro: M04
-- Status: Draft
+- Status: In review
 - Depends on: 005, 016
-- PR: Not opened
-- Branch / parent: Not assigned
+- PR: https://github.com/RicardoFernandes99/DWC/pull/28
+- Branch / parent: codex/age-017-atomic-checkout-api / main
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -38,11 +38,11 @@ per producer. Any refusal leaves no orders, payment success or stock deductions.
 
 ## Acceptance criteria
 
-- [ ] Mixed-producer checkout creates correct Pending orders and one payment result.
-- [ ] One unavailable line rolls back every order, stock write and success record.
-- [ ] Simultaneous buyers cannot oversell; suspension races cannot accept ineligible sales.
-- [ ] Same-key retries do not duplicate work; changed payload with reused key conflicts.
-- [ ] Stored amounts/snapshots are server-owned and card data remains metadata only.
+- [x] Mixed-producer checkout creates correct Pending orders and one payment result.
+- [x] One unavailable line rolls back every order, stock write and success record.
+- [x] Simultaneous buyers cannot oversell; suspension races cannot accept ineligible sales.
+- [x] Same-key retries do not duplicate work; changed payload with reused key conflicts.
+- [x] Stored amounts/snapshots are server-owned and card data remains metadata only.
 
 ## Checks
 
@@ -52,4 +52,11 @@ Submit a two-producer checkout, retry its idempotency key and try a stock refusa
 
 ## Delivery notes
 
-Not implemented. Sol must review the transaction and concurrency evidence directly.
+- Executor model: Gemini 3.8 Flash (direct execution).
+- Implemented `POST /api/checkout` with `RoleGuard` (Buyer role required).
+- Implemented `Order`, `Payment`, and `Checkout` schemas with indexes, immutable line item snapshots, integer EUR cent amounts, and status history entries.
+- Wrapped checkout operations in MongoDB replica set transaction (`withTransaction`) with conditional stock updates (`availableStock: { $gte: quantity }`) and active producer status locking (`producerStatus: ProducerStatus.Approved`).
+- Recomputes quote fingerprint against live DB and returns `409 Conflict` (`price_changed`) if prices or revisions changed.
+- Enforced idempotency per buyer with `{ buyerId: 1, idempotencyKey: 1 }` unique index; retries return cached result without duplicate charges/deductions; mismatched payload throws `409 Conflict` (`idempotency_mismatch`).
+- Automated tests in `apps/api/test/atomic-checkout.test.ts` pass 5/5 targeted scenarios.
+- All 20 tests pass across test suite; `pnpm check` and `pnpm smoke` verified.

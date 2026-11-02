@@ -1,11 +1,11 @@
 ---
 name: build
-description: Build a numbered DWC Markdown ticket with a frontier orchestrator, cheaper implementation agent, review-and-fix loop and a stacked ready-for-review PR. Use for build N, $build N or a request to build the next ticket. Not for running pnpm build alone.
+description: Build a numbered DWC Markdown ticket with a frontier orchestrator, implementation agent, review-and-fix loop and a stacked ready-for-review PR. Use for build N, $build N or a request to build the next ticket. Not for running pnpm build alone.
 ---
 
 # Build a ticket
 
-Ingest ticket -> plan in chat -> cheaper builder implements -> frontier reviews
+Ingest ticket -> plan in chat -> selected builder implements -> frontier reviews
 and requests fixes until approved -> open a ready-for-review stacked PR.
 
 One invocation builds one ticket. Invoking this workflow authorizes its scoped
@@ -14,47 +14,34 @@ Creating/editing this skill is not a request to start a ticket.
 
 ## Models and ownership
 
-- The baseline orchestrator and reviewer is `gpt-6.1-sol` at `medium` reasoning.
-  A skill cannot change the main chat's model. If the active model cannot provide
-  the requested frontier review, explain that before implementation.
-  Use the active frontier model; do not spawn a second Sol just to coordinate.
-- Select implementation effort from this baseline rather than always using High:
+Use the active session's model and selected reasoning effort for orchestration
+and review. Do not impose Medium on the orchestrator. Map Light to `low`.
+The executor is selected separately to minimize total cost of accepted work.
 
-| Work                                                                         | Model                                              | Reasoning |
-| ---------------------------------------------------------------------------- | -------------------------------------------------- | --------- |
-| Straightforward forms, DTOs, tests and small changes                         | `gpt-6-luna`                                       | `medium`  |
-| Bounded feature implementation with several failure cases                    | `gpt-6-luna`                                       | `high`    |
-| UI/browser work and scoped fixes being evaluated                             | `gpt-6.1-terra`                                    | `medium`  |
-| Refresh-token concurrency, auction settlement and difficult correctness work | `gpt-6.1-sol`, or split into smaller builder tasks | `medium`  |
+- Consider `gpt-6-luna` and `gpt-6.1-terra` at `low`, `medium` or `high`.
+  High is the ceiling, not the default. Start with an effort appropriate to the
+  scope and observed results. Luna suits straightforward bounded edits; Terra
+  is a candidate for UI/browser work or scopes where Luna needs corrections.
+- Consider `gpt-6.1-sol` at `low` as an executor alternative when cheaper models'
+  extra reasoning, retries or review overhead may erase their price advantage.
+  Do not assume either Sol Light or a cheaper model at High is always cheapest.
+- State the chosen executor model/effort and reason before implementation.
+  Diagnose environment/contract failures before adapting model or effort.
+  Announce and record changes; never exceed High without user instruction.
+- Compare completed tasks using total input, cached input, output/reasoning
+  usage and applicable rates when exposed, including orchestration, handoffs,
+  review and correction rounds. Mark unavailable measurements unavailable.
+  Effort labels alone do not prove cost or quality. Learn across real tickets;
+  do not reimplement a ticket just to benchmark configurations.
 
-- For difficult work, prefer bounded cheaper tasks with Sol resolving the hard
-  correctness decisions. If Sol implements a critical part directly, state that
-  exception instead of claiming it was delegated to a cheaper model.
-- Explicitly select the model and effort in the available delegation API.
-  For this session's `spawn_agent`,
-  use `fork_turns: "none"` with `model` and `reasoning_effort` so the builder does
-  not inherit the frontier model or the full conversation. Supply a compact
-  self-contained handoff. User-specified model overrides take precedence.
-- On another client, use its supported cheaper-model selection, not a fabricated
-  model alias. If delegation/model selection is unavailable, report the limitation
-  and ask for the missing selection or a single-model fallback; do not silently
-  run implementation on the expensive driver while claiming cheaper delegation.
-- Keep architecture, ambiguity resolution, planning, review and Git/PR mutations
-  with the orchestrator. The builder edits/tests one assigned scope. No concurrent
-  editing agents, second provider or additional review swarm by default.
-
-State the chosen model/effort and reason before implementation. This is a starting
-baseline, not a proven cheapest configuration. Adapt within these model choices
-when actual failed tasks, repeated corrections or observed usage justify it.
-Diagnose environment/contract problems before increasing model effort. Keep
-handoffs small and reuse valid verification; do not compare models by implementing
-the same ticket several times just to benchmark them.
-
-Record model/effort, correction rounds and a short reason for any change in the
-ticket's delivery notes. Include token/credit usage only when the client exposes
-it; otherwise record it as unavailable. Do not infer savings from effort labels
-or treat token count alone as cost across different models. Changes to this
-baseline itself should follow observed outcomes and the user's preferences.
+For `spawn_agent`, use `fork_turns: "none"` with explicit `model` and
+`reasoning_effort` and a compact self-contained handoff. If delegation or the
+chosen configuration is unavailable, report it and ask for a supported fallback.
+Keep architecture, review and Git/PR mutations with the orchestrator. The builder
+edits/tests one scope. No concurrent editors or additional review swarm.
+Preserve completed work and valid checks when adapting the executor. Record
+model/effort, correction rounds, adaptation reasons and available usage in the
+ticket's delivery notes.
 
 ## 1. Ingest
 
@@ -105,6 +92,11 @@ Send one handoff containing:
 Let the builder read the ticket itself instead of copying the entire chat/PDF.
 Use the existing checkout. Scope changes require the orchestrator's decision.
 The builder follows app skills for schemas, UI, security and meaningful tests.
+Keep code modular and concise ("less is more"): reuse OpenAPI-generated types via
+typed request helpers (`authenticatedRequest<T>`, `publicRequest<T>`) instead of
+boilerplate per-field response type guards, reuse shared formatters/constants in
+`src/lib/`, and split reusable cards (`components/shared/`) and feature subcomponents
+(`features/<name>/components/`) into focused files rather than monolithic screens.
 
 ## 4. Frontier review and corrections
 
@@ -118,7 +110,7 @@ Give a concrete verdict in chat:
 
 - `CHANGES REQUESTED`: file/line, observed problem, expected behavior and a check
   that will demonstrate the fix. Send this bounded list to the same builder unless
-  a justified model change within the baseline is needed. Preserve the handoff
+  an announced executor model/effort change is justified by observed results. Preserve the handoff
   and current diff when changing builders; do not restart completed work.
   Review its new diff and affected checks; repeat as needed.
 - `APPROVED`: all required acceptance criteria have evidence, no blocking findings

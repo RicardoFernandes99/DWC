@@ -3,6 +3,20 @@
 The user wants each new build stacked on the latest open feature PR, including
 unrelated features. Ticket readiness still depends on actual prerequisites.
 
+## Native stack tooling
+
+Use GitHub's official `gh stack` extension for stacked PR creation, tracking and
+publication. Do not use the previous manual branch/base-PR stacking workflow.
+Inspect `gh stack --help` and subcommand help before mutations. If missing,
+install with `gh extension install github/gh-stack` and inspect its help.
+If unavailable or unsupported, report the blocker without a manual fallback.
+A standalone PR against main is appropriate when no open feature stack exists.
+
+Parent selection, preservation, review and no-merge rules below still apply.
+Perform stack mutations and publication through supported native stack commands
+rather than manually linking PR bases. These rules supersede manual mechanics
+in the steps below.
+
 ## Discover and resume
 
 1. Resolve the repository/remote from Git and query live GitHub PR metadata using

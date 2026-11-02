@@ -13,7 +13,7 @@ before starting ticket 001. Use a clean checkout with Node 24 from `.node-versio
 and the pinned pnpm. Install with `pnpm install --frozen-lockfile`; run
 `pnpm setup:local` and `pnpm infra:up` for the local services.
 
-Start a fresh Codex chat in this repository, select Sol Medium and send
+Start a fresh Codex chat in this repository, select Sol at your preferred effort and send
 `build 1` or `$build 1`. The skill reads ticket 001, chooses its builder and
 ends with a reviewed PR. It does not require the earlier chat history. Keep the
 authenticated GitHub CLI (`gh`) available for PR discovery/publication. GitHub
@@ -135,12 +135,19 @@ assumed password-reset feature. Do not invent it while building auth.
 These apply to every ticket, including 001-006, and belong in builder handoffs:
 
 - Keep strict TypeScript and existing compiler diagnostics enabled. Validate
-  untrusted HTTP/socket/storage data as `unknown` at boundaries, then narrow it.
-  Do not hide errors with `any`, double assertions, non-null assertions without
-  proof, `@ts-ignore`, broad lint disables or handwritten false response types.
+  untrusted external input (user forms, URL search params, socket payloads, file
+  uploads) at boundaries. For our own NestJS HTTP endpoints, rely on the
+  OpenAPI-generated `components['schemas']` types with `authenticatedRequest<T>`
+  / `publicRequest<T>` rather than writing repetitive field-by-field runtime type
+  guards in every feature file. Do not hide errors with `any`, double assertions,
+  `@ts-ignore`, broad lint disables or handwritten duplicate response interfaces.
 - UI work follows [the shared style reference](../ui-guidelines.md) and the 045
   visual specimen. Consume central CSS tokens, organize library primitives under
-  `components/ui` and extract repeated project patterns into typed components.
+  `components/ui`, put shared cross-screen components (such as product cards or
+  shared field wrappers) in `components/shared` and shared formatters/constants
+  in `src/lib/`, and split feature subcomponents (such as filter bars or forms)
+  into focused files under `features/<name>/components/` rather than creating
+  1,000-line monolithic files.
 - Nest DTOs/OpenAPI own HTTP contracts. At the first Web API client in 004,
   introduce reproducible OpenAPI-derived request/response types and typed endpoint
   calls, with a generation/drift check in the appropriate checks. Update them with
@@ -186,11 +193,7 @@ is required merely because it is a separate application.
 ## Sol and builder handoff
 
 The [build skill](../../.agents/skills/build/SKILL.md) is the executable agent
-workflow for this handoff. Sol Medium is the orchestration/review baseline.
-Implementation uses Luna Medium for straightforward work, Luna High for bounded
-features with several failure cases, and Terra Medium for UI/browser work and
-scoped fixes being evaluated. Difficult correctness work stays with Sol Medium
-or is split into smaller builder tasks. The skill owns the exact model selection
+workflow for this handoff. The orchestrator inherits the session model and effort. Select executors separately among Luna or Terra at Low, Medium or High, with High as the ceiling, and Sol Light when total cost justifies it. Compare actual accepted-work cost including corrections and review. The skill owns the exact model selection
 and adaptation rules; builders receive fresh, compact context. User choices take
 precedence. No parallel editing agents or guaranteed token savings are implied.
 

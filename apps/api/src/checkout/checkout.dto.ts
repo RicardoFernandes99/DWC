@@ -16,11 +16,9 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ProductUnit } from '../products/product.schema.js';
+import { FulfilmentMethod, OrderStatus } from '../orders/order.schema.js';
 
-export enum FulfilmentMethod {
-  Delivery = 'delivery',
-  Collection = 'collection',
-}
+export { FulfilmentMethod };
 
 export enum CheckoutQuoteIssueCode {
   InsufficientStock = 'insufficient_stock',
@@ -400,4 +398,181 @@ export class CheckoutQuoteResponseDto {
     description: 'ISO timestamp when the quote was computed.',
   })
   createdAt!: string;
+}
+
+export class SubmitCheckoutDto {
+  @ApiProperty({
+    type: [QuoteCheckoutItemDto],
+    description: 'List of product items to purchase.',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => QuoteCheckoutItemDto)
+  items!: QuoteCheckoutItemDto[];
+
+  @ApiProperty({
+    enum: FulfilmentMethod,
+    example: FulfilmentMethod.Delivery,
+    description: 'Chosen fulfilment method for the checkout.',
+  })
+  @IsEnum(FulfilmentMethod)
+  fulfilmentMethod!: FulfilmentMethod;
+
+  @ApiPropertyOptional({
+    type: DeliveryAddressDto,
+    description:
+      'Delivery address. Required when fulfilmentMethod is delivery.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DeliveryAddressDto)
+  deliveryAddress?: DeliveryAddressDto;
+
+  @ApiProperty({
+    example: 'a6c837825fd8bfa6c29bda4d347318ec7e9b0d2d38596677f2ea99a6cf80918e',
+    description:
+      'SHA-256 quote fingerprint returned by POST /api/checkout/quote.',
+  })
+  @IsString()
+  @MinLength(64)
+  @MaxLength(64)
+  fingerprint!: string;
+
+  @ApiProperty({
+    example: '60d5ecb8b392d13b48f10b01',
+    description:
+      'MongoDB identifier of buyer-owned, unexpired saved payment method.',
+  })
+  @IsMongoId()
+  paymentMethodId!: string;
+
+  @ApiProperty({
+    example: 'c3d526fa-8b1b-43d9-95a3-76a084bc612e',
+    description: 'Client-generated idempotency key scoped to the buyer.',
+  })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  idempotencyKey!: string;
+}
+
+export class CheckoutOrderSummaryDto {
+  @ApiProperty({
+    example: '60d5ecb8b392d13b48f10b01',
+    description: 'Unique order identifier.',
+  })
+  orderId!: string;
+
+  @ApiProperty({
+    example: '60d5ecb8b392d13b48f10b99',
+    description: 'Producer user identifier.',
+  })
+  producerId!: string;
+
+  @ApiProperty({
+    example: 'Valley Green Farm',
+    description: 'Producer farm or business name.',
+  })
+  producerName!: string;
+
+  @ApiProperty({
+    example: 4500,
+    description: 'Subtotal for this producer in integer EUR cents.',
+  })
+  subtotalCents!: number;
+
+  @ApiProperty({
+    example: 500,
+    description: 'Delivery fee for this producer in integer EUR cents.',
+  })
+  deliveryFeeCents!: number;
+
+  @ApiProperty({
+    example: 5000,
+    description: 'Total for this producer in integer EUR cents.',
+  })
+  totalCents!: number;
+
+  @ApiProperty({
+    example: 3,
+    description: 'Total quantity of items for this producer.',
+  })
+  itemCount!: number;
+
+  @ApiProperty({
+    enum: OrderStatus,
+    example: OrderStatus.Pending,
+    description: 'Initial order status (pending).',
+  })
+  status!: OrderStatus;
+}
+
+export class CheckoutResponseDto {
+  @ApiProperty({
+    example: '60d5ecb8b392d13b48f10c01',
+    description: 'Unique identifier of the completed checkout.',
+  })
+  checkoutId!: string;
+
+  @ApiProperty({
+    example: '60d5ecb8b392d13b48f10d01',
+    description: 'Identifier of the internal payment record.',
+  })
+  paymentId!: string;
+
+  @ApiProperty({
+    enum: FulfilmentMethod,
+    example: FulfilmentMethod.Delivery,
+    description: 'Fulfilment method.',
+  })
+  fulfilmentMethod!: FulfilmentMethod;
+
+  @ApiProperty({
+    example: 4500,
+    description: 'Combined product subtotal in integer EUR cents.',
+  })
+  subtotalCents!: number;
+
+  @ApiProperty({
+    example: 500,
+    description: 'Combined delivery fee in integer EUR cents.',
+  })
+  deliveryFeeCents!: number;
+
+  @ApiProperty({
+    example: 5000,
+    description: 'Combined checkout total in integer EUR cents.',
+  })
+  totalCents!: number;
+
+  @ApiProperty({
+    type: [CheckoutOrderSummaryDto],
+    description: 'Summary of created orders per producer.',
+  })
+  orders!: CheckoutOrderSummaryDto[];
+
+  @ApiProperty({
+    example: '2026-11-02T14:00:00.000Z',
+    description: 'ISO timestamp when the checkout was recorded.',
+  })
+  createdAt!: string;
+}
+
+export class CheckoutPriceChangedConflictDto {
+  @ApiProperty({ example: 409 })
+  statusCode!: number;
+
+  @ApiProperty({ example: 'price_changed' })
+  code!: string;
+
+  @ApiProperty({
+    example:
+      'Pricing, availability or fees have changed since the quote was generated.',
+  })
+  message!: string;
+
+  @ApiProperty({ type: CheckoutQuoteResponseDto })
+  currentQuote!: CheckoutQuoteResponseDto;
 }

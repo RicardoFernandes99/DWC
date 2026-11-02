@@ -14,13 +14,17 @@ description: Implement or modify NestJS REST endpoints, DTOs, MongoDB models, S3
    prices when order models are introduced. Add indexes based on real queries.
 4. Enforce identities and ownership on the server. Never trust caller-supplied
    roles, monetary totals, auction deadlines, or stock availability.
-5. For auctions, make conditional atomic updates the acceptance boundary;
-   exercise simultaneous bids with separate clients. Consider a transaction for
-   consistent auction/bid records. Broadcast only after persistence succeeds.
+5. For atomic checkout and auctions, make conditional atomic updates the acceptance
+   boundary; execute mixed order/stock/payment writes inside a real MongoDB session
+   transaction (`withTransaction`). Use conditional stock decrements (`availableStock: { $gte: quantity }`)
+   and abort on any item refusal. Validate quote fingerprints against live DB state and return
+   `409 Conflict` on price/fee shifts. Scope idempotency per buyer. Broadcast or publish
+   side effects only after persistence succeeds.
 6. Keep S3 buckets private and SDK configuration provider-neutral. Define access
    control before adding uploads or signed URLs; validate file size and type.
-7. Update Swagger with DTO schemas and success/error responses. Keep liveness
-   separate from dependency readiness; failures must not disclose secrets.
+7. Update Swagger with DTO schemas and success/error responses. Export the web contract
+   (`pnpm contract:generate`) when endpoints or DTOs change so OpenAPI types are cleanly exposed to `@dwc/web`.
+   Keep liveness separate from dependency readiness; failures must not disclose secrets.
 8. Run API typecheck/build and root lint/scoped format checks. Manually exercise
    the changed endpoint and a meaningful refusal. Automated tests and smoke are
    optional; choose a small focused check only when useful. Use isolated data and

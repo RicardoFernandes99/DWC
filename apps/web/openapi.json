@@ -1746,6 +1746,64 @@
           "Checkout"
         ]
       }
+    },
+    "/api/checkout": {
+      "post": {
+        "operationId": "CheckoutController_checkout",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitCheckoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Checkout completed atomically. Orders created in pending status and stock decremented.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid items, missing delivery address for delivery, or invalid/expired payment method."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only buyers may complete checkout."
+          },
+          "409": {
+            "description": "Pricing/revision shifted (price_changed), stock insufficient (insufficient_stock), producer suspended (producer_suspended), or idempotency mismatch (idempotency_mismatch).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutPriceChangedConflictDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Authentication or database storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Checkout"
+        ]
+      }
     }
   },
   "info": {
@@ -3595,6 +3653,208 @@
           "issues",
           "fingerprint",
           "createdAt"
+        ]
+      },
+      "SubmitCheckoutDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "List of product items to purchase.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteCheckoutItemDto"
+            }
+          },
+          "fulfilmentMethod": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "collection"
+            ],
+            "example": "delivery",
+            "description": "Chosen fulfilment method for the checkout."
+          },
+          "deliveryAddress": {
+            "description": "Delivery address. Required when fulfilmentMethod is delivery.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryAddressDto"
+              }
+            ]
+          },
+          "fingerprint": {
+            "type": "string",
+            "example": "a6c837825fd8bfa6c29bda4d347318ec7e9b0d2d38596677f2ea99a6cf80918e",
+            "description": "SHA-256 quote fingerprint returned by POST /api/checkout/quote."
+          },
+          "paymentMethodId": {
+            "type": "string",
+            "example": "60d5ecb8b392d13b48f10b01",
+            "description": "MongoDB identifier of buyer-owned, unexpired saved payment method."
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "example": "c3d526fa-8b1b-43d9-95a3-76a084bc612e",
+            "description": "Client-generated idempotency key scoped to the buyer."
+          }
+        },
+        "required": [
+          "items",
+          "fulfilmentMethod",
+          "fingerprint",
+          "paymentMethodId",
+          "idempotencyKey"
+        ]
+      },
+      "CheckoutOrderSummaryDto": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "example": "60d5ecb8b392d13b48f10b01",
+            "description": "Unique order identifier."
+          },
+          "producerId": {
+            "type": "string",
+            "example": "60d5ecb8b392d13b48f10b99",
+            "description": "Producer user identifier."
+          },
+          "producerName": {
+            "type": "string",
+            "example": "Valley Green Farm",
+            "description": "Producer farm or business name."
+          },
+          "subtotalCents": {
+            "type": "number",
+            "example": 4500,
+            "description": "Subtotal for this producer in integer EUR cents."
+          },
+          "deliveryFeeCents": {
+            "type": "number",
+            "example": 500,
+            "description": "Delivery fee for this producer in integer EUR cents."
+          },
+          "totalCents": {
+            "type": "number",
+            "example": 5000,
+            "description": "Total for this producer in integer EUR cents."
+          },
+          "itemCount": {
+            "type": "number",
+            "example": 3,
+            "description": "Total quantity of items for this producer."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "shipped",
+              "delivered",
+              "ready_for_collection",
+              "collected",
+              "cancelled"
+            ],
+            "example": "pending",
+            "description": "Initial order status (pending)."
+          }
+        },
+        "required": [
+          "orderId",
+          "producerId",
+          "producerName",
+          "subtotalCents",
+          "deliveryFeeCents",
+          "totalCents",
+          "itemCount",
+          "status"
+        ]
+      },
+      "CheckoutResponseDto": {
+        "type": "object",
+        "properties": {
+          "checkoutId": {
+            "type": "string",
+            "example": "60d5ecb8b392d13b48f10c01",
+            "description": "Unique identifier of the completed checkout."
+          },
+          "paymentId": {
+            "type": "string",
+            "example": "60d5ecb8b392d13b48f10d01",
+            "description": "Identifier of the internal payment record."
+          },
+          "fulfilmentMethod": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "collection"
+            ],
+            "example": "delivery",
+            "description": "Fulfilment method."
+          },
+          "subtotalCents": {
+            "type": "number",
+            "example": 4500,
+            "description": "Combined product subtotal in integer EUR cents."
+          },
+          "deliveryFeeCents": {
+            "type": "number",
+            "example": 500,
+            "description": "Combined delivery fee in integer EUR cents."
+          },
+          "totalCents": {
+            "type": "number",
+            "example": 5000,
+            "description": "Combined checkout total in integer EUR cents."
+          },
+          "orders": {
+            "description": "Summary of created orders per producer.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckoutOrderSummaryDto"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-02T14:00:00.000Z",
+            "description": "ISO timestamp when the checkout was recorded."
+          }
+        },
+        "required": [
+          "checkoutId",
+          "paymentId",
+          "fulfilmentMethod",
+          "subtotalCents",
+          "deliveryFeeCents",
+          "totalCents",
+          "orders",
+          "createdAt"
+        ]
+      },
+      "CheckoutPriceChangedConflictDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 409
+          },
+          "code": {
+            "type": "string",
+            "example": "price_changed"
+          },
+          "message": {
+            "type": "string",
+            "example": "Pricing, availability or fees have changed since the quote was generated."
+          },
+          "currentQuote": {
+            "$ref": "#/components/schemas/CheckoutQuoteResponseDto"
+          }
+        },
+        "required": [
+          "statusCode",
+          "code",
+          "message",
+          "currentQuote"
         ]
       }
     }

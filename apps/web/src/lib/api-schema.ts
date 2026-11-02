@@ -373,6 +373,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CheckoutController_checkout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1283,6 +1299,125 @@ export interface components {
              * @example 2026-11-02T13:00:00.000Z
              */
             createdAt: string;
+        };
+        SubmitCheckoutDto: {
+            /** @description List of product items to purchase. */
+            items: components["schemas"]["QuoteCheckoutItemDto"][];
+            /**
+             * @description Chosen fulfilment method for the checkout.
+             * @example delivery
+             * @enum {string}
+             */
+            fulfilmentMethod: "delivery" | "collection";
+            /** @description Delivery address. Required when fulfilmentMethod is delivery. */
+            deliveryAddress?: components["schemas"]["DeliveryAddressDto"];
+            /**
+             * @description SHA-256 quote fingerprint returned by POST /api/checkout/quote.
+             * @example a6c837825fd8bfa6c29bda4d347318ec7e9b0d2d38596677f2ea99a6cf80918e
+             */
+            fingerprint: string;
+            /**
+             * @description MongoDB identifier of buyer-owned, unexpired saved payment method.
+             * @example 60d5ecb8b392d13b48f10b01
+             */
+            paymentMethodId: string;
+            /**
+             * @description Client-generated idempotency key scoped to the buyer.
+             * @example c3d526fa-8b1b-43d9-95a3-76a084bc612e
+             */
+            idempotencyKey: string;
+        };
+        CheckoutOrderSummaryDto: {
+            /**
+             * @description Unique order identifier.
+             * @example 60d5ecb8b392d13b48f10b01
+             */
+            orderId: string;
+            /**
+             * @description Producer user identifier.
+             * @example 60d5ecb8b392d13b48f10b99
+             */
+            producerId: string;
+            /**
+             * @description Producer farm or business name.
+             * @example Valley Green Farm
+             */
+            producerName: string;
+            /**
+             * @description Subtotal for this producer in integer EUR cents.
+             * @example 4500
+             */
+            subtotalCents: number;
+            /**
+             * @description Delivery fee for this producer in integer EUR cents.
+             * @example 500
+             */
+            deliveryFeeCents: number;
+            /**
+             * @description Total for this producer in integer EUR cents.
+             * @example 5000
+             */
+            totalCents: number;
+            /**
+             * @description Total quantity of items for this producer.
+             * @example 3
+             */
+            itemCount: number;
+            /**
+             * @description Initial order status (pending).
+             * @example pending
+             * @enum {string}
+             */
+            status: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+        };
+        CheckoutResponseDto: {
+            /**
+             * @description Unique identifier of the completed checkout.
+             * @example 60d5ecb8b392d13b48f10c01
+             */
+            checkoutId: string;
+            /**
+             * @description Identifier of the internal payment record.
+             * @example 60d5ecb8b392d13b48f10d01
+             */
+            paymentId: string;
+            /**
+             * @description Fulfilment method.
+             * @example delivery
+             * @enum {string}
+             */
+            fulfilmentMethod: "delivery" | "collection";
+            /**
+             * @description Combined product subtotal in integer EUR cents.
+             * @example 4500
+             */
+            subtotalCents: number;
+            /**
+             * @description Combined delivery fee in integer EUR cents.
+             * @example 500
+             */
+            deliveryFeeCents: number;
+            /**
+             * @description Combined checkout total in integer EUR cents.
+             * @example 5000
+             */
+            totalCents: number;
+            /** @description Summary of created orders per producer. */
+            orders: components["schemas"]["CheckoutOrderSummaryDto"][];
+            /**
+             * @description ISO timestamp when the checkout was recorded.
+             * @example 2026-11-02T14:00:00.000Z
+             */
+            createdAt: string;
+        };
+        CheckoutPriceChangedConflictDto: {
+            /** @example 409 */
+            statusCode: number;
+            /** @example price_changed */
+            code: string;
+            /** @example Pricing, availability or fees have changed since the quote was generated. */
+            message: string;
+            currentQuote: components["schemas"]["CheckoutQuoteResponseDto"];
         };
     };
     responses: never;
@@ -2786,6 +2921,67 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Authentication or database storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CheckoutController_checkout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitCheckoutDto"];
+            };
+        };
+        responses: {
+            /** @description Checkout completed atomically. Orders created in pending status and stock decremented. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutResponseDto"];
+                };
+            };
+            /** @description Invalid items, missing delivery address for delivery, or invalid/expired payment method. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only buyers may complete checkout. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Pricing/revision shifted (price_changed), stock insufficient (insufficient_stock), producer suspended (producer_suspended), or idempotency mismatch (idempotency_mismatch). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutPriceChangedConflictDto"];
+                };
             };
             /** @description Authentication or database storage unavailable. */
             503: {
