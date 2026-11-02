@@ -5,21 +5,43 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { readFile, writeFile } from 'node:fs/promises';
+import { AdminGuard } from './auth/admin.guard.js';
 import { AuthController } from './auth/auth.controller.js';
 import { AuthService } from './auth/auth.service.js';
 import { UsersController } from './users/users.controller.js';
 import { UsersService } from './users/users.service.js';
 import { PaymentMethodsController } from './payment-methods/payment-methods.controller.js';
 import { PaymentMethodsService } from './payment-methods/payment-methods.service.js';
+import { AdminProducerApplicationsController } from './producer-application/admin-producer-applications.controller.js';
+import { ProducerApplicationController } from './producer-application/producer-application.controller.js';
+import { ProducerApplicationService } from './producer-application/producer-application.service.js';
+import { ProducerProfileController } from './producer-application/producer-profile.controller.js';
+import { ProducerProductsController } from './products/producer-products.controller.js';
+import { ProductsService } from './products/products.service.js';
+import { CatalogueController } from './catalogue/catalogue.controller.js';
+import { CatalogueService } from './catalogue/catalogue.service.js';
 
 // Contract-only module: controllers and DTO metadata are real; no service is called.
 @Module({
   imports: [ThrottlerModule.forRoot([{ ttl: 60_000, limit: 10 }])],
-  controllers: [AuthController, UsersController, PaymentMethodsController],
+  controllers: [
+    AuthController,
+    UsersController,
+    PaymentMethodsController,
+    ProducerApplicationController,
+    ProducerProfileController,
+    AdminProducerApplicationsController,
+    ProducerProductsController,
+    CatalogueController,
+  ],
   providers: [
     { provide: AuthService, useValue: {} },
+    { provide: AdminGuard, useValue: { canActivate: () => true } },
     { provide: UsersService, useValue: {} },
     { provide: PaymentMethodsService, useValue: {} },
+    { provide: ProducerApplicationService, useValue: {} },
+    { provide: ProductsService, useValue: {} },
+    { provide: CatalogueService, useValue: {} },
     {
       provide: ConfigService,
       useValue: { getOrThrow: () => 'http://localhost' },

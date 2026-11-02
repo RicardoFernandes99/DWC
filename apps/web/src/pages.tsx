@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/form-field';
 import { PaymentMethods } from '@/features/payment-methods/components/payment-methods';
+import { ProducerOnboarding } from '@/features/producer-onboarding/components/producer-onboarding';
+import { ProducerProducts } from '@/features/producer-products/components/producer-products';
 import {
   ApiError,
   login,
@@ -442,6 +444,11 @@ export function Account() {
       </main>
     );
   const current: User = query.data;
+  const pathname = window.location.pathname;
+  const requestedSellingPath =
+    pathname.startsWith('/producer/') && pathname !== '/producer/'
+      ? pathname
+      : undefined;
   return (
     <main className="mx-auto max-w-5xl px-6 py-12 md:py-20">
       <h1 className="text-3xl font-semibold">Your account</h1>
@@ -462,20 +469,14 @@ export function Account() {
         </div>
       )}
       {current.role === 'producer' && (
-        <section className="mt-8 rounded-xl border bg-card p-6">
-          <h2 className="text-lg font-semibold">Producer status</h2>
-          <p className="mt-2">
-            {current.producerStatus === 'pending'
-              ? 'Pending approval'
-              : current.producerStatus === 'approved'
-                ? 'Approved'
-                : current.producerStatus === 'rejected'
-                  ? 'Application rejected'
-                  : current.producerStatus === 'suspended'
-                    ? 'Your producer account is suspended.'
-                    : 'Status unavailable'}
-          </p>
-        </section>
+        <>
+          <ProducerOnboarding
+            key={current.id}
+            user={current}
+            requestedSellingPath={requestedSellingPath}
+          />
+          <ProducerProducts status={current.producerStatus} />
+        </>
       )}
       {current.role === 'buyer' && (
         <PaymentMethods key={current.id} buyerId={current.id} />

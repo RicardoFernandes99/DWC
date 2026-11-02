@@ -101,6 +101,262 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/producer/application": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProducerApplicationController_get"];
+        put: operations["ProducerApplicationController_submit"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producer/application/resubmit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ProducerApplicationController_resubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producer/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProducerProfileController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["ProducerProfileController_update"];
+        trace?: never;
+    };
+    "/api/admin/producer-applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminProducerApplicationsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/producer-applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminProducerApplicationsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/producer-applications/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminProducerApplicationsController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/producer-applications/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminProducerApplicationsController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producer/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProducerProductsController_list"];
+        put?: never;
+        post: operations["ProducerProductsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producer/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProducerProductsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["ProducerProductsController_update"];
+        trace?: never;
+    };
+    "/api/producer/products/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ProducerProductsController_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producer/products/{id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProducerProductsController_getImagePreview"];
+        put?: never;
+        post: operations["ProducerProductsController_uploadImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CatalogueController_listProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CatalogueController_getProduct"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CatalogueController_listProducers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CatalogueController_getProducer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producers/{id}/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CatalogueController_listProducerProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -121,12 +377,14 @@ export interface components {
              * @example buyer
              * @enum {string}
              */
-            role: "buyer" | "producer";
+            role: "buyer" | "producer" | "admin";
             /**
              * @example null
              * @enum {string|null}
              */
             producerStatus: null | "pending" | "approved" | "rejected" | "suspended";
+            /** @example null */
+            producerRejectionReason: string | null;
         };
         AuthResponseDto: {
             accessToken: string;
@@ -170,6 +428,590 @@ export interface components {
             expiryYear: number;
             /** @example false */
             expired: boolean;
+        };
+        ProducerApplicationDetailsDto: {
+            /**
+             * @description Public name of the farm or producer enterprise.
+             * @example Quinta do Sol
+             */
+            farmName: string;
+            /**
+             * @description Detailed overview of farming practices, products, and story.
+             * @example Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.
+             */
+            description: string;
+            /**
+             * @description City or municipality of the farm.
+             * @example Sintra
+             */
+            city: string;
+            /**
+             * @description Physical address for order collections and farm visits.
+             * @example Rua Principal 12, 2710-001 Sintra
+             */
+            collectionAddress: string;
+            /**
+             * @description Latitude coordinate in decimal degrees between -90 and 90.
+             * @example 38.8029
+             */
+            latitude: number;
+            /**
+             * @description Longitude coordinate in decimal degrees between -180 and 180.
+             * @example -9.3817
+             */
+            longitude: number;
+        };
+        ProducerApplicationResponseDto: {
+            /**
+             * @description Review status of the producer registration.
+             * @example pending
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected" | "suspended";
+            /**
+             * @description Administrator explanation for application rejection, if rejected.
+             * @example null
+             */
+            rejectionReason: string | null;
+            /**
+             * Format: date-time
+             * @description ISO-8601 timestamp of most recent application submission.
+             * @example 2026-11-01T12:00:00.000Z
+             */
+            submittedAt: string | null;
+            /**
+             * Format: date-time
+             * @description ISO-8601 timestamp of the latest administrator approval or rejection decision, if any.
+             * @example null
+             */
+            decidedAt: string | null;
+            /** @description Current submitted application details, or null if not yet submitted. */
+            application: components["schemas"]["ProducerApplicationDetailsDto"] | null;
+        };
+        SubmitProducerApplicationDto: {
+            /**
+             * @description Public name of the farm or producer enterprise.
+             * @example Quinta do Sol
+             */
+            farmName: string;
+            /**
+             * @description Detailed overview of farming practices, products, and story.
+             * @example Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.
+             */
+            description: string;
+            /**
+             * @description City or municipality of the farm.
+             * @example Sintra
+             */
+            city: string;
+            /**
+             * @description Physical address for order collections and farm visits.
+             * @example Rua Principal 12, 2710-001 Sintra
+             */
+            collectionAddress: string;
+            /**
+             * @description Latitude coordinate in decimal degrees between -90 and 90.
+             * @example 38.8029
+             */
+            latitude: number;
+            /**
+             * @description Longitude coordinate in decimal degrees between -180 and 180.
+             * @example -9.3817
+             */
+            longitude: number;
+        };
+        ProducerProfileResponseDto: {
+            /**
+             * @description Public name of the farm or producer enterprise.
+             * @example Quinta do Sol
+             */
+            farmName: string;
+            /**
+             * @description Detailed overview of farming practices, products, and story.
+             * @example Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.
+             */
+            description: string;
+            /**
+             * @description City or municipality of the farm.
+             * @example Sintra
+             */
+            city: string;
+            /**
+             * @description Physical address for order collections and farm visits.
+             * @example Rua Principal 12, 2710-001 Sintra
+             */
+            collectionAddress: string;
+            /**
+             * @description Latitude coordinate in decimal degrees between -90 and 90.
+             * @example 38.8029
+             */
+            latitude: number;
+            /**
+             * @description Longitude coordinate in decimal degrees between -180 and 180.
+             * @example -9.3817
+             */
+            longitude: number;
+            /**
+             * @description Current status of the approved producer.
+             * @example approved
+             * @enum {string}
+             */
+            status: "approved";
+            /**
+             * @description Current producer profile revision.
+             * @example 2
+             */
+            revision: number;
+            /**
+             * Format: date-time
+             * @description ISO-8601 timestamp of the latest profile update.
+             * @example 2026-11-01T12:00:00.000Z
+             */
+            updatedAt: string;
+        };
+        UpdateProducerProfileDto: {
+            /**
+             * @description Current producer profile revision to prevent stale or concurrent overwrite.
+             * @example 1
+             */
+            revision: number;
+            /**
+             * @description Public name of the farm or producer enterprise.
+             * @example Quinta do Sol
+             */
+            farmName?: string;
+            /**
+             * @description Detailed overview of farming practices, products, and story.
+             * @example Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.
+             */
+            description?: string;
+            /**
+             * @description City or municipality of the farm.
+             * @example Sintra
+             */
+            city?: string;
+            /**
+             * @description Physical address for order collections and farm visits.
+             * @example Rua Principal 12, 2710-001 Sintra
+             */
+            collectionAddress?: string;
+            /**
+             * @description Latitude coordinate in decimal degrees between -90 and 90.
+             * @example 38.8029
+             */
+            latitude?: number;
+            /**
+             * @description Longitude coordinate in decimal degrees between -180 and 180.
+             * @example -9.3817
+             */
+            longitude?: number;
+        };
+        AdminProducerApplicationItemDto: {
+            /** @example 671f0f98ac53ba58e26c4789 */
+            id: string;
+            /** @example Maria Costa */
+            name: string;
+            /** @example maria@example.com */
+            email: string;
+            /**
+             * @example pending
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected" | "suspended";
+            /**
+             * @description Current application decision revision used for concurrency checks.
+             * @example 1
+             */
+            revision: number;
+            /** @example null */
+            rejectionReason: string | null;
+            /**
+             * Format: date-time
+             * @example 2026-11-01T12:00:00.000Z
+             */
+            submittedAt: string;
+            /**
+             * Format: date-time
+             * @example null
+             */
+            decidedAt: string | null;
+            /**
+             * @description Administrator user ID that recorded the latest decision.
+             * @example null
+             */
+            decidedBy: string | null;
+            application: components["schemas"]["ProducerApplicationDetailsDto"];
+        };
+        AdminProducerApplicationListResponseDto: {
+            items: components["schemas"]["AdminProducerApplicationItemDto"][];
+            /** @example 1 */
+            total: number;
+            /** @example 1 */
+            page: number;
+            /** @example 20 */
+            limit: number;
+        };
+        ApproveProducerApplicationDto: {
+            /**
+             * @description Current application decision revision to prevent stale or concurrent overwrite.
+             * @example 1
+             */
+            revision: number;
+        };
+        RejectProducerApplicationDto: {
+            /**
+             * @description Current application decision revision to prevent stale or concurrent overwrite.
+             * @example 1
+             */
+            revision: number;
+            /**
+             * @description Required administrator explanation for rejection.
+             * @example Please provide your complete collection street number and organic certification details.
+             */
+            reason: string;
+        };
+        ProducerProductImageMetadataDto: {
+            /**
+             * @description Validated canonical raster MIME type of the stored image.
+             * @example image/jpeg
+             * @enum {string}
+             */
+            mimeType: "image/jpeg" | "image/png" | "image/webp";
+            /**
+             * @description Stored image size in bytes.
+             * @example 184320
+             */
+            sizeBytes: number;
+            /**
+             * @description Image width in pixels.
+             * @example 1200
+             */
+            width: number;
+            /**
+             * @description Image height in pixels.
+             * @example 900
+             */
+            height: number;
+            /**
+             * Format: date-time
+             * @description Timestamp when the image was uploaded.
+             * @example 2026-11-01T12:00:00.000Z
+             */
+            uploadedAt: string;
+        };
+        ProducerProductResponseDto: {
+            /** @example 671f0f98ac53ba58e26c4789 */
+            id: string;
+            /** @example 671f0f98ac53ba58e26c4788 */
+            producerId: string;
+            /** @example Heirloom Oxheart Tomatoes */
+            name: string;
+            /** @example Field-ripened organic oxheart tomatoes harvested every morning for sweet, low-acid flavor. */
+            description: string;
+            /**
+             * @example vegetables
+             * @enum {string}
+             */
+            category: "vegetables" | "fruits" | "dairy" | "eggs" | "meat" | "bakery" | "pantry" | "beverages" | "other";
+            /**
+             * @example organic
+             * @enum {string}
+             */
+            productionMethod: "organic" | "sustainable" | "conventional" | "artisanal" | "biodynamic";
+            /**
+             * @example [
+             *       "summer",
+             *       "autumn"
+             *     ]
+             */
+            seasons: ("spring" | "summer" | "autumn" | "winter" | "year_round")[];
+            /** @example 380 */
+            priceCents: number;
+            /**
+             * @example kg
+             * @enum {string}
+             */
+            unit: "unit" | "bunch" | "box" | "jar" | "bottle" | "bag" | "kg" | "g_500" | "g_250" | "l" | "ml_500";
+            /** @example 25 */
+            availableStock: number;
+            /** @example 0 */
+            reservedStock: number;
+            /** @example 5 */
+            lowStockThreshold: number;
+            /**
+             * @description True when availableStock is at or below lowStockThreshold.
+             * @example false
+             */
+            isLowStock: boolean;
+            /** @example true */
+            published: boolean;
+            /**
+             * Format: date-time
+             * @example null
+             */
+            archivedAt: string | null;
+            /**
+             * Format: date-time
+             * @example null
+             */
+            moderatedAt: string | null;
+            /** @example null */
+            moderationReason: string | null;
+            /**
+             * @description Whether an image has been uploaded for this product.
+             * @example false
+             */
+            hasImage: boolean;
+            /**
+             * @description Short-lived signed preview URL when an active unarchived, unmoderated product has an image; null otherwise.
+             * @example null
+             */
+            imageUrl: string | null;
+            /**
+             * @description Validated image metadata when an image is attached; null otherwise.
+             * @example null
+             */
+            imageMeta: components["schemas"]["ProducerProductImageMetadataDto"] | null;
+            /** @example 1 */
+            revision: number;
+            /**
+             * Format: date-time
+             * @example 2026-11-01T12:00:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2026-11-01T12:00:00.000Z
+             */
+            updatedAt: string;
+        };
+        ProducerProductListResponseDto: {
+            items: components["schemas"]["ProducerProductResponseDto"][];
+            /** @example 1 */
+            total: number;
+            /** @example 1 */
+            page: number;
+            /** @example 20 */
+            limit: number;
+        };
+        CreateProducerProductDto: {
+            /**
+             * @description Product display name.
+             * @example Heirloom Oxheart Tomatoes
+             */
+            name: string;
+            /**
+             * @description Detailed product description.
+             * @example Field-ripened organic oxheart tomatoes harvested every morning for sweet, low-acid flavor.
+             */
+            description: string;
+            /**
+             * @description Catalogue category.
+             * @example vegetables
+             * @enum {string}
+             */
+            category: "vegetables" | "fruits" | "dairy" | "eggs" | "meat" | "bakery" | "pantry" | "beverages" | "other";
+            /**
+             * @description Farming or production method.
+             * @example organic
+             * @enum {string}
+             */
+            productionMethod: "organic" | "sustainable" | "conventional" | "artisanal" | "biodynamic";
+            /**
+             * @description Deduplicated list of harvest or availability seasons.
+             * @example [
+             *       "summer",
+             *       "autumn"
+             *     ]
+             */
+            seasons: ("spring" | "summer" | "autumn" | "winter" | "year_round")[];
+            /**
+             * @description Price per unit in integer EUR cents.
+             * @example 380
+             */
+            priceCents: number;
+            /**
+             * @description Discrete pack or measurement unit.
+             * @example kg
+             * @enum {string}
+             */
+            unit: "unit" | "bunch" | "box" | "jar" | "bottle" | "bag" | "kg" | "g_500" | "g_250" | "l" | "ml_500";
+            /**
+             * @description Non-negative integer stock quantity available for sale.
+             * @example 25
+             */
+            availableStock: number;
+            /**
+             * @description Non-negative integer threshold for low-stock warnings.
+             * @example 5
+             */
+            lowStockThreshold: number;
+            /**
+             * @description Whether the product is published in the public catalogue when the producer is eligible.
+             * @default true
+             * @example true
+             */
+            published: boolean;
+        };
+        UpdateProducerProductDto: {
+            /**
+             * @description Current product revision to prevent stale edits or overwriting concurrent stock reservations.
+             * @example 1
+             */
+            revision: number;
+            /**
+             * @description Product display name.
+             * @example Heirloom Oxheart Tomatoes
+             */
+            name?: string;
+            /**
+             * @description Detailed product description.
+             * @example Field-ripened organic oxheart tomatoes harvested every morning for sweet, low-acid flavor.
+             */
+            description?: string;
+            /**
+             * @description Catalogue category.
+             * @example vegetables
+             * @enum {string}
+             */
+            category?: "vegetables" | "fruits" | "dairy" | "eggs" | "meat" | "bakery" | "pantry" | "beverages" | "other";
+            /**
+             * @description Farming or production method.
+             * @example organic
+             * @enum {string}
+             */
+            productionMethod?: "organic" | "sustainable" | "conventional" | "artisanal" | "biodynamic";
+            /**
+             * @description Deduplicated list of harvest or availability seasons.
+             * @example [
+             *       "summer",
+             *       "autumn"
+             *     ]
+             */
+            seasons?: ("spring" | "summer" | "autumn" | "winter" | "year_round")[];
+            /**
+             * @description Price per unit in integer EUR cents.
+             * @example 380
+             */
+            priceCents?: number;
+            /**
+             * @description Discrete pack or measurement unit.
+             * @example kg
+             * @enum {string}
+             */
+            unit?: "unit" | "bunch" | "box" | "jar" | "bottle" | "bag" | "kg" | "g_500" | "g_250" | "l" | "ml_500";
+            /**
+             * @description Non-negative integer stock quantity available for sale.
+             * @example 25
+             */
+            availableStock?: number;
+            /**
+             * @description Non-negative integer threshold for low-stock warnings.
+             * @example 5
+             */
+            lowStockThreshold?: number;
+            /**
+             * @description Whether the product is published in the public catalogue when the producer is eligible.
+             * @example true
+             */
+            published?: boolean;
+        };
+        ArchiveProducerProductDto: {
+            /**
+             * @description Current product revision to prevent stale archive actions.
+             * @example 1
+             */
+            revision: number;
+        };
+        UploadProducerProductImageSwaggerDto: {
+            /**
+             * @description Current product revision to prevent stale image replacements.
+             * @example 1
+             */
+            revision: number;
+            /**
+             * Format: binary
+             * @description Raster product image file (JPEG, PNG or WebP; SVG rejected; max 5 MB / 5,242,880 bytes; dimensions 1..4096 px, max 16,777,216 pixels).
+             */
+            file: string;
+        };
+        ProducerProductImagePreviewResponseDto: {
+            /**
+             * @description Validated canonical raster MIME type of the stored image.
+             * @example image/jpeg
+             * @enum {string}
+             */
+            mimeType: "image/jpeg" | "image/png" | "image/webp";
+            /**
+             * @description Stored image size in bytes.
+             * @example 184320
+             */
+            sizeBytes: number;
+            /**
+             * @description Image width in pixels.
+             * @example 1200
+             */
+            width: number;
+            /**
+             * @description Image height in pixels.
+             * @example 900
+             */
+            height: number;
+            /**
+             * Format: date-time
+             * @description Timestamp when the image was uploaded.
+             * @example 2026-11-01T12:00:00.000Z
+             */
+            uploadedAt: string;
+            /**
+             * @description Short-lived signed GET URL for the private product image object.
+             * @example http://127.0.0.1:4566/product-images/products/671f0f98ac53ba58e26c4788/671f0f98ac53ba58e26c4789/7b8e1100-5b8d-4900-a312-9076511c48b3.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300
+             */
+            url: string;
+            /**
+             * @description Lifetime of the signed URL in seconds.
+             * @example 300
+             */
+            expiresInSeconds: number;
+        };
+        Object: Record<string, never>;
+        CatalogueProductDto: {
+            id: string;
+            producerId: string;
+            producerFarmName: string;
+            producerCity: string;
+            name: string;
+            description: string;
+            /** @enum {string} */
+            category: "vegetables" | "fruits" | "dairy" | "eggs" | "meat" | "bakery" | "pantry" | "beverages" | "other";
+            /** @enum {string} */
+            productionMethod: "organic" | "sustainable" | "conventional" | "artisanal" | "biodynamic";
+            seasons: ("spring" | "summer" | "autumn" | "winter" | "year_round")[];
+            priceCents: number;
+            /** @enum {string} */
+            unit: "unit" | "bunch" | "box" | "jar" | "bottle" | "bag" | "kg" | "g_500" | "g_250" | "l" | "ml_500";
+            availableStock: number;
+            imageUrl: string | null;
+        };
+        CatalogueListDto: {
+            items: components["schemas"]["CatalogueProductDto"][];
+            total: number;
+            page: number;
+            limit: number;
+        };
+        ProducerPublicDto: {
+            id: string;
+            farmName: string;
+            description: string;
+            city: string;
+            latitude: number;
+            longitude: number;
+        };
+        ProducerListDto: {
+            items: components["schemas"]["ProducerPublicDto"][];
+            total: number;
+            page: number;
+            limit: number;
         };
     };
     responses: never;
@@ -473,6 +1315,1157 @@ export interface operations {
             };
             /** @description Authentication storage unavailable. */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerApplicationController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current producer application and review status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerApplicationResponseDto"];
+                };
+            };
+            /** @description Unexpected query fields are not accepted. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only producers may access producer applications. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerApplicationController_submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitProducerApplicationDto"];
+            };
+        };
+        responses: {
+            /** @description Application successfully saved or updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerApplicationResponseDto"];
+                };
+            };
+            /** @description Invalid application fields, bounds or unexpected properties. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only producers may access producer applications. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only pending producer applications can be saved directly. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerApplicationController_resubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitProducerApplicationDto"];
+            };
+        };
+        responses: {
+            /** @description Application successfully resubmitted for review. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerApplicationResponseDto"];
+                };
+            };
+            /** @description Invalid application fields, bounds or unexpected properties. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only producers may access producer applications. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only rejected producer applications can be resubmitted. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProfileController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current approved producer profile and revision. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProfileResponseDto"];
+                };
+            };
+            /** @description Unexpected query fields are not accepted. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may access producer profiles. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProfileController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProducerProfileDto"];
+            };
+        };
+        responses: {
+            /** @description Producer profile updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProfileResponseDto"];
+                };
+            };
+            /** @description Invalid profile fields, bounds or unexpected properties. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may edit producer profiles. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Producer profile was modified concurrently. Refresh and try again. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminProducerApplicationsController_list: {
+        parameters: {
+            query?: {
+                /** @description Optional producer application status filter. */
+                status?: "pending" | "approved" | "rejected" | "suspended";
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Maximum number of applications returned per page. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of submitted producer applications ordered by most recent submission. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProducerApplicationListResponseDto"];
+                };
+            };
+            /** @description Invalid pagination bounds, status filter or query fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminProducerApplicationsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Producer user identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Producer application details and review metadata. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProducerApplicationItemDto"];
+                };
+            };
+            /** @description Invalid producer user identifier. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Producer account not found or has not submitted an application. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminProducerApplicationsController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Producer user identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveProducerApplicationDto"];
+            };
+        };
+        responses: {
+            /** @description Producer application approved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProducerApplicationItemDto"];
+                };
+            };
+            /** @description Invalid producer user identifier or revision payload. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Producer account not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Application is unsubmitted, not pending, or its revision changed concurrently. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminProducerApplicationsController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Producer user identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectProducerApplicationDto"];
+            };
+        };
+        responses: {
+            /** @description Producer application rejected with administrator feedback. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProducerApplicationItemDto"];
+                };
+            };
+            /** @description Invalid producer user identifier, revision payload, or missing/invalid rejection reason. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Producer account not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Application is unsubmitted, not pending, or its revision changed concurrently. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProductsController_list: {
+        parameters: {
+            query?: {
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Maximum number of products returned per page. */
+                limit?: number;
+                /** @description Whether to include archived products in the results. */
+                includeArchived?: boolean;
+                /** @description Optional product category filter. */
+                category?: "vegetables" | "fruits" | "dairy" | "eggs" | "meat" | "bakery" | "pantry" | "beverages" | "other";
+                /** @description Optional published state filter. */
+                published?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of the producer’s own products. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProductListResponseDto"];
+                };
+            };
+            /** @description Invalid pagination bounds, filters or query fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may manage products. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication or product image storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProductsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProducerProductDto"];
+            };
+        };
+        responses: {
+            /** @description Product created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProductResponseDto"];
+                };
+            };
+            /** @description Invalid product fields, bounds or unexpected properties. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may manage products. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication or product image storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProductsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Product identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Producer product details and current stock/revision. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProductResponseDto"];
+                };
+            };
+            /** @description Invalid product identifier or unexpected query fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may manage products. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication or product image storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProductsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Product identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProducerProductDto"];
+            };
+        };
+        responses: {
+            /** @description Product updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProductResponseDto"];
+                };
+            };
+            /** @description Invalid product identifier, fields or unexpected properties. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may manage products. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product is archived or its revision/stock changed concurrently. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication or product image storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProductsController_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Product identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchiveProducerProductDto"];
+            };
+        };
+        responses: {
+            /** @description Product archived and unpublished while preserving historical references. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProductResponseDto"];
+                };
+            };
+            /** @description Invalid product identifier or revision payload. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may manage products. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product is already archived or its revision changed concurrently. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication or product image storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProductsController_getImagePreview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Product identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Short-lived signed preview URL and metadata for the producer’s product image. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProductImagePreviewResponseDto"];
+                };
+            };
+            /** @description Invalid product identifier or unexpected query fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may manage products. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product or product image not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Archived or moderated products cannot mint fresh image URLs. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication or product image storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProductsController_uploadImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Product identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Multipart upload with current product revision and a raster image file (JPEG, PNG or WebP; SVG rejected; max 5 MB; dimensions 1..4096 px, max 16,777,216 pixels). */
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["UploadProducerProductImageSwaggerDto"];
+            };
+        };
+        responses: {
+            /** @description Product image uploaded or replaced in private S3 storage and signed preview access returned. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProductResponseDto"];
+                };
+            };
+            /** @description Missing or invalid image bytes, unsupported SVG or non-raster format, spoofed MIME declaration, invalid pixel bounds, or invalid revision. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may manage products. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product is archived, moderated, or its revision changed concurrently. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Uploaded file exceeds the 5 MB (5,242,880 bytes) size limit. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication or product image storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CatalogueController_listProducts: {
+        parameters: {
+            query?: {
+                q?: string;
+                category?: "vegetables" | "fruits" | "dairy" | "eggs" | "meat" | "bakery" | "pantry" | "beverages" | "other";
+                producerId?: string;
+                location?: string;
+                season?: "spring" | "summer" | "autumn" | "winter" | "year_round";
+                productionMethod?: "organic" | "sustainable" | "conventional" | "artisanal" | "biodynamic";
+                minPriceCents?: number;
+                maxPriceCents?: number;
+                sort?: "newest" | "price_asc" | "price_desc" | "name_asc";
+                page?: components["schemas"]["Object"];
+                limit?: components["schemas"]["Object"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueListDto"];
+                };
+            };
+            /** @description Invalid filters, price range, pagination or query fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CatalogueController_getProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueProductDto"];
+                };
+            };
+            /** @description Invalid product identifier. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product not found or unavailable. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CatalogueController_listProducers: {
+        parameters: {
+            query?: {
+                q?: string;
+                page?: components["schemas"]["Object"];
+                limit?: components["schemas"]["Object"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerListDto"];
+                };
+            };
+            /** @description Invalid search or pagination. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CatalogueController_getProducer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerPublicDto"];
+                };
+            };
+            /** @description Invalid producer identifier. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Producer not found or unavailable. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CatalogueController_listProducerProducts: {
+        parameters: {
+            query?: {
+                q?: string;
+                category?: "vegetables" | "fruits" | "dairy" | "eggs" | "meat" | "bakery" | "pantry" | "beverages" | "other";
+                producerId?: string;
+                location?: string;
+                season?: "spring" | "summer" | "autumn" | "winter" | "year_round";
+                productionMethod?: "organic" | "sustainable" | "conventional" | "artisanal" | "biodynamic";
+                minPriceCents?: number;
+                maxPriceCents?: number;
+                sort?: "newest" | "price_asc" | "price_desc" | "name_asc";
+                page?: components["schemas"]["Object"];
+                limit?: components["schemas"]["Object"];
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueListDto"];
+                };
+            };
+            /** @description Invalid producer identifier or catalogue filters. */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

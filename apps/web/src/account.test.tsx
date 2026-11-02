@@ -22,6 +22,7 @@ const person = {
   email: 'buyer@example.com',
   role: 'buyer' as const,
   producerStatus: null,
+  producerRejectionReason: null,
 };
 function showAccount() {
   const client = new QueryClient({

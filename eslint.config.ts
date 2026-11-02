@@ -12,6 +12,8 @@ export default [
       '**/coverage/**',
       '.agents/skills/**/*.mjs',
       '.agents/skills/record-demo/assets/overlay.js',
+      '.agents/skills/impeccable/**',
+      '.agents/skills/taste-skill/**',
     ],
   },
   js.configs.recommended,

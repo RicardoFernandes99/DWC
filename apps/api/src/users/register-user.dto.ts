@@ -13,6 +13,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Buffer } from 'node:buffer';
 import { UserRole } from './user.schema.js';
 
+export enum PublicRegisterRole {
+  Buyer = UserRole.Buyer,
+  Producer = UserRole.Producer,
+}
+
 @ValidatorConstraint({ name: 'passwordByteLength', async: false })
 class PasswordByteLength implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
@@ -56,7 +61,7 @@ export class RegisterUserDto {
   @Validate(PasswordByteLength)
   password!: string;
 
-  @ApiProperty({ enum: UserRole, example: UserRole.Buyer })
-  @IsEnum(UserRole)
-  role!: UserRole;
+  @ApiProperty({ enum: PublicRegisterRole, example: PublicRegisterRole.Buyer })
+  @IsEnum(PublicRegisterRole)
+  role!: PublicRegisterRole;
 }

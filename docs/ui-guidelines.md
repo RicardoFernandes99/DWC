@@ -1,8 +1,9 @@
 # Frontend style and component conventions
 
 Use this reference for every React UI ticket. The visual specimen will be built
-in [045: UI foundation](tickets/045-ui-foundation.md). Reuse the current earthy
-green/neutral direction rather than choosing a new palette for each feature.
+in [045: UI foundation](tickets/045-ui-foundation.md). Follow the approved
+Orchard direction shown at `/ui-design` and in the durable reference asset at
+`apps/web/public/design/orchard-reference.png`.
 
 ## Tokens
 
@@ -10,13 +11,21 @@ green/neutral direction rather than choosing a new palette for each feature.
 Tailwind `@theme inline` mapping already define background, foreground, primary,
 secondary, muted, accent, card, border, input, ring and feedback colors, plus radii.
 
+The approved Orchard palette is Forest `#24563D` for primary actions, Cream
+`#F7F5EE` for the page and auth background, Sage `#DDE8D8` for secondary
+surfaces, Ink `#253329` for text and icons, and Orange `#D98145` for highlights
+and warning surfaces. Orange uses Ink text because white-on-orange does not meet
+text contrast. Destructive feedback stays red; Orange does not replace it.
+Continue using Fraunces for editorial headings and the system font for controls
+and body text.
+
 Components consume semantic classes such as `bg-primary`, `text-foreground`,
 `text-muted-foreground`, `border-border` and `ring-ring`. They must not copy color
 values into component files or create a competing TypeScript color map. A needed
 new semantic token belongs in that central source and the visual specimen.
 
-Current visual defaults include a warm neutral background, green primary actions,
-neutral cards and semantic success/warning/error feedback. Keep typography, spacing,
+Current visual defaults include cream backgrounds, forest primary actions, sage
+secondary surfaces and semantic success/warning/error feedback. Keep typography, spacing,
 radii and control variants consistent with the specimen. Do not add a new font,
 dark theme or styling framework solely to decorate one screen.
 

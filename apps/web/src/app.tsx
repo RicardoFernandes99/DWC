@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowUpRight, RefreshCw } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
+import { Link } from '@tanstack/react-router';
 
 export function App() {
   const [status, setStatus] = useState('Not checked yet');
@@ -28,7 +28,7 @@ export function App() {
   return (
     <div className="min-h-svh bg-background text-foreground">
       <main className="mx-auto max-w-5xl px-6 py-16 md:py-24">
-        <p className="text-sm font-medium uppercase tracking-widest text-primary">
+        <p className="inline-flex rounded-full bg-highlight px-3 py-1 text-sm font-medium text-highlight-foreground">
           Grown locally
         </p>
         <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
@@ -38,11 +38,6 @@ export function App() {
           Local produce, orders, and live auctions. We are getting the
           marketplace ready.
         </p>
-        <Button asChild variant="outline" className="mt-6">
-          <Link to="/ui-design">
-            UI Design <ArrowUpRight />
-          </Link>
-        </Button>
         <section
           aria-labelledby="connection-title"
           className="mt-12 rounded-xl border border-border bg-card p-6 md:max-w-xl"
@@ -62,6 +57,9 @@ export function App() {
               <a href="/api-docs">
                 API documentation <ArrowUpRight aria-hidden="true" />
               </a>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link to="/ui-design">View Orchard design references</Link>
             </Button>
           </div>
         </section>

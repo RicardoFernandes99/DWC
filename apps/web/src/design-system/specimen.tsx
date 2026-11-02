@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const colors = [
   { name: 'Background', className: 'bg-background text-foreground' },
@@ -12,6 +13,10 @@ const colors = [
   { name: 'Secondary', className: 'bg-secondary text-secondary-foreground' },
   { name: 'Muted', className: 'bg-muted text-muted-foreground' },
   { name: 'Accent', className: 'bg-accent text-accent-foreground' },
+  {
+    name: 'Highlight / Orchard orange',
+    className: 'bg-highlight text-highlight-foreground',
+  },
   {
     name: 'Destructive',
     className: 'bg-destructive text-destructive-foreground',
@@ -237,6 +242,14 @@ export function Specimen() {
                       disabled
                       value="Unavailable"
                       readOnly
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="example-textarea">Farm description</Label>
+                    <Textarea
+                      id="example-textarea"
+                      rows={3}
+                      placeholder="Describe farming practices, seasonal produce, and collection arrangements."
                     />
                   </div>
                 </div>

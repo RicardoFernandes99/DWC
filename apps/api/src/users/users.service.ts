@@ -2,7 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import bcrypt from 'bcryptjs';
 import { Model } from 'mongoose';
-import { RegisterUserDto } from './register-user.dto.js';
+import { PublicRegisterRole, RegisterUserDto } from './register-user.dto.js';
 import { ProducerStatus, User, UserDocument, UserRole } from './user.schema.js';
 import { UserResponseDto } from './user-response.dto.js';
 
@@ -34,6 +34,11 @@ function toUserResponse(user: UserDocument): UserResponseDto {
     email: user.email,
     role: user.role,
     producerStatus: user.producerStatus,
+    producerRejectionReason:
+      user.role === UserRole.Producer &&
+      user.producerStatus === ProducerStatus.Rejected
+        ? (user.producerRejectionReason ?? null)
+        : null,
   };
 }
 
@@ -61,15 +66,19 @@ export class UsersService {
   async register(input: RegisterUserDto) {
     const email = input.email.trim().toLowerCase();
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_COST);
+    const role =
+      input.role === PublicRegisterRole.Producer
+        ? UserRole.Producer
+        : UserRole.Buyer;
 
     try {
       const user = await this.users.create({
         name: input.name.trim(),
         email,
         passwordHash,
-        role: input.role,
+        role,
         producerStatus:
-          input.role === UserRole.Producer ? ProducerStatus.Pending : null,
+          role === UserRole.Producer ? ProducerStatus.Pending : null,
       });
       return toUserResponse(user);
     } catch (error: unknown) {

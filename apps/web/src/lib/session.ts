@@ -23,12 +23,16 @@ function user(value: unknown): value is User {
     typeof value.id === 'string' &&
     typeof value.name === 'string' &&
     typeof value.email === 'string' &&
-    (value.role === 'buyer' || value.role === 'producer') &&
+    (value.role === 'buyer' ||
+      value.role === 'producer' ||
+      value.role === 'admin') &&
     (value.producerStatus === null ||
       value.producerStatus === 'pending' ||
       value.producerStatus === 'approved' ||
       value.producerStatus === 'rejected' ||
-      value.producerStatus === 'suspended')
+      value.producerStatus === 'suspended') &&
+    (value.producerRejectionReason === null ||
+      typeof value.producerRejectionReason === 'string')
   );
 }
 function auth(value: unknown): value is Auth {
@@ -49,8 +53,11 @@ async function request(
     response = await fetch(`${base}/${path}`, {
       ...options,
       credentials: 'include',
-      signal: AbortSignal.timeout(10000),
-      headers: { 'Content-Type': 'application/json', ...options.headers },
+      signal: options.signal ?? AbortSignal.timeout(10000),
+      headers:
+        options.body instanceof FormData
+          ? options.headers
+          : { 'Content-Type': 'application/json', ...options.headers },
     });
   } catch {
     throw new ApiError(0, 'Could not connect. Please try again.');

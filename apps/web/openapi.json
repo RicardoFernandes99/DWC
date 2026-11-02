@@ -280,6 +280,1424 @@
           "Payment methods"
         ]
       }
+    },
+    "/api/producer/application": {
+      "get": {
+        "operationId": "ProducerApplicationController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current producer application and review status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerApplicationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected query fields are not accepted."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only producers may access producer applications."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer application"
+        ]
+      },
+      "put": {
+        "operationId": "ProducerApplicationController_submit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitProducerApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application successfully saved or updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerApplicationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application fields, bounds or unexpected properties."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only producers may access producer applications."
+          },
+          "409": {
+            "description": "Only pending producer applications can be saved directly."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer application"
+        ]
+      }
+    },
+    "/api/producer/application/resubmit": {
+      "post": {
+        "operationId": "ProducerApplicationController_resubmit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitProducerApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application successfully resubmitted for review.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerApplicationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application fields, bounds or unexpected properties."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only producers may access producer applications."
+          },
+          "409": {
+            "description": "Only rejected producer applications can be resubmitted."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer application"
+        ]
+      }
+    },
+    "/api/producer/profile": {
+      "get": {
+        "operationId": "ProducerProfileController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current approved producer profile and revision.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProfileResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected query fields are not accepted."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may access producer profiles."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer profile"
+        ]
+      },
+      "patch": {
+        "operationId": "ProducerProfileController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProducerProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Producer profile updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProfileResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid profile fields, bounds or unexpected properties."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may edit producer profiles."
+          },
+          "409": {
+            "description": "Producer profile was modified concurrently. Refresh and try again."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer profile"
+        ]
+      }
+    },
+    "/api/admin/producer-applications": {
+      "get": {
+        "operationId": "AdminProducerApplicationsController_list",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Optional producer application status filter.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "suspended"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page number.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum number of applications returned per page.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of submitted producer applications ordered by most recent submission.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProducerApplicationListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination bounds, status filter or query fields."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin producer applications"
+        ]
+      }
+    },
+    "/api/admin/producer-applications/{id}": {
+      "get": {
+        "operationId": "AdminProducerApplicationsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Producer user identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producer application details and review metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProducerApplicationItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid producer user identifier."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Producer account not found or has not submitted an application."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin producer applications"
+        ]
+      }
+    },
+    "/api/admin/producer-applications/{id}/approve": {
+      "post": {
+        "operationId": "AdminProducerApplicationsController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Producer user identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveProducerApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Producer application approved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProducerApplicationItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid producer user identifier or revision payload."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Producer account not found."
+          },
+          "409": {
+            "description": "Application is unsubmitted, not pending, or its revision changed concurrently."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin producer applications"
+        ]
+      }
+    },
+    "/api/admin/producer-applications/{id}/reject": {
+      "post": {
+        "operationId": "AdminProducerApplicationsController_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Producer user identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectProducerApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Producer application rejected with administrator feedback.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProducerApplicationItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid producer user identifier, revision payload, or missing/invalid rejection reason."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Producer account not found."
+          },
+          "409": {
+            "description": "Application is unsubmitted, not pending, or its revision changed concurrently."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin producer applications"
+        ]
+      }
+    },
+    "/api/producer/products": {
+      "get": {
+        "operationId": "ProducerProductsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page number.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum number of products returned per page.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "includeArchived",
+            "required": false,
+            "in": "query",
+            "description": "Whether to include archived products in the results.",
+            "schema": {
+              "default": false,
+              "example": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "description": "Optional product category filter.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vegetables",
+                "fruits",
+                "dairy",
+                "eggs",
+                "meat",
+                "bakery",
+                "pantry",
+                "beverages",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "published",
+            "required": false,
+            "in": "query",
+            "description": "Optional published state filter.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of the producer’s own products.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProductListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination bounds, filters or query fields."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may manage products."
+          },
+          "503": {
+            "description": "Authentication or product image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer products"
+        ]
+      },
+      "post": {
+        "operationId": "ProducerProductsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProducerProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProductResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid product fields, bounds or unexpected properties."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may manage products."
+          },
+          "503": {
+            "description": "Authentication or product image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer products"
+        ]
+      }
+    },
+    "/api/producer/products/{id}": {
+      "get": {
+        "operationId": "ProducerProductsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Product identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producer product details and current stock/revision.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProductResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid product identifier or unexpected query fields."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may manage products."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "503": {
+            "description": "Authentication or product image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer products"
+        ]
+      },
+      "patch": {
+        "operationId": "ProducerProductsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Product identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProducerProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProductResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid product identifier, fields or unexpected properties."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may manage products."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "409": {
+            "description": "Product is archived or its revision/stock changed concurrently."
+          },
+          "503": {
+            "description": "Authentication or product image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer products"
+        ]
+      }
+    },
+    "/api/producer/products/{id}/archive": {
+      "post": {
+        "operationId": "ProducerProductsController_archive",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Product identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveProducerProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product archived and unpublished while preserving historical references.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProductResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid product identifier or revision payload."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may manage products."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "409": {
+            "description": "Product is already archived or its revision changed concurrently."
+          },
+          "503": {
+            "description": "Authentication or product image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer products"
+        ]
+      }
+    },
+    "/api/producer/products/{id}/image": {
+      "post": {
+        "operationId": "ProducerProductsController_uploadImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Product identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Multipart upload with current product revision and a raster image file (JPEG, PNG or WebP; SVG rejected; max 5 MB; dimensions 1..4096 px, max 16,777,216 pixels).",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadProducerProductImageSwaggerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product image uploaded or replaced in private S3 storage and signed preview access returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProductResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid image bytes, unsupported SVG or non-raster format, spoofed MIME declaration, invalid pixel bounds, or invalid revision."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may manage products."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "409": {
+            "description": "Product is archived, moderated, or its revision changed concurrently."
+          },
+          "413": {
+            "description": "Uploaded file exceeds the 5 MB (5,242,880 bytes) size limit."
+          },
+          "503": {
+            "description": "Authentication or product image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer products"
+        ]
+      },
+      "get": {
+        "operationId": "ProducerProductsController_getImagePreview",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Product identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Short-lived signed preview URL and metadata for the producer’s product image.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProductImagePreviewResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid product identifier or unexpected query fields."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may manage products."
+          },
+          "404": {
+            "description": "Product or product image not found."
+          },
+          "409": {
+            "description": "Archived or moderated products cannot mint fresh image URLs."
+          },
+          "503": {
+            "description": "Authentication or product image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer products"
+        ]
+      }
+    },
+    "/api/products": {
+      "get": {
+        "operationId": "CatalogueController_listProducts",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vegetables",
+                "fruits",
+                "dairy",
+                "eggs",
+                "meat",
+                "bakery",
+                "pantry",
+                "beverages",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "producerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "mongo-id",
+              "type": "string"
+            }
+          },
+          {
+            "name": "location",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "season",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          {
+            "name": "productionMethod",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organic",
+                "sustainable",
+                "conventional",
+                "artisanal",
+                "biodynamic"
+              ]
+            }
+          },
+          {
+            "name": "minPriceCents",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "maximum": 10000000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPriceCents",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "maximum": 10000000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "newest",
+              "type": "string",
+              "enum": [
+                "newest",
+                "price_asc",
+                "price_desc",
+                "name_asc"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueListDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filters, price range, pagination or query fields."
+          }
+        },
+        "tags": [
+          "Public catalogue"
+        ]
+      }
+    },
+    "/api/products/{id}": {
+      "get": {
+        "operationId": "CatalogueController_getProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueProductDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid product identifier."
+          },
+          "404": {
+            "description": "Product not found or unavailable."
+          }
+        },
+        "tags": [
+          "Public catalogue"
+        ]
+      }
+    },
+    "/api/producers": {
+      "get": {
+        "operationId": "CatalogueController_listProducers",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerListDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search or pagination."
+          }
+        },
+        "tags": [
+          "Public catalogue"
+        ]
+      }
+    },
+    "/api/producers/{id}": {
+      "get": {
+        "operationId": "CatalogueController_getProducer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerPublicDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid producer identifier."
+          },
+          "404": {
+            "description": "Producer not found or unavailable."
+          }
+        },
+        "tags": [
+          "Public catalogue"
+        ]
+      }
+    },
+    "/api/producers/{id}/products": {
+      "get": {
+        "operationId": "CatalogueController_listProducerProducts",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vegetables",
+                "fruits",
+                "dairy",
+                "eggs",
+                "meat",
+                "bakery",
+                "pantry",
+                "beverages",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "producerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "mongo-id",
+              "type": "string"
+            }
+          },
+          {
+            "name": "location",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "season",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          {
+            "name": "productionMethod",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organic",
+                "sustainable",
+                "conventional",
+                "artisanal",
+                "biodynamic"
+              ]
+            }
+          },
+          {
+            "name": "minPriceCents",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "maximum": 10000000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPriceCents",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "maximum": 10000000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "newest",
+              "type": "string",
+              "enum": [
+                "newest",
+                "price_asc",
+                "price_desc",
+                "name_asc"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueListDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid producer identifier or catalogue filters."
+          }
+        },
+        "tags": [
+          "Public catalogue"
+        ]
+      }
     }
   },
   "info": {
@@ -342,7 +1760,8 @@
             "type": "string",
             "enum": [
               "buyer",
-              "producer"
+              "producer",
+              "admin"
             ],
             "example": "buyer"
           },
@@ -357,6 +1776,11 @@
             ],
             "nullable": true,
             "example": null
+          },
+          "producerRejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null
           }
         },
         "required": [
@@ -364,7 +1788,8 @@
           "name",
           "email",
           "role",
-          "producerStatus"
+          "producerStatus",
+          "producerRejectionReason"
         ]
       },
       "AuthResponseDto": {
@@ -486,6 +1911,1241 @@
           "expiryMonth",
           "expiryYear",
           "expired"
+        ]
+      },
+      "ProducerApplicationDetailsDto": {
+        "type": "object",
+        "properties": {
+          "farmName": {
+            "type": "string",
+            "example": "Quinta do Sol",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Public name of the farm or producer enterprise."
+          },
+          "description": {
+            "type": "string",
+            "example": "Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "Detailed overview of farming practices, products, and story."
+          },
+          "city": {
+            "type": "string",
+            "example": "Sintra",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "City or municipality of the farm."
+          },
+          "collectionAddress": {
+            "type": "string",
+            "example": "Rua Principal 12, 2710-001 Sintra",
+            "minLength": 1,
+            "maxLength": 240,
+            "description": "Physical address for order collections and farm visits."
+          },
+          "latitude": {
+            "type": "number",
+            "example": 38.8029,
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude coordinate in decimal degrees between -90 and 90."
+          },
+          "longitude": {
+            "type": "number",
+            "example": -9.3817,
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude coordinate in decimal degrees between -180 and 180."
+          }
+        },
+        "required": [
+          "farmName",
+          "description",
+          "city",
+          "collectionAddress",
+          "latitude",
+          "longitude"
+        ]
+      },
+      "ProducerApplicationResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "suspended"
+            ],
+            "example": "pending",
+            "description": "Review status of the producer registration."
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Administrator explanation for application rejection, if rejected."
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2026-11-01T12:00:00.000Z",
+            "description": "ISO-8601 timestamp of most recent application submission."
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null,
+            "description": "ISO-8601 timestamp of the latest administrator approval or rejection decision, if any."
+          },
+          "application": {
+            "nullable": true,
+            "description": "Current submitted application details, or null if not yet submitted.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProducerApplicationDetailsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "rejectionReason",
+          "submittedAt",
+          "decidedAt",
+          "application"
+        ]
+      },
+      "SubmitProducerApplicationDto": {
+        "type": "object",
+        "properties": {
+          "farmName": {
+            "type": "string",
+            "example": "Quinta do Sol",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Public name of the farm or producer enterprise."
+          },
+          "description": {
+            "type": "string",
+            "example": "Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "Detailed overview of farming practices, products, and story."
+          },
+          "city": {
+            "type": "string",
+            "example": "Sintra",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "City or municipality of the farm."
+          },
+          "collectionAddress": {
+            "type": "string",
+            "example": "Rua Principal 12, 2710-001 Sintra",
+            "minLength": 1,
+            "maxLength": 240,
+            "description": "Physical address for order collections and farm visits."
+          },
+          "latitude": {
+            "type": "number",
+            "example": 38.8029,
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude coordinate in decimal degrees between -90 and 90."
+          },
+          "longitude": {
+            "type": "number",
+            "example": -9.3817,
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude coordinate in decimal degrees between -180 and 180."
+          }
+        },
+        "required": [
+          "farmName",
+          "description",
+          "city",
+          "collectionAddress",
+          "latitude",
+          "longitude"
+        ]
+      },
+      "ProducerProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "farmName": {
+            "type": "string",
+            "example": "Quinta do Sol",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Public name of the farm or producer enterprise."
+          },
+          "description": {
+            "type": "string",
+            "example": "Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "Detailed overview of farming practices, products, and story."
+          },
+          "city": {
+            "type": "string",
+            "example": "Sintra",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "City or municipality of the farm."
+          },
+          "collectionAddress": {
+            "type": "string",
+            "example": "Rua Principal 12, 2710-001 Sintra",
+            "minLength": 1,
+            "maxLength": 240,
+            "description": "Physical address for order collections and farm visits."
+          },
+          "latitude": {
+            "type": "number",
+            "example": 38.8029,
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude coordinate in decimal degrees between -90 and 90."
+          },
+          "longitude": {
+            "type": "number",
+            "example": -9.3817,
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude coordinate in decimal degrees between -180 and 180."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved"
+            ],
+            "example": "approved",
+            "description": "Current status of the approved producer."
+          },
+          "revision": {
+            "type": "number",
+            "example": 2,
+            "minimum": 1,
+            "description": "Current producer profile revision."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-01T12:00:00.000Z",
+            "description": "ISO-8601 timestamp of the latest profile update."
+          }
+        },
+        "required": [
+          "farmName",
+          "description",
+          "city",
+          "collectionAddress",
+          "latitude",
+          "longitude",
+          "status",
+          "revision",
+          "updatedAt"
+        ]
+      },
+      "UpdateProducerProfileDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "description": "Current producer profile revision to prevent stale or concurrent overwrite."
+          },
+          "farmName": {
+            "type": "string",
+            "example": "Quinta do Sol",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Public name of the farm or producer enterprise."
+          },
+          "description": {
+            "type": "string",
+            "example": "Family-owned organic vegetable farm specializing in heirloom tomatoes and seasonal greens.",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "Detailed overview of farming practices, products, and story."
+          },
+          "city": {
+            "type": "string",
+            "example": "Sintra",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "City or municipality of the farm."
+          },
+          "collectionAddress": {
+            "type": "string",
+            "example": "Rua Principal 12, 2710-001 Sintra",
+            "minLength": 1,
+            "maxLength": 240,
+            "description": "Physical address for order collections and farm visits."
+          },
+          "latitude": {
+            "type": "number",
+            "example": 38.8029,
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude coordinate in decimal degrees between -90 and 90."
+          },
+          "longitude": {
+            "type": "number",
+            "example": -9.3817,
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude coordinate in decimal degrees between -180 and 180."
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "AdminProducerApplicationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "671f0f98ac53ba58e26c4789"
+          },
+          "name": {
+            "type": "string",
+            "example": "Maria Costa"
+          },
+          "email": {
+            "type": "string",
+            "example": "maria@example.com"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "suspended"
+            ],
+            "example": "pending"
+          },
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "description": "Current application decision revision used for concurrency checks."
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-01T12:00:00.000Z"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "decidedBy": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Administrator user ID that recorded the latest decision."
+          },
+          "application": {
+            "$ref": "#/components/schemas/ProducerApplicationDetailsDto"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "status",
+          "revision",
+          "rejectionReason",
+          "submittedAt",
+          "decidedAt",
+          "decidedBy",
+          "application"
+        ]
+      },
+      "AdminProducerApplicationListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminProducerApplicationItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0
+          },
+          "page": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20,
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "ApproveProducerApplicationDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "description": "Current application decision revision to prevent stale or concurrent overwrite."
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "RejectProducerApplicationDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "description": "Current application decision revision to prevent stale or concurrent overwrite."
+          },
+          "reason": {
+            "type": "string",
+            "example": "Please provide your complete collection street number and organic certification details.",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Required administrator explanation for rejection."
+          }
+        },
+        "required": [
+          "revision",
+          "reason"
+        ]
+      },
+      "ProducerProductImageMetadataDto": {
+        "type": "object",
+        "properties": {
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ],
+            "example": "image/jpeg",
+            "description": "Validated canonical raster MIME type of the stored image."
+          },
+          "sizeBytes": {
+            "type": "number",
+            "example": 184320,
+            "minimum": 1,
+            "maximum": 5242880,
+            "description": "Stored image size in bytes."
+          },
+          "width": {
+            "type": "number",
+            "example": 1200,
+            "minimum": 1,
+            "maximum": 4096,
+            "description": "Image width in pixels."
+          },
+          "height": {
+            "type": "number",
+            "example": 900,
+            "minimum": 1,
+            "maximum": 4096,
+            "description": "Image height in pixels."
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-01T12:00:00.000Z",
+            "description": "Timestamp when the image was uploaded."
+          }
+        },
+        "required": [
+          "mimeType",
+          "sizeBytes",
+          "width",
+          "height",
+          "uploadedAt"
+        ]
+      },
+      "ProducerProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "671f0f98ac53ba58e26c4789"
+          },
+          "producerId": {
+            "type": "string",
+            "example": "671f0f98ac53ba58e26c4788"
+          },
+          "name": {
+            "type": "string",
+            "example": "Heirloom Oxheart Tomatoes"
+          },
+          "description": {
+            "type": "string",
+            "example": "Field-ripened organic oxheart tomatoes harvested every morning for sweet, low-acid flavor."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "vegetables",
+              "fruits",
+              "dairy",
+              "eggs",
+              "meat",
+              "bakery",
+              "pantry",
+              "beverages",
+              "other"
+            ],
+            "example": "vegetables"
+          },
+          "productionMethod": {
+            "type": "string",
+            "enum": [
+              "organic",
+              "sustainable",
+              "conventional",
+              "artisanal",
+              "biodynamic"
+            ],
+            "example": "organic"
+          },
+          "seasons": {
+            "type": "array",
+            "example": [
+              "summer",
+              "autumn"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          "priceCents": {
+            "type": "number",
+            "example": 380,
+            "minimum": 1
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "bunch",
+              "box",
+              "jar",
+              "bottle",
+              "bag",
+              "kg",
+              "g_500",
+              "g_250",
+              "l",
+              "ml_500"
+            ],
+            "example": "kg"
+          },
+          "availableStock": {
+            "type": "number",
+            "example": 25,
+            "minimum": 0
+          },
+          "reservedStock": {
+            "type": "number",
+            "example": 0,
+            "minimum": 0
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "example": 5,
+            "minimum": 0
+          },
+          "isLowStock": {
+            "type": "boolean",
+            "example": false,
+            "description": "True when availableStock is at or below lowStockThreshold."
+          },
+          "published": {
+            "type": "boolean",
+            "example": true
+          },
+          "archivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "moderatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "moderationReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "hasImage": {
+            "type": "boolean",
+            "example": false,
+            "description": "Whether an image has been uploaded for this product."
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Short-lived signed preview URL when an active unarchived, unmoderated product has an image; null otherwise."
+          },
+          "imageMeta": {
+            "nullable": true,
+            "example": null,
+            "description": "Validated image metadata when an image is attached; null otherwise.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProducerProductImageMetadataDto"
+              }
+            ]
+          },
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-01T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-01T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "producerId",
+          "name",
+          "description",
+          "category",
+          "productionMethod",
+          "seasons",
+          "priceCents",
+          "unit",
+          "availableStock",
+          "reservedStock",
+          "lowStockThreshold",
+          "isLowStock",
+          "published",
+          "archivedAt",
+          "moderatedAt",
+          "moderationReason",
+          "hasImage",
+          "imageUrl",
+          "imageMeta",
+          "revision",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ProducerProductListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProducerProductResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0
+          },
+          "page": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20,
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "CreateProducerProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Heirloom Oxheart Tomatoes",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Product display name."
+          },
+          "description": {
+            "type": "string",
+            "example": "Field-ripened organic oxheart tomatoes harvested every morning for sweet, low-acid flavor.",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "Detailed product description."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "vegetables",
+              "fruits",
+              "dairy",
+              "eggs",
+              "meat",
+              "bakery",
+              "pantry",
+              "beverages",
+              "other"
+            ],
+            "example": "vegetables",
+            "description": "Catalogue category."
+          },
+          "productionMethod": {
+            "type": "string",
+            "enum": [
+              "organic",
+              "sustainable",
+              "conventional",
+              "artisanal",
+              "biodynamic"
+            ],
+            "example": "organic",
+            "description": "Farming or production method."
+          },
+          "seasons": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "example": [
+              "summer",
+              "autumn"
+            ],
+            "description": "Deduplicated list of harvest or availability seasons.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          "priceCents": {
+            "type": "number",
+            "example": 380,
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Price per unit in integer EUR cents."
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "bunch",
+              "box",
+              "jar",
+              "bottle",
+              "bag",
+              "kg",
+              "g_500",
+              "g_250",
+              "l",
+              "ml_500"
+            ],
+            "example": "kg",
+            "description": "Discrete pack or measurement unit."
+          },
+          "availableStock": {
+            "type": "number",
+            "example": 25,
+            "minimum": 0,
+            "maximum": 1000000,
+            "description": "Non-negative integer stock quantity available for sale."
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "example": 5,
+            "minimum": 0,
+            "maximum": 1000000,
+            "description": "Non-negative integer threshold for low-stock warnings."
+          },
+          "published": {
+            "type": "boolean",
+            "default": true,
+            "example": true,
+            "description": "Whether the product is published in the public catalogue when the producer is eligible."
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "category",
+          "productionMethod",
+          "seasons",
+          "priceCents",
+          "unit",
+          "availableStock",
+          "lowStockThreshold"
+        ]
+      },
+      "UpdateProducerProductDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "description": "Current product revision to prevent stale edits or overwriting concurrent stock reservations."
+          },
+          "name": {
+            "type": "string",
+            "example": "Heirloom Oxheart Tomatoes",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Product display name."
+          },
+          "description": {
+            "type": "string",
+            "example": "Field-ripened organic oxheart tomatoes harvested every morning for sweet, low-acid flavor.",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "Detailed product description."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "vegetables",
+              "fruits",
+              "dairy",
+              "eggs",
+              "meat",
+              "bakery",
+              "pantry",
+              "beverages",
+              "other"
+            ],
+            "example": "vegetables",
+            "description": "Catalogue category."
+          },
+          "productionMethod": {
+            "type": "string",
+            "enum": [
+              "organic",
+              "sustainable",
+              "conventional",
+              "artisanal",
+              "biodynamic"
+            ],
+            "example": "organic",
+            "description": "Farming or production method."
+          },
+          "seasons": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "example": [
+              "summer",
+              "autumn"
+            ],
+            "description": "Deduplicated list of harvest or availability seasons.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          "priceCents": {
+            "type": "number",
+            "example": 380,
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Price per unit in integer EUR cents."
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "bunch",
+              "box",
+              "jar",
+              "bottle",
+              "bag",
+              "kg",
+              "g_500",
+              "g_250",
+              "l",
+              "ml_500"
+            ],
+            "example": "kg",
+            "description": "Discrete pack or measurement unit."
+          },
+          "availableStock": {
+            "type": "number",
+            "example": 25,
+            "minimum": 0,
+            "maximum": 1000000,
+            "description": "Non-negative integer stock quantity available for sale."
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "example": 5,
+            "minimum": 0,
+            "maximum": 1000000,
+            "description": "Non-negative integer threshold for low-stock warnings."
+          },
+          "published": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the product is published in the public catalogue when the producer is eligible."
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "ArchiveProducerProductDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "description": "Current product revision to prevent stale archive actions."
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "UploadProducerProductImageSwaggerDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "description": "Current product revision to prevent stale image replacements."
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Raster product image file (JPEG, PNG or WebP; SVG rejected; max 5 MB / 5,242,880 bytes; dimensions 1..4096 px, max 16,777,216 pixels)."
+          }
+        },
+        "required": [
+          "revision",
+          "file"
+        ]
+      },
+      "ProducerProductImagePreviewResponseDto": {
+        "type": "object",
+        "properties": {
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ],
+            "example": "image/jpeg",
+            "description": "Validated canonical raster MIME type of the stored image."
+          },
+          "sizeBytes": {
+            "type": "number",
+            "example": 184320,
+            "minimum": 1,
+            "maximum": 5242880,
+            "description": "Stored image size in bytes."
+          },
+          "width": {
+            "type": "number",
+            "example": 1200,
+            "minimum": 1,
+            "maximum": 4096,
+            "description": "Image width in pixels."
+          },
+          "height": {
+            "type": "number",
+            "example": 900,
+            "minimum": 1,
+            "maximum": 4096,
+            "description": "Image height in pixels."
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-01T12:00:00.000Z",
+            "description": "Timestamp when the image was uploaded."
+          },
+          "url": {
+            "type": "string",
+            "example": "http://127.0.0.1:4566/product-images/products/671f0f98ac53ba58e26c4788/671f0f98ac53ba58e26c4789/7b8e1100-5b8d-4900-a312-9076511c48b3.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300",
+            "description": "Short-lived signed GET URL for the private product image object."
+          },
+          "expiresInSeconds": {
+            "type": "number",
+            "example": 300,
+            "minimum": 60,
+            "maximum": 900,
+            "description": "Lifetime of the signed URL in seconds."
+          }
+        },
+        "required": [
+          "mimeType",
+          "sizeBytes",
+          "width",
+          "height",
+          "uploadedAt",
+          "url",
+          "expiresInSeconds"
+        ]
+      },
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "CatalogueProductDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "producerId": {
+            "type": "string"
+          },
+          "producerFarmName": {
+            "type": "string"
+          },
+          "producerCity": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "vegetables",
+              "fruits",
+              "dairy",
+              "eggs",
+              "meat",
+              "bakery",
+              "pantry",
+              "beverages",
+              "other"
+            ]
+          },
+          "productionMethod": {
+            "type": "string",
+            "enum": [
+              "organic",
+              "sustainable",
+              "conventional",
+              "artisanal",
+              "biodynamic"
+            ]
+          },
+          "seasons": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          "priceCents": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "bunch",
+              "box",
+              "jar",
+              "bottle",
+              "bag",
+              "kg",
+              "g_500",
+              "g_250",
+              "l",
+              "ml_500"
+            ]
+          },
+          "availableStock": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "producerId",
+          "producerFarmName",
+          "producerCity",
+          "name",
+          "description",
+          "category",
+          "productionMethod",
+          "seasons",
+          "priceCents",
+          "unit",
+          "availableStock",
+          "imageUrl"
+        ]
+      },
+      "CatalogueListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogueProductDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "ProducerPublicDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "farmName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "farmName",
+          "description",
+          "city",
+          "latitude",
+          "longitude"
+        ]
+      },
+      "ProducerListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProducerPublicDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
         ]
       }
     }

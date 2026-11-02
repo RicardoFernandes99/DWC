@@ -4,10 +4,13 @@ coverage/
 pnpm-lock.yaml
 .claude/skills/
 
-# Preserve upstream demo utilities; format DWC TypeScript adapters normally.
+# Preserve upstream demo utilities and vendored skills; format DWC TypeScript adapters normally.
 .agents/skills/**/*.mjs
 .agents/skills/record-demo/scripts/*.sh
 .agents/skills/record-demo/assets/overlay.js
+.agents/skills/emil-design-eng/
+.agents/skills/impeccable/
+.agents/skills/taste-skill/
 demos/takes/
 demos/**/*.record-demo/
 demos/**/*.produce-demo/
