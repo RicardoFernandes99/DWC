@@ -123,6 +123,13 @@ export function useCart() {
     saveCart(current);
   };
 
+  const removeItems = (productIds: string[]) => {
+    const idSet = new Set(productIds);
+    const current = loadCart();
+    current.items = current.items.filter((item) => !idSet.has(item.productId));
+    saveCart(current);
+  };
+
   const clearCart = () => {
     saveCart({ version: 1, items: [] });
   };
@@ -137,6 +144,7 @@ export function useCart() {
     addItem,
     updateQuantity,
     removeItem,
+    removeItems,
     clearCart,
     totalItemCount,
   };
