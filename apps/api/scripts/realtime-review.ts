@@ -428,40 +428,54 @@ async function main() {
     );
 
     await logout(baseUrl, origin, buyerA);
-    const revokedNoLeak = waitForEvent(buyerASocket, 350);
-    const revokedDisconnect = new Promise<void>((resolve) =>
-      buyerASocket.once('disconnect', () => resolve()),
+    assert.equal(
+      await rejectedConnection(
+        baseUrl,
+        { accessToken: buyerA.accessToken },
+        origin,
+        'revoked session',
+      ),
+      'unauthorized',
     );
-    await publisher.publishNotificationCreated(
-      buyerA.user.id,
-      randomUUID().replaceAll('-', '').slice(0, 24),
+    const afterLogoutId = randomUUID().replaceAll('-', '').slice(0, 24);
+    const afterLogout = waitForEvent(buyerASocket);
+    const otherTab = waitForEvent(attackerSocket);
+    publisher.publishNotificationCreated(buyerA.user.id, afterLogoutId);
+    assert.equal(
+      await afterLogout,
+      afterLogoutId,
+      'existing sockets remain subscribed after logout',
     );
     assert.equal(
-      await revokedNoLeak,
-      null,
-      'revoked sessions must receive no subsequent event',
+      await otherTab,
+      afterLogoutId,
+      'broadcast reaches every connected tab in the room',
     );
-    await revokedDisconnect;
+    buyerASocket.disconnect();
+    attackerSocket.disconnect();
 
     const redis = app.get(RedisService);
     await redis.onModuleDestroy();
-    const redisFailureNoLeak = waitForEvent(buyerBSocket, 350);
-    const redisFailureDisconnect = new Promise<void>((resolve) =>
-      buyerBSocket.once('disconnect', () => resolve()),
-    );
-    await publisher.publishNotificationCreated(
-      buyerB.user.id,
-      randomUUID().replaceAll('-', '').slice(0, 24),
-    );
     assert.equal(
-      await redisFailureNoLeak,
-      null,
-      'Redis failure must prevent later private delivery',
+      await rejectedConnection(
+        baseUrl,
+        { accessToken: buyerB.accessToken },
+        origin,
+        'Redis unavailable',
+      ),
+      'service_unavailable',
     );
-    await redisFailureDisconnect;
+    const afterRedisFailureId = randomUUID().replaceAll('-', '').slice(0, 24);
+    const afterRedisFailure = waitForEvent(buyerBSocket);
+    publisher.publishNotificationCreated(buyerB.user.id, afterRedisFailureId);
+    assert.equal(
+      await afterRedisFailure,
+      afterRedisFailureId,
+      'broadcast to existing sockets does not query Redis',
+    );
 
     console.log(
-      'ticket 022 socket review passed: buyers/producers, JWT refusals, room isolation, revocation, Origin CORS, Redis failure.',
+      'ticket 022 socket review passed: buyers/producers, JWT refusals, room isolation, multi-tab broadcast, handshake revocation/Redis refusal, Origin CORS, shutdown.',
     );
   } finally {
     if (app) {

@@ -6,7 +6,6 @@ import {
 import { ConfigService } from '@nestjs/config';
 import {
   OnGatewayConnection,
-  OnGatewayDisconnect,
   OnGatewayInit,
   WebSocketGateway,
   WebSocketServer,
@@ -54,14 +53,12 @@ export class RealtimeGateway
   implements
     OnGatewayInit<RealtimeServer>,
     OnGatewayConnection<PersonalSocket>,
-    OnGatewayDisconnect<PersonalSocket>,
     OnModuleDestroy
 {
   @WebSocketServer()
   private server!: RealtimeServer;
 
   private readonly webOrigin: string;
-  private readonly socketsByUser = new Map<string, Set<PersonalSocket>>();
 
   constructor(
     private readonly auth: AuthService,
@@ -94,51 +91,20 @@ export class RealtimeGateway
       socket.disconnect(true);
       return;
     }
-    if (!socket.connected) return;
-    const sockets = this.socketsByUser.get(userId) ?? new Set<PersonalSocket>();
-    sockets.add(socket);
-    this.socketsByUser.set(userId, sockets);
   }
 
-  handleDisconnect(socket: PersonalSocket) {
-    const { userId } = socket.data;
-    if (!userId) return;
-    const sockets = this.socketsByUser.get(userId);
-    sockets?.delete(socket);
-    if (sockets?.size === 0) this.socketsByUser.delete(userId);
-  }
-
-  async publishNotificationCreated(
+  publishNotificationCreated(
     userId: string,
     payload: NotificationCreatedPayload,
   ) {
     if (!/^[0-9a-f]{24}$/.test(userId)) return;
     if (!/^[0-9a-f]{24}$/.test(payload.notificationId)) return;
 
-    const sockets = this.socketsByUser.get(userId);
-    if (!sockets) return;
-    for (const socket of [...sockets]) {
-      try {
-        const currentUser = await this.auth.authenticate(
-          `Bearer ${socket.data.accessToken}`,
-        );
-        if (currentUser.id !== userId || socket.data.userId !== userId) {
-          socket.disconnect(true);
-          continue;
-        }
-        if (!socket.connected) continue;
-        socket.emit('notification.created', payload);
-      } catch {
-        socket.disconnect(true);
-      }
-    }
+    this.server.to(this.userRoom(userId)).emit('notification.created', payload);
   }
 
   onModuleDestroy() {
-    for (const sockets of this.socketsByUser.values()) {
-      for (const socket of sockets) socket.disconnect(true);
-    }
-    this.socketsByUser.clear();
+    this.server.disconnectSockets(true);
   }
 
   private async authenticateHandshake(socket: PersonalSocket) {
@@ -160,7 +126,6 @@ export class RealtimeGateway
 
     const user = await this.auth.authenticate(`Bearer ${auth.accessToken}`);
     socket.data.userId = user.id;
-    socket.data.accessToken = auth.accessToken;
   }
 
   private handshakeError(error: unknown) {

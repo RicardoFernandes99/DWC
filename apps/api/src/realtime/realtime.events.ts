@@ -8,7 +8,6 @@ export type InterServerEvents = Record<never, never>;
 
 export interface SocketData {
   userId: string;
-  accessToken: string;
 }
 
 export interface NotificationCreatedPayload {
