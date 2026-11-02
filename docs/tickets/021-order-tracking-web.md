@@ -1,9 +1,9 @@
 # 021: Track orders and handle refund requests in buyer/producer UI
 
 - Macro: M04
-- Status: In progress
+- Status: In review
 - Depends on: 008, 018, 019, 020
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/33
 - Branch / parent: `codex/age-021-order-tracking-web` / `codex/age-020-refunds-api` (PR #32)
 - Blockers: None beyond dependencies
 
@@ -47,6 +47,9 @@ Follow [lightweight verification](README.md#lightweight-verification).
 Walk through both fulfilment timelines and a refund request/decision with two accounts. Check stale-state feedback, exact totals and responsive/keyboard controls.
 
 ## Delivery notes
+
+- Reviewed implementation/check revision: `42471d1`. The following commit updates
+  ticket delivery metadata only. Native GitHub stack: #34, with PR #32 as parent.
 
 - Builder: `gpt-6-luna`, high effort. One correction round, no model adaptation.
   Input, cached input, output/reasoning usage, rates and total cost are unavailable,
