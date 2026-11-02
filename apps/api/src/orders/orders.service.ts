@@ -25,13 +25,6 @@ import {
   OrderStatusHistoryEntry,
 } from './order.schema.js';
 
-interface UserSnapshot {
-  name: string;
-  producerApplication?: {
-    farmName: string;
-  } | null;
-}
-
 const DELIVERY_TRANSITIONS: Readonly<Record<OrderStatus, OrderStatus | null>> =
   {
     [OrderStatus.Pending]: OrderStatus.Confirmed,
@@ -318,14 +311,12 @@ export class OrdersService {
         .exec(),
     ]);
 
-    const userMap = new Map<string, UserSnapshot>();
+    const nameMap = new Map<string, string>();
     for (const user of users) {
-      userMap.set(user._id.toString(), {
-        name: user.name,
-        producerApplication: user.producerApplication
-          ? { farmName: user.producerApplication.farmName }
-          : null,
-      });
+      nameMap.set(
+        user._id.toString(),
+        user.producerApplication?.farmName || user.name,
+      );
     }
 
     const paymentMap = new Map<string, PaymentDocument>();
@@ -334,8 +325,6 @@ export class OrdersService {
     }
 
     return orders.map((order) => {
-      const buyer = userMap.get(order.buyerId.toString());
-      const producer = userMap.get(order.producerId.toString());
       const paymentDoc = order.paymentId
         ? paymentMap.get(order.paymentId.toString())
         : undefined;
@@ -355,10 +344,9 @@ export class OrdersService {
         id: order._id.toString(),
         checkoutId: order.checkoutId.toString(),
         buyerId: order.buyerId.toString(),
-        buyerName: buyer?.name ?? null,
+        buyerName: nameMap.get(order.buyerId.toString()) ?? null,
         producerId: order.producerId.toString(),
-        producerName:
-          producer?.producerApplication?.farmName ?? producer?.name ?? null,
+        producerName: nameMap.get(order.producerId.toString()) ?? null,
         items: order.items.map((item) => ({
           productId: item.productId.toString(),
           productName: item.productName,
