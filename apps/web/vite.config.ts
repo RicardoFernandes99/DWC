@@ -24,7 +24,10 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       strictPort: true,
-      proxy: { '/api': { target: api, ws: true } },
+      proxy: {
+        '/api': { target: api, ws: true },
+        '/socket.io': { target: api, ws: true },
+      },
     },
     test: {
       environment: 'jsdom',

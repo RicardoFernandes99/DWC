@@ -11,6 +11,7 @@ import { Shell, AuthPage, Account } from './pages';
 import { UIDesignPage } from './pages/ui-design';
 import { CartPage } from './features/cart/components/cart-page';
 import { CheckoutPage } from './features/checkout/components/checkout-page';
+import { NotificationPage } from './features/notifications/components/notification-page';
 import { OrderTrackingPage } from './features/orders/components/order-tracking-page';
 import {
   CataloguePage,
@@ -125,6 +126,11 @@ const checkoutRoute = createRoute({
   path: '/checkout',
   component: CheckoutPage,
 });
+const notificationRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/notifications',
+  component: NotificationPage,
+});
 const buyerOrdersRoute = createRoute({
   getParentRoute: () => root,
   path: '/orders',
@@ -208,6 +214,7 @@ export const router = createRouter({
     productRoute,
     cartRoute,
     checkoutRoute,
+    notificationRoute,
     buyerOrdersRoute,
     buyerOrderDetailRoute,
     producerOrdersRoute,

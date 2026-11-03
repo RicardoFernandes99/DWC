@@ -93,17 +93,33 @@ let token: string | undefined;
 let signedOut = false;
 let generation = 0;
 let pending: Promise<Auth> | undefined;
+const accessTokenListeners = new Set<(value: string | undefined) => void>();
+function publishAccessToken(value: string | undefined) {
+  for (const listener of accessTokenListeners) listener(value);
+}
+export function getAccessToken() {
+  return token;
+}
+export function subscribeAccessToken(
+  listener: (value: string | undefined) => void,
+) {
+  accessTokenListeners.add(listener);
+  return () => accessTokenListeners.delete(listener);
+}
 function install(value: unknown, current: number): Auth {
   if (!auth(value))
     throw new ApiError(0, 'The server returned an invalid response.');
   if (generation !== current) throw new ApiError(401, 'Session changed.');
+  const changed = token !== value.accessToken;
   token = value.accessToken;
+  if (changed) publishAccessToken(token);
   return value;
 }
 export async function login(input: Login): Promise<User> {
   const current = ++generation;
   signedOut = false;
   token = undefined;
+  publishAccessToken(undefined);
   pending = undefined;
   return install(
     await request('login', { method: 'POST', body: JSON.stringify(input) }),
@@ -128,8 +144,10 @@ export function refresh(): Promise<Auth> {
         generation === current &&
         error instanceof ApiError &&
         (error.status === 401 || error.status === 403)
-      )
+      ) {
         token = undefined;
+        publishAccessToken(undefined);
+      }
       throw error;
     })
     .finally(() => {
@@ -166,8 +184,10 @@ export async function me(): Promise<User> {
         retryError instanceof ApiError &&
         retryError.status === 401 &&
         generation === current
-      )
+      ) {
         token = undefined;
+        publishAccessToken(undefined);
+      }
       throw retryError;
     }
   }
@@ -217,8 +237,10 @@ export async function authenticatedRequest<T = unknown>(
         retryError.status === 401 &&
         generation === current &&
         token === retryToken
-      )
+      ) {
         token = undefined;
+        publishAccessToken(undefined);
+      }
       throw retryError;
     }
   }
@@ -228,6 +250,7 @@ export async function logout(): Promise<void> {
   signedOut = true;
   ++generation;
   token = undefined;
+  publishAccessToken(undefined);
   pending = undefined;
   if (inFlight) await inFlight.catch(() => undefined);
   await request('logout', { method: 'POST' });
@@ -245,6 +268,7 @@ export async function currentUser(): Promise<User | null> {
       (error.status === 401 || error.status === 403)
     ) {
       token = undefined;
+      publishAccessToken(undefined);
       signedOut = true;
       return null;
     }

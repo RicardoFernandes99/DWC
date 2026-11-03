@@ -8,6 +8,7 @@ export function routeAccess(pathname: string, user: User | null) {
     path === '/checkout' || path === '/orders' || path.startsWith('/orders/');
   if (path === '/cart')
     return !user || user.role === 'buyer' ? 'allow' : 'home';
+  if (path === '/notifications') return user ? 'allow' : 'login';
   if (producer || buyer || path === '/account') {
     if (!user) return 'login';
     if (producer && user.role !== 'producer') return 'home';

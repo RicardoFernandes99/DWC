@@ -34,6 +34,7 @@ import {
 } from '@/lib/session';
 import { sessionOptions } from './lib/session-query';
 import { useCart } from '@/features/cart/use-cart';
+import { NotificationRuntime } from '@/features/notifications/components/notification-runtime';
 
 const sessionKey = ['session'] as const;
 export function Shell() {
@@ -95,6 +96,9 @@ export function Shell() {
               >
                 Orders
               </Link>
+            )}
+            {query.data && (
+              <NotificationRuntime key={query.data.id} user={query.data} />
             )}
             {query.data ? (
               <Link
