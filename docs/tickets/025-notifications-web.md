@@ -1,9 +1,9 @@
 # 025: Show an unread inbox and live notification toasts
 
 - Macro: M06
-- Status: In progress
+- Status: In review
 - Depends on: 004, 021, 024
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/39
 - Branch / parent: `codex/age-025-notifications-web` / `codex/age-024-order-approval-notifications` (PR #38, `e36c946a51f16483e1b1cbdd4c205c06cec11d52`)
 - Blockers: None beyond dependencies
 
@@ -85,3 +85,9 @@ unauthenticated design inspector.
 
 All pre-existing dirty order UI, shared documentation, build guidance, index.css,
 and demo files were excluded. No merge was performed.
+
+Reviewed implementation revision: `b780ad7cdd99436714dfa8b28c91ff51a7490cbd`.
+Published ready for review in native stack #34, against PR #38. No eligible
+successor remains: 026, 028, 033, 038, 042 and 043 have unresolved product/tooling
+decisions; every other unfinished ticket depends on missing downstream work.
+No successor chat was created.
