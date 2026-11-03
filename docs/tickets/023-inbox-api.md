@@ -1,10 +1,10 @@
 # 023: Persist and read a private notification inbox
 
 - Macro: M06
-- Status: In progress
+- Status: In review
 - Depends on: 003
-- PR: Not opened
-- Branch / parent: `codex/age-023-inbox-api` / `60d1e16fc36346102c58501b3b0e36280fc68740`
+- PR: https://github.com/RicardoFernandes99/DWC/pull/37
+- Branch / parent: `codex/age-023-inbox-api` / `codex/age-022-socketio-transport` at `60d1e16fc36346102c58501b3b0e36280fc68740`
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -50,6 +50,8 @@ Create a local inbox record, read/mark it and try another account. Repeat its so
 Implemented on `codex/age-023-inbox-api`, based on `60d1e16fc36346102c58501b3b0e36280fc68740` (PR 36 parent). Builder model: gpt-6-luna, high; formal correction rounds: 1; model adaptation: none; token/credit usage: unavailable.
 
 Frontier review: APPROVED after the response-contract correction and real HTTP ownership/pagination plus MongoDB deduplication/rollback checks passed. The parent is [PR 36](https://github.com/RicardoFernandes99/DWC/pull/36). Existing unrelated web, shared documentation, skill and demo changes remain excluded and unstaged.
+
+Reviewed implementation revision: `2f16ee0`. Published ready for review as [PR 37](https://github.com/RicardoFernandes99/DWC/pull/37) through native `gh stack submit --auto --open` in stack 34. No merge was performed. Event producer integration remains in ticket 024.
 
 - Added authenticated inbox list, unread count and owner-scoped idempotent read routes. Cursor pages sort by creation time and Mongo ID; page size is capped at 50.
 - Added recipient/source-event unique index and recipient/time plus unread lookup indexes. `NotificationsService.createNotification` accepts an existing Mongoose session and performs no socket or other external side effects.
