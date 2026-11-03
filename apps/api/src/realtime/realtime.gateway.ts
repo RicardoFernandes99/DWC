@@ -112,19 +112,12 @@ export class RealtimeGateway
     if (origin && origin !== this.webOrigin) {
       throw new HandshakeError('origin_not_allowed');
     }
-    const auth: unknown = socket.handshake.auth;
-    if (
-      typeof auth !== 'object' ||
-      auth === null ||
-      !('accessToken' in auth) ||
-      typeof auth.accessToken !== 'string' ||
-      auth.accessToken.length > 2000 ||
-      !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(auth.accessToken)
-    ) {
+    const accessToken: unknown = socket.handshake.auth?.accessToken;
+    if (typeof accessToken !== 'string') {
       throw new UnauthorizedException();
     }
 
-    const user = await this.auth.authenticate(`Bearer ${auth.accessToken}`);
+    const user = await this.auth.authenticate(`Bearer ${accessToken}`);
     socket.data.userId = user.id;
   }
 
