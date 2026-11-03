@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '../auth/auth.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 import { Payment, PaymentSchema } from '../checkout/payment.schema.js';
 import { User, UserSchema } from '../users/user.schema.js';
 import { Product, ProductSchema } from '../products/product.schema.js';
@@ -15,6 +16,7 @@ import { OrdersService } from './orders.service.js';
 @Module({
   imports: [
     AuthModule,
+    NotificationsModule,
     MongooseModule.forFeature([
       { name: Order.name, schema: OrderSchema },
       { name: Payment.name, schema: PaymentSchema },

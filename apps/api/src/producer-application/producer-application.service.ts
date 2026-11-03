@@ -6,7 +6,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import type { Connection } from 'mongoose';
+import { NotificationIntegrationService } from '../notifications/notification-integration.service.js';
+import {
+  NotificationEventType,
+  NotificationResourceType,
+} from '../notifications/notification.schema.js';
+import type { NotificationDocument } from '../notifications/notification.schema.js';
 import {
   ProducerStatus,
   User,
@@ -118,6 +126,8 @@ export class ProducerApplicationService {
   constructor(
     @InjectModel(User.name)
     private readonly users: Model<User>,
+    @InjectConnection() private readonly connection: Connection,
+    private readonly notificationIntegration: NotificationIntegrationService,
   ) {}
 
   async get(userId: string): Promise<ProducerApplicationResponseDto> {
@@ -262,30 +272,58 @@ export class ProducerApplicationService {
     input: ApproveProducerApplicationDto,
   ): Promise<AdminProducerApplicationItemDto> {
     const now = new Date();
-    const updated = await this.users.findOneAndUpdate(
-      {
-        _id: new Types.ObjectId(id),
-        role: UserRole.Producer,
-        producerStatus: ProducerStatus.Pending,
-        producerApplication: { $ne: null },
-        producerDecisionRevision: input.revision,
-      },
-      {
-        $set: {
-          producerStatus: ProducerStatus.Approved,
-          producerRejectionReason: null,
-          producerDecisionBy: new Types.ObjectId(adminId),
-          producerDecisionAt: now,
-        },
-        $inc: { producerDecisionRevision: 1 },
-      },
-      { returnDocument: 'after', runValidators: true },
-    );
+    const session = await this.connection.startSession();
+    let updated: UserDocument | null = null;
+    let notification: NotificationDocument | null = null;
+    try {
+      await session.withTransaction(async () => {
+        updated = null;
+        notification = null;
+        updated = await this.users.findOneAndUpdate(
+          {
+            _id: new Types.ObjectId(id),
+            role: UserRole.Producer,
+            producerStatus: ProducerStatus.Pending,
+            producerApplication: { $ne: null },
+            producerDecisionRevision: input.revision,
+          },
+          {
+            $set: {
+              producerStatus: ProducerStatus.Approved,
+              producerRejectionReason: null,
+              producerDecisionBy: new Types.ObjectId(adminId),
+              producerDecisionAt: now,
+            },
+            $inc: { producerDecisionRevision: 1 },
+          },
+          { returnDocument: 'after', runValidators: true, session },
+        );
+        if (updated) {
+          notification = await this.notificationIntegration.persist(
+            {
+              recipientId: id,
+              eventType: NotificationEventType.ProducerApplicationApproved,
+              title: 'Producer application approved',
+              message: 'Your producer application has been approved.',
+              resource: {
+                type: NotificationResourceType.ProducerApplication,
+                id,
+              },
+              sourceEventKey: `producer:${id}:decision:${input.revision + 1}`,
+            },
+            session,
+          );
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
 
     if (!updated) {
       return await this.throwDecisionConflict(id, 'approved');
     }
-
+    if (notification)
+      this.notificationIntegration.publishCommitted(notification);
     return toAdminItem(updated);
   }
 
@@ -295,30 +333,59 @@ export class ProducerApplicationService {
     input: RejectProducerApplicationDto,
   ): Promise<AdminProducerApplicationItemDto> {
     const now = new Date();
-    const updated = await this.users.findOneAndUpdate(
-      {
-        _id: new Types.ObjectId(id),
-        role: UserRole.Producer,
-        producerStatus: ProducerStatus.Pending,
-        producerApplication: { $ne: null },
-        producerDecisionRevision: input.revision,
-      },
-      {
-        $set: {
-          producerStatus: ProducerStatus.Rejected,
-          producerRejectionReason: input.reason,
-          producerDecisionBy: new Types.ObjectId(adminId),
-          producerDecisionAt: now,
-        },
-        $inc: { producerDecisionRevision: 1 },
-      },
-      { returnDocument: 'after', runValidators: true },
-    );
+    const session = await this.connection.startSession();
+    let updated: UserDocument | null = null;
+    let notification: NotificationDocument | null = null;
+    try {
+      await session.withTransaction(async () => {
+        updated = null;
+        notification = null;
+        updated = await this.users.findOneAndUpdate(
+          {
+            _id: new Types.ObjectId(id),
+            role: UserRole.Producer,
+            producerStatus: ProducerStatus.Pending,
+            producerApplication: { $ne: null },
+            producerDecisionRevision: input.revision,
+          },
+          {
+            $set: {
+              producerStatus: ProducerStatus.Rejected,
+              producerRejectionReason: input.reason,
+              producerDecisionBy: new Types.ObjectId(adminId),
+              producerDecisionAt: now,
+            },
+            $inc: { producerDecisionRevision: 1 },
+          },
+          { returnDocument: 'after', runValidators: true, session },
+        );
+        if (updated) {
+          notification = await this.notificationIntegration.persist(
+            {
+              recipientId: id,
+              eventType: NotificationEventType.ProducerApplicationRejected,
+              title: 'Producer application rejected',
+              message:
+                'Your producer application needs changes before approval.',
+              resource: {
+                type: NotificationResourceType.ProducerApplication,
+                id,
+              },
+              sourceEventKey: `producer:${id}:decision:${input.revision + 1}`,
+            },
+            session,
+          );
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
 
     if (!updated) {
       return await this.throwDecisionConflict(id, 'rejected');
     }
-
+    if (notification)
+      this.notificationIntegration.publishCommitted(notification);
     return toAdminItem(updated);
   }
 

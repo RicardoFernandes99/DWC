@@ -34,6 +34,12 @@ import {
   RefundAllocation,
   RefundAllocationSchema,
 } from '../dist/orders/refund-allocation.schema.js';
+import {
+  Notification,
+  NotificationSchema,
+} from '../dist/notifications/notification.schema.js';
+import { NotificationsService } from '../dist/notifications/notifications.service.js';
+import { NotificationIntegrationService } from '../dist/notifications/notification-integration.service.js';
 
 interface TestOrderData {
   _id: Types.ObjectId;
@@ -211,6 +217,26 @@ function createMockEnvironment(initialOrders: TestOrderData[]) {
     RefundAllocationSchema,
   );
   const connection = testMongoose.createConnection();
+  Object.defineProperty(connection, 'startSession', {
+    value: async () => ({
+      withTransaction: async (callback: () => Promise<unknown>) => callback(),
+      endSession: async () => {},
+    }),
+  });
+  const notificationModel = testMongoose.model<Notification>(
+    Notification.name,
+    NotificationSchema,
+  );
+  Object.defineProperty(notificationModel, 'findOneAndUpdate', {
+    value: (
+      _filter: unknown,
+      update: { $setOnInsert: Record<string, unknown> },
+    ) => Promise.resolve(new notificationModel(update.$setOnInsert)),
+  });
+  const notificationIntegration = new NotificationIntegrationService(
+    new NotificationsService(notificationModel),
+    { publishNotificationCreated: () => {} },
+  );
 
   const service = new OrdersService(
     orderModel as unknown as Model<OrderDocument>,
@@ -219,6 +245,7 @@ function createMockEnvironment(initialOrders: TestOrderData[]) {
     productModel,
     refundAllocationModel,
     connection,
+    notificationIntegration,
   );
 
   return { service, orders };
