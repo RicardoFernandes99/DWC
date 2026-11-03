@@ -1,9 +1,9 @@
 # 027: Accept atomic bids and broadcast live auction state
 
 - Macro: M05
-- Status: In progress
+- Status: In review
 - Depends on: 005, 022, 026
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/41
 - Branch / parent: `codex/age-027-atomic-bids` on PR 40 (`codex/age-026-auction-scheduling`, `baa0122f63eaf7b677a6b64df0950c9b65f38636`)
 - Blockers: None beyond dependencies
 
@@ -52,6 +52,9 @@ Follow [lightweight verification](README.md#lightweight-verification).
 Use two browser/socket clients for competing bids and a final-ten-second extension. Confirm history, deadline refusal and current state; a small race regression test is optional.
 
 ## Delivery notes
+
+Reviewed implementation: `4500f075c62f052ce09b3c4e16d4764728c3eda3`.
+Published ready for review in native stack 34 above PR 40. No merge performed.
 
 Frontier verdict: APPROVED, zero formal correction rounds. Executor: `gpt-6-luna`
 at High effort for transactional bidding, idempotency and deadline concurrency.
