@@ -177,8 +177,19 @@ replaced are not requirements.
   for products that are otherwise published and not separately moderated.
 - Existing orders can still be fulfilled, and active auctions finish normally.
   Scheduled auctions cannot start while the producer is suspended.
-- Treatment of elapsed scheduled auctions after suspension is lifted and the
-  effects of buyer suspension on existing bids/orders remain TBD.
+- If a scheduled auction cannot start because its producer is suspended, it is
+  cancelled at that missed start and its reserved stock is released exactly once;
+  it is never shifted or shortened. The server recovers scheduled auctions after
+  downtime using their original start and end times. If the producer is still
+  approved and no suspension decision occurred after the start, an overdue
+  auction becomes active with those original times (it may already be time-ended
+  for bids and ready for settlement). If suspension is still in force, or the
+  producer was reinstated after the missed start, the auction is cancelled and
+  its lot is released. Active auctions finish normally while the producer is
+  suspended. Auction settlement and no-bid stock handling remain ticket 028.
+- Producer status decisions must update `producerDecisionAt`; the scheduler uses
+  it to detect reinstatement after a missed auction start. Profile edits do not
+  count as status decisions.
 
 ## Open decisions
 
@@ -186,5 +197,6 @@ Resolve these with the affected tickets, without blocking unrelated work:
 
 - Invoice format, required information and PDF download.
 - Account recovery scope. Session implementation details are drafted in ticket 003.
-- Auction settlement edge cases and scheduled auctions affected by suspension.
-- Buyer suspension behavior and detailed dashboard metric definitions.
+- Auction settlement edge cases.
+- Buyer suspension behavior, including effects on existing bids/orders, and
+  detailed dashboard metric definitions.

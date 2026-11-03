@@ -2363,6 +2363,404 @@
           "Notifications"
         ]
       }
+    },
+    "/api/producer/auctions": {
+      "get": {
+        "operationId": "ProducerAuctionsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request input is invalid."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "403": {
+            "description": "Producer access is required."
+          },
+          "503": {
+            "description": "Authentication service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the authenticated producer’s auctions.",
+        "tags": [
+          "Producer auctions"
+        ]
+      },
+      "post": {
+        "operationId": "ProducerAuctionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAuctionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request input is invalid."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "403": {
+            "description": "Only an approved producer may create auctions."
+          },
+          "409": {
+            "description": "Product stock or eligibility changed."
+          },
+          "503": {
+            "description": "Authentication service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a scheduled auction and reserve its lot.",
+        "tags": [
+          "Producer auctions"
+        ]
+      }
+    },
+    "/api/producer/auctions/{id}": {
+      "get": {
+        "operationId": "ProducerAuctionsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request input is invalid."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "404": {
+            "description": "Auction not found."
+          },
+          "503": {
+            "description": "Authentication service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read one of the authenticated producer’s auctions.",
+        "tags": [
+          "Producer auctions"
+        ]
+      },
+      "patch": {
+        "operationId": "ProducerAuctionsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAuctionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request input is invalid."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "404": {
+            "description": "Auction not found."
+          },
+          "409": {
+            "description": "Auction started, revision is stale, or stock changed."
+          },
+          "503": {
+            "description": "Authentication service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit a scheduled auction before its start.",
+        "tags": [
+          "Producer auctions"
+        ]
+      }
+    },
+    "/api/producer/auctions/{id}/cancel": {
+      "post": {
+        "operationId": "ProducerAuctionsController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelAuctionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request input is invalid."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "404": {
+            "description": "Auction not found."
+          },
+          "409": {
+            "description": "Auction started, revision is stale, or stock could not be released."
+          },
+          "503": {
+            "description": "Authentication service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a scheduled auction and release its reserved lot.",
+        "tags": [
+          "Producer auctions"
+        ]
+      }
+    },
+    "/api/auctions": {
+      "get": {
+        "operationId": "PublicAuctionsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "upcoming",
+                "active",
+                "finished"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination or state filter."
+          }
+        },
+        "summary": "Browse upcoming, active and time-ended auctions.",
+        "tags": [
+          "Auctions"
+        ]
+      }
+    },
+    "/api/auctions/{id}": {
+      "get": {
+        "operationId": "PublicAuctionsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid auction identifier."
+          },
+          "404": {
+            "description": "Auction not found or not publicly visible."
+          }
+        },
+        "summary": "Read a public auction and its immutable product snapshot.",
+        "tags": [
+          "Auctions"
+        ]
+      }
     }
   },
   "info": {
@@ -4994,6 +5392,254 @@
         },
         "required": [
           "count"
+        ]
+      },
+      "AuctionProductSnapshotResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "productionMethod": {
+            "type": "string"
+          },
+          "seasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "category",
+          "productionMethod",
+          "seasons",
+          "unit"
+        ]
+      },
+      "AuctionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "producerId": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "product": {
+            "$ref": "#/components/schemas/AuctionProductSnapshotResponseDto"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1
+          },
+          "startingPriceCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "minimumIncrementCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "upcoming",
+              "active",
+              "finished"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "active",
+              "cancelled"
+            ]
+          },
+          "currentBidCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "revision": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "producerId",
+          "productId",
+          "product",
+          "quantity",
+          "startingPriceCents",
+          "minimumIncrementCents",
+          "startsAt",
+          "endsAt",
+          "state",
+          "status",
+          "currentBidCents",
+          "revision",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "AuctionListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuctionResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "minimum": 0
+          },
+          "page": {
+            "type": "number",
+            "minimum": 1
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "CreateAuctionDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "example": "671f0f98ac53ba58e26c4789"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1000000,
+            "example": 3
+          },
+          "startingPriceCents": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100000000,
+            "example": 1500
+          },
+          "minimumIncrementCents": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100000000,
+            "example": 100
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-12-01T12:00:00.000Z"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-12-01T13:00:00.000Z"
+          }
+        },
+        "required": [
+          "productId",
+          "quantity",
+          "startingPriceCents",
+          "minimumIncrementCents",
+          "startsAt",
+          "endsAt"
+        ]
+      },
+      "UpdateAuctionDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1,
+            "description": "Current auction revision."
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1000000,
+            "example": 4
+          },
+          "startingPriceCents": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100000000,
+            "example": 1800
+          },
+          "minimumIncrementCents": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100000000,
+            "example": 150
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "CancelAuctionDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1,
+            "description": "Current auction revision."
+          }
+        },
+        "required": [
+          "revision"
         ]
       }
     }

@@ -17,6 +17,7 @@ import { CheckoutModule } from './checkout/checkout.module.js';
 import { OrdersModule } from './orders/orders.module.js';
 import { RealtimeModule } from './realtime/realtime.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { AuctionsModule } from './auctions/auctions.module.js';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
     OrdersModule,
     RealtimeModule,
     NotificationsModule,
+    AuctionsModule,
     UsersModule,
     RedisModule,
     StorageModule,

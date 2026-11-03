@@ -76,6 +76,9 @@ export class User {
   @Prop({ type: Number, default: 0, min: 0 })
   producerDecisionRevision!: number;
 
+  @Prop({ type: Number, default: 0, min: 0 })
+  auctionEligibilityRevision!: number;
+
   @Prop({
     type: SchemaTypes.ObjectId,
     ref: 'User',
