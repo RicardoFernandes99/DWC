@@ -1,9 +1,9 @@
 # 024: Notify users about producer decisions, orders and refunds
 
 - Macro: M06
-- Status: In progress
+- Status: In review
 - Depends on: 009, 019, 020, 022, 023
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/38
 - Branch / parent: codex/age-024-order-approval-notifications / codex/age-023-inbox-api
 - Blockers: None beyond dependencies
 
@@ -71,11 +71,26 @@ delivery/isolation, offline inbox recovery, refusals, retries and repeated refun
 cycles, direct cancellation, sync/async publisher failures, notification-write
 rollback, and a transaction callback retry. A process failure after MongoDB
 commit but before socket dispatch can miss a live toast; inbox fetch/reconnect
-recovers the persisted notification. No delivery queue is introduced. PR not
-opened; ticket remains In progress until the stacked PR is published. Runtime
+recovers the persisted notification. No delivery queue is introduced. Runtime
 verification used an ephemeral local API port, real MongoDB/Redis and native
 WebSocket connections. Only verifier-owned records and sessions were removed;
 the temporary API and verifier were cleaned up. Injected synchronous and
 asynchronous dispatch failures did not change committed responses. A retryable
 transaction error after inbox insertion produced two callback attempts and one
 committed notification/live event.
+
+Reviewed implementation revision: `4ca8162d16bc7292c363e9d99f6cf3288642254f`.
+Published ready for review as [PR 38](https://github.com/RicardoFernandes99/DWC/pull/38)
+through `gh stack submit --auto --open` in stack 34. No merge was performed.
+
+Passed commands with Node 24.19.0 and pinned pnpm 11.25.0:
+
+- `pnpm --filter @dwc/api typecheck` and `pnpm --filter @dwc/api build`.
+- `pnpm --filter @dwc/web typecheck` and `pnpm lint`.
+- `pnpm --filter @dwc/api exec tsc -p tsconfig.test.json --noEmit`.
+- `pnpm --filter @dwc/api exec node --test test/order-tracking.test.ts test/checkout-quote.test.ts`, 18 passed.
+- `pnpm contract:check` and `pnpm exec prettier --check` on the 11 ticket files.
+- `node --env-file=.env .temp/ticket024-verify.ts`, temporary runtime verifier removed after cleanup.
+
+Runtime verification is focused evidence, not proof of every possible concurrent
+interleaving. Existing Mongoose `new` option deprecation warnings remain.
