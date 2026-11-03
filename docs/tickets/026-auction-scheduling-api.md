@@ -1,9 +1,9 @@
 # 026: Schedule auction lots and reserve catalogue stock
 
 - Macro: M05
-- Status: In progress
+- Status: In review
 - Depends on: 010, 019
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/40
 - Branch / parent: `codex/age-026-auction-scheduling` / `codex/age-025-notifications-web` (PR #39, `22f2cefbda543097acde819f98b0e860f507064b`)
 - Blockers: None; scheduled-auction suspension and downtime behavior is recorded in [product decisions](../product-decisions.md#laravel-administration-and-suspension).
 
@@ -54,6 +54,7 @@ Create/edit/cancel a lot and inspect stock. Try a late edit and one competing st
 
 ## Delivery notes
 
+- Reviewed implementation: `380fe64ce812b8d856fe2a1ac6fa1f6b76f97f4b`.
 - Frontier verdict: APPROVED, zero formal correction rounds. Executor: `gpt-6-luna`
   at High effort for transactional stock and scheduling concurrency. Usage and
   cost measurements are unavailable.
