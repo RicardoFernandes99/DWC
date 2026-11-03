@@ -7,6 +7,7 @@ import {
   IsMongoId,
   Max,
   Min,
+  IsUUID,
   ValidateIf,
 } from 'class-validator';
 import { AuctionStatus } from './auction.schema.js';
@@ -21,6 +22,51 @@ export class AuctionIdParamDto {
   @ApiProperty({ example: '671f0f98ac53ba58e26c4789' })
   @IsMongoId()
   id!: string;
+}
+
+export class AuctionHistoryQueryDto {
+  @ApiPropertyOptional({ minimum: 1, maximum: 1000, default: 1 })
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  page = 1;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 50, default: 20 })
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit = 20;
+}
+
+export class AuctionBidRequestDto {
+  @ApiProperty({ format: 'uuid' })
+  @IsUUID('4')
+  requestId!: string;
+
+  @ApiProperty({ example: '671f0f98ac53ba58e26c4789' })
+  @IsMongoId()
+  auctionId!: string;
+
+  @ApiProperty({ minimum: 1, maximum: 100_000_000 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100_000_000)
+  amountCents!: number;
+
+  @ApiProperty({ example: '671f0f98ac53ba58e26c4789' })
+  @IsMongoId()
+  paymentMethodId!: string;
+}
+
+export class AuctionRoomRequestDto {
+  @ApiProperty({ example: '671f0f98ac53ba58e26c4789' })
+  @IsMongoId()
+  auctionId!: string;
 }
 
 export class CreateAuctionDto {
@@ -172,6 +218,39 @@ export class AuctionListResponseDto {
   @ApiProperty({ minimum: 0 }) total!: number;
   @ApiProperty({ minimum: 1 }) page!: number;
   @ApiProperty({ minimum: 1, maximum: 50 }) limit!: number;
+}
+
+export class AuctionBidResponseDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() auctionId!: string;
+  @ApiProperty({ minimum: 1 }) amountCents!: number;
+  @ApiProperty({ maxLength: 100 }) bidderName!: string;
+  @ApiProperty({ type: String, format: 'date-time' }) acceptedAt!: string;
+  @ApiProperty({ type: String, format: 'date-time' }) endsAt!: string;
+  @ApiProperty({ minimum: 1 }) revision!: number;
+}
+
+export class AuctionHistoryResponseDto {
+  @ApiProperty({ type: () => AuctionBidResponseDto, isArray: true })
+  items!: AuctionBidResponseDto[];
+  @ApiProperty({ minimum: 0 }) total!: number;
+  @ApiProperty({ minimum: 1 }) page!: number;
+  @ApiProperty({ minimum: 1, maximum: 50 }) limit!: number;
+}
+
+export class AuctionLiveStateDto {
+  @ApiProperty() auctionId!: string;
+  @ApiProperty({ enum: AuctionPublicState }) state!: AuctionPublicState;
+  @ApiProperty({ minimum: 1 }) startingPriceCents!: number;
+  @ApiProperty({ minimum: 1 }) minimumIncrementCents!: number;
+  @ApiProperty({ type: Number, nullable: true }) currentBidCents!:
+    number | null;
+  @ApiProperty({ type: String, nullable: true, maxLength: 100 })
+  currentBidderName!: string | null;
+  @ApiProperty({ type: String, format: 'date-time' }) serverTime!: string;
+  @ApiProperty({ type: String, format: 'date-time' }) endsAt!: string;
+  @ApiProperty() revision!: number;
+  @ApiProperty({ minimum: 0 }) viewerCount!: number;
 }
 
 export class CancelAuctionDto {

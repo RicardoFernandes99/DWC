@@ -8,6 +8,8 @@ import {
 } from '@nestjs/swagger';
 import {
   AuctionIdParamDto,
+  AuctionHistoryQueryDto,
+  AuctionHistoryResponseDto,
   AuctionListResponseDto,
   AuctionResponseDto,
   ListPublicAuctionsQueryDto,
@@ -40,5 +42,19 @@ export class PublicAuctionsController {
   })
   get(@Param() param: AuctionIdParamDto): Promise<AuctionResponseDto> {
     return this.auctions.getPublic(param.id);
+  }
+
+  @Get(':id/bids')
+  @ApiOperation({ summary: 'Read public, paginated auction bid history.' })
+  @ApiOkResponse({ type: AuctionHistoryResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Invalid auction identifier or pagination.',
+  })
+  @ApiNotFoundResponse({ description: 'Auction not found.' })
+  history(
+    @Param() param: AuctionIdParamDto,
+    @Query() query: AuctionHistoryQueryDto,
+  ): Promise<AuctionHistoryResponseDto> {
+    return this.auctions.listPublicHistory(param.id, query);
   }
 }

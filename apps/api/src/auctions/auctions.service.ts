@@ -7,6 +7,7 @@ import {
   NotFoundException,
   OnModuleDestroy,
   OnModuleInit,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
@@ -14,8 +15,14 @@ import type { ClientSession, Connection, Model } from 'mongoose';
 import { Product } from '../products/product.schema.js';
 import { ProducerStatus, User, UserRole } from '../users/user.schema.js';
 import { Auction, AuctionStatus } from './auction.schema.js';
-import type { AuctionDocument } from './auction.schema.js';
+import { AuctionBid } from './auction.schema.js';
+import type { AuctionBidDocument, AuctionDocument } from './auction.schema.js';
 import {
+  AuctionBidRequestDto,
+  AuctionBidResponseDto,
+  AuctionHistoryQueryDto,
+  AuctionHistoryResponseDto,
+  AuctionLiveStateDto,
   AuctionListResponseDto,
   AuctionPublicState,
   AuctionResponseDto,
@@ -25,6 +32,26 @@ import {
   ListPublicAuctionsQueryDto,
   UpdateAuctionDto,
 } from './auction.dto.js';
+import { PaymentMethod } from '../payment-methods/payment-method.schema.js';
+import { UserResponseDto } from '../users/user-response.dto.js';
+
+export interface AcceptedBidResult {
+  duplicate: boolean;
+  bid: AuctionBidResponseDto;
+  state: AuctionLiveStateDto;
+}
+
+function toBidResponse(bid: AuctionBidDocument): AuctionBidResponseDto {
+  return {
+    id: bid._id.toString(),
+    auctionId: bid.auctionId.toString(),
+    amountCents: bid.amountCents,
+    bidderName: bid.bidderName,
+    acceptedAt: bid.acceptedAt.toISOString(),
+    endsAt: bid.endsAt.toISOString(),
+    revision: bid.revision,
+  };
+}
 
 function toAuctionResponse(
   auction: AuctionDocument,
@@ -75,6 +102,10 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
     @InjectModel(Auction.name) private readonly auctions: Model<Auction>,
     @InjectModel(Product.name) private readonly products: Model<Product>,
     @InjectModel(User.name) private readonly users: Model<User>,
+    @InjectModel(AuctionBid.name)
+    private readonly bids: Model<AuctionBid>,
+    @InjectModel(PaymentMethod.name)
+    private readonly paymentMethods: Model<PaymentMethod>,
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
@@ -481,6 +512,274 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
     });
     if (!auction) throw new NotFoundException('Auction not found.');
     return toAuctionResponse(auction);
+  }
+
+  async getLiveState(
+    id: string,
+    viewerCount: number,
+  ): Promise<AuctionLiveStateDto> {
+    const auction = await this.auctions.findOne({
+      _id: new Types.ObjectId(id),
+      $or: [
+        { status: AuctionStatus.Active },
+        { status: AuctionStatus.Scheduled, startsAt: { $gt: new Date() } },
+      ],
+    });
+    if (!auction) throw new NotFoundException('Auction not found.');
+    return this.toLiveState(auction, new Date(), viewerCount);
+  }
+
+  async listPublicHistory(
+    auctionId: string,
+    query: AuctionHistoryQueryDto,
+  ): Promise<AuctionHistoryResponseDto> {
+    const id = new Types.ObjectId(auctionId);
+    const auction = await this.auctions.exists({
+      _id: id,
+      status: { $ne: AuctionStatus.Cancelled },
+    });
+    if (!auction) throw new NotFoundException('Auction not found.');
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const filter = { auctionId: id };
+    const [items, total] = await Promise.all([
+      this.bids
+        .find(filter)
+        .sort({ acceptedAt: -1, _id: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec(),
+      this.bids.countDocuments(filter),
+    ]);
+    return { items: items.map(toBidResponse), total, page, limit };
+  }
+
+  async placeBid(
+    buyer: UserResponseDto,
+    input: AuctionBidRequestDto,
+  ): Promise<AcceptedBidResult> {
+    if (buyer.role !== UserRole.Buyer) {
+      throw new ForbiddenException('Buyer access is required to bid.');
+    }
+    const buyerId = new Types.ObjectId(buyer.id);
+    const auctionId = new Types.ObjectId(input.auctionId);
+    const paymentMethodId = new Types.ObjectId(input.paymentMethodId);
+    const prior = await this.findRequest(buyerId, input.requestId);
+    if (prior) return this.duplicateBid(prior, input, buyerId);
+
+    try {
+      return await this.withTransaction(async (session) => {
+        const duplicate = await this.bids
+          .findOne({ buyerId, requestId: input.requestId })
+          .session(session);
+        if (duplicate) return this.duplicateBid(duplicate, input, buyerId);
+
+        const method = await this.paymentMethods
+          .findOne({
+            _id: paymentMethodId,
+            ownerId: buyerId,
+            $expr: {
+              $gte: [
+                { $add: [{ $multiply: ['$expiryYear', 12] }, '$expiryMonth'] },
+                {
+                  $add: [
+                    { $multiply: [{ $year: '$$NOW' }, 12] },
+                    { $month: '$$NOW' },
+                  ],
+                },
+              ],
+            },
+          })
+          .session(session)
+          .select({ _id: 1 });
+        if (!method)
+          throw new ForbiddenException(
+            'Choose a saved payment method that belongs to you and has not expired.',
+          );
+        const current = await this.auctions
+          .findOne({ _id: auctionId })
+          .session(session);
+        if (!current) throw new NotFoundException('Auction not found.');
+
+        const updated = await this.auctions.findOneAndUpdate(
+          {
+            _id: auctionId,
+            revision: current.revision,
+            status: AuctionStatus.Active,
+            $expr: {
+              $and: [
+                { $lte: ['$startsAt', '$$NOW'] },
+                { $gt: ['$endsAt', '$$NOW'] },
+                {
+                  $or: [
+                    {
+                      $and: [
+                        {
+                          $eq: [{ $ifNull: ['$currentBidCents', null] }, null],
+                        },
+                        {
+                          $gte: [
+                            { $literal: input.amountCents },
+                            '$startingPriceCents',
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      $and: [
+                        {
+                          $ne: [{ $ifNull: ['$currentBidCents', null] }, null],
+                        },
+                        {
+                          $gte: [
+                            { $literal: input.amountCents },
+                            {
+                              $add: [
+                                '$currentBidCents',
+                                '$minimumIncrementCents',
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+          [
+            {
+              $set: {
+                currentBidCents: { $literal: input.amountCents },
+                currentBidderId: { $literal: buyerId },
+                currentBidderName: { $literal: buyer.name.slice(0, 100) },
+                lastBidAt: '$$NOW',
+                endsAt: {
+                  $cond: [
+                    { $lt: [{ $subtract: ['$endsAt', '$$NOW'] }, 10_000] },
+                    { $add: ['$$NOW', 10_000] },
+                    '$endsAt',
+                  ],
+                },
+                revision: { $add: ['$revision', 1] },
+                updatedAt: '$$NOW',
+              },
+            },
+          ],
+          { session, returnDocument: 'after', updatePipeline: true },
+        );
+        if (!updated) {
+          throw new ConflictException(
+            'Bid was not accepted. Refresh the auction and meet the current minimum bid before its deadline.',
+          );
+        }
+        if (!updated.lastBidAt) {
+          throw new ConflictException('Accepted bid timestamp is unavailable.');
+        }
+
+        const bid = await this.bids.create(
+          [
+            {
+              auctionId,
+              buyerId,
+              bidderName: buyer.name.slice(0, 100),
+              paymentMethodId,
+              requestId: input.requestId,
+              amountCents: input.amountCents,
+              startingPriceCents: updated.startingPriceCents,
+              minimumIncrementCents: updated.minimumIncrementCents,
+              acceptedAt: updated.lastBidAt,
+              endsAt: updated.endsAt,
+              revision: updated.revision,
+            },
+          ],
+          { session },
+        );
+        return {
+          duplicate: false,
+          bid: toBidResponse(bid[0]),
+          state: this.toLiveState(updated, updated.lastBidAt, 0),
+        };
+      });
+    } catch (error) {
+      if (this.isDuplicateKey(error)) {
+        const duplicate = await this.findRequest(buyerId, input.requestId);
+        if (duplicate) return this.duplicateBid(duplicate, input, buyerId);
+      }
+      throw error;
+    }
+  }
+
+  private async findRequest(buyerId: Types.ObjectId, requestId: string) {
+    return this.bids.findOne({ buyerId, requestId });
+  }
+
+  private duplicateBid(
+    bid: AuctionBidDocument,
+    input: AuctionBidRequestDto,
+    buyerId: Types.ObjectId,
+  ): AcceptedBidResult {
+    if (
+      !bid.auctionId.equals(new Types.ObjectId(input.auctionId)) ||
+      bid.amountCents !== input.amountCents ||
+      !bid.paymentMethodId.equals(new Types.ObjectId(input.paymentMethodId))
+    ) {
+      throw new ConflictException(
+        'This request ID was already used with a different bid. Use a new request ID.',
+      );
+    }
+    if (!bid.buyerId.equals(buyerId)) throw new UnauthorizedException();
+    return {
+      duplicate: true,
+      bid: toBidResponse(bid),
+      state: {
+        auctionId: bid.auctionId.toString(),
+        state: AuctionPublicState.Active,
+        startingPriceCents: bid.startingPriceCents,
+        minimumIncrementCents: bid.minimumIncrementCents,
+        currentBidCents: bid.amountCents,
+        currentBidderName: bid.bidderName,
+        serverTime: bid.acceptedAt.toISOString(),
+        endsAt: bid.endsAt.toISOString(),
+        revision: bid.revision,
+        viewerCount: 0,
+      },
+    };
+  }
+
+  private toLiveState(
+    auction: AuctionDocument,
+    now: Date,
+    viewerCount: number,
+  ): AuctionLiveStateDto {
+    const state =
+      auction.status === AuctionStatus.Scheduled
+        ? AuctionPublicState.Upcoming
+        : auction.endsAt <= now
+          ? AuctionPublicState.Finished
+          : AuctionPublicState.Active;
+    return {
+      auctionId: auction._id.toString(),
+      state,
+      startingPriceCents: auction.startingPriceCents,
+      minimumIncrementCents: auction.minimumIncrementCents,
+      currentBidCents: auction.currentBidCents,
+      currentBidderName: auction.currentBidderName,
+      serverTime: now.toISOString(),
+      endsAt: auction.endsAt.toISOString(),
+      revision: auction.revision,
+      viewerCount,
+    };
+  }
+
+  private isDuplicateKey(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 11000
+    );
   }
 
   private async processDueAuctions(): Promise<void> {

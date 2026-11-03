@@ -137,6 +137,9 @@ replaced are not requirements.
   delivery. Gateways call domain services, authorize actions and room access,
   and broadcast only accepted, persisted changes. Reconnecting clients fetch
   current server state; public watching does not grant bidding permissions.
+- Auction viewer counts count connected sockets currently watching an auction.
+  They are labelled “viewers”; multiple tabs for one account count separately,
+  and guests are included.
 - At closure, a winner receives a Confirmed collection order for the lot and
   the simulated payment is recorded automatically. No second checkout is needed.
 - An auction without accepted bids releases its reserved quantity back to stock.

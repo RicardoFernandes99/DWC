@@ -3,6 +3,14 @@ export interface SocketData {
 }
 
 export type {
+  AuctionBidAcceptedPayload,
+  AuctionBidAcknowledgement,
+  AuctionBidPayload,
+  AuctionJoinAcknowledgement,
+  AuctionLeaveAcknowledgement,
+  AuctionLiveStatePayload,
+  AuctionRefusalCode,
+  AuctionRoomRequestPayload,
   ClientToServerEvents,
   InterServerEvents,
   NotificationCreatedPayload,

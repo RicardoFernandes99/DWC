@@ -7,7 +7,7 @@ the default namespace (`/`). Its Engine.IO CORS options use configured
 clients must connect from that origin; a supplied mismatching `Origin` is
 rejected for every transport. Non-browser clients may omit `Origin`.
 
-## Handshake
+## Default namespace handshake
 
 Send the current access JWT in Socket.IO's `auth` object:
 
@@ -20,7 +20,11 @@ io(apiOrigin, { auth: { accessToken } });
 Redis session and current MongoDB user through the same `AuthService` used by
 HTTP. A successful connection joins only the server-derived `user:<userId>`
 room. Client-supplied room names and user IDs are never accepted as authority.
-No client-to-server application events are currently defined.
+No client-to-server application events are defined on the default namespace.
+
+The default namespace checks identity at connection time. Personal events are
+sent to those authenticated connections without repeating session validation
+before every emission.
 
 Failed handshakes return a Socket.IO `connect_error` with a safe `data.code`:
 
@@ -35,21 +39,54 @@ origin configuration after `origin_not_allowed`, and retry with backoff after
 `service_unavailable`. Error messages do not include token or infrastructure
 details.
 
+## Public auction namespace
+
+Connect to `/auctions` without a handshake token to watch as a guest. The
+configured `WEB_ORIGIN` is enforced when an `Origin` header is present. A watcher
+joins with `auction.join` and `{ auctionId }`; the server validates the ID and
+derives the room. `auction.leave` leaves that derived room. There is no arbitrary
+room join event. Joining emits `auction.state` and returns the same current
+state in its acknowledgement. Reconnect by joining again, then fetch paginated
+history from `GET /api/auctions/{id}/bids`.
+
+The state includes the auction ID, public state, starting price, increment,
+current bid and bidder display name, server time, deadline, revision and
+`viewerCount`. Viewer count means connected watching sockets, including guests;
+tabs count separately and the label is “viewers”. This count is local to one API
+process.
+
+Submit `auction.bid` with `{ requestId, auctionId, amountCents,
+paymentMethodId, accessToken }`. The gateway verifies the current access token,
+session and user for every bid, then the domain service checks buyer role,
+method ownership/expiry and atomic auction conditions. The acknowledgement is
+either `{ ok: true, duplicate, bid, state }` or a safe refusal with a code and
+actionable message. Accepted state is broadcast only after the auction summary
+and separate history record commit. Retried request IDs return the original
+accepted bid and do not broadcast again; reusing one with different bid inputs
+is refused. Bid attempts are throttled per buyer to ten per ten seconds in one
+API process.
+
 ## Server to client
 
-| Event                  | Payload                      | Recipient                                            |
-| ---------------------- | ---------------------------- | ---------------------------------------------------- |
-| `notification.created` | `{ notificationId: string }` | The notification owner's authenticated sockets only. |
+| Event                  | Payload                             | Recipient                                       |
+| ---------------------- | ----------------------------------- | ----------------------------------------------- |
+| `notification.created` | `{ notificationId: string }`        | The notification owner's authenticated sockets. |
+| `auction.state`        | Current public auction state        | Watching sockets in the derived auction room.   |
+| `auction.bid.accepted` | `{ bid, state }` with public fields | Watching sockets after a committed bid.         |
 
-The payload contains only the persisted notification ID; clients fetch its
-content through the authenticated inbox API. The API revalidates each socket's
-JWT/session/current user immediately before each private emission. Revoked,
-expired or unverifiable sessions are disconnected without receiving that
-emission. Since Redis validation and socket delivery are separate operations, a
-logout racing exactly with validation-to-emission may still overlap one event;
-this transport does not claim atomic delivery with logout. Offline clients
-recover through persisted inbox fetches once that feature is implemented.
+The notification payload contains only the persisted notification ID; clients
+fetch its content through the authenticated inbox API. Revocation or expiry
+after the default namespace handshake does not proactively disconnect a socket;
+clients disconnect on logout and reconnect with refreshed credentials. Offline clients recover through
+persisted inbox fetches. Bid events separately
+revalidate identity for each action.
 
-Sockets are removed from the gateway's in-memory user registry on disconnect
-and are disconnected during API shutdown. There is no cross-process adapter;
+Auction watcher tracking is removed on disconnect. Sockets are disconnected
+during API shutdown. There is no cross-process adapter;
 this contract covers the single API process in local development.
+
+Auction broadcasts are best-effort after commit. A crash between persistence and
+emission can omit an event; reconnecting clients fetch authoritative state and
+history. Concurrent responses can arrive out of revision order, so clients must
+ignore older auction revisions, including original-state acknowledgements for
+retried bids. Viewer counts may change without changing the auction revision.

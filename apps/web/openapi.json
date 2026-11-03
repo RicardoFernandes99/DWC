@@ -2761,6 +2761,74 @@
           "Auctions"
         ]
       }
+    },
+    "/api/auctions/{id}/bids": {
+      "get": {
+        "operationId": "PublicAuctionsController_history",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionHistoryResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid auction identifier or pagination."
+          },
+          "404": {
+            "description": "Auction not found."
+          }
+        },
+        "summary": "Read public, paginated auction bid history.",
+        "tags": [
+          "Auctions"
+        ]
+      }
     }
   },
   "info": {
@@ -5640,6 +5708,76 @@
         },
         "required": [
           "revision"
+        ]
+      },
+      "AuctionBidResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "auctionId": {
+            "type": "string"
+          },
+          "amountCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "bidderName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "type": "number",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "id",
+          "auctionId",
+          "amountCents",
+          "bidderName",
+          "acceptedAt",
+          "endsAt",
+          "revision"
+        ]
+      },
+      "AuctionHistoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuctionBidResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "minimum": 0
+          },
+          "page": {
+            "type": "number",
+            "minimum": 1
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
         ]
       }
     }

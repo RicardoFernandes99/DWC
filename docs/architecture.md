@@ -68,16 +68,18 @@ checks do not imply catalogue, order or auction behavior is implemented.
 ## Realtime transport
 
 Socket.IO runs on the API's existing HTTP server and configured `WEB_ORIGIN`.
-The gateway authenticates the access JWT through `AuthService`, so each
-connection checks JWT claims, the Redis session and current MongoDB user. The
-server derives personal rooms as `user:<userId>` and accepts no client room-join
-commands. Before each private event, it repeats authentication and disconnects
-the socket on revocation, expiry or dependency failure. A small publisher
-exposes only `notification.created` with the persisted notification ID; there
-is no auction event yet. See the [Socket.IO event contract](socket-events.md)
-for handshake errors, event shape and delivery limitations. The gateway keeps
-an in-memory connection registry, cleans it on disconnect and shutdown, and
-does not use a multi-instance adapter; private delivery is process-local.
+The default namespace authenticates the access JWT through `AuthService` at
+connection time, checking JWT claims, the Redis session and current MongoDB
+user. The server derives personal rooms as `user:<userId>` and accepts no client
+room-join commands. Personal notifications are published to authenticated
+connections without repeating authentication before each event. The separate
+`/auctions` namespace permits guest watching, derives auction rooms only from
+validated auction IDs, and authenticates the supplied JWT/session/current buyer
+and saved payment method for each bid. Auction state and history expose only
+bounded public bidder snapshots. Both namespaces enforce the configured web
+origin when supplied. See the [Socket.IO event contract](socket-events.md) for
+event shapes and delivery limitations. Connections and viewer counts are
+process-local; there is no multi-instance adapter.
 
 ## Tooling choices
 
