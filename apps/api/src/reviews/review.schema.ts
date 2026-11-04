@@ -30,6 +30,18 @@ export class Review {
     default: ReviewVisibility.Visible,
   })
   visibility!: ReviewVisibility;
+
+  @Prop({ type: Number, default: 1, min: 1 })
+  revision!: number;
+
+  @Prop({ type: Date, default: null })
+  moderatedAt!: Date | null;
+
+  @Prop({ type: String, default: null, trim: true, maxlength: 500 })
+  moderationReason!: string | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
+  moderatedBy!: Types.ObjectId | null;
 }
 
 export type ReviewDocument = HydratedDocument<Review> & {

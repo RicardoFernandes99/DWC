@@ -2069,14 +2069,14 @@ export interface components {
         };
         NotificationResourceDto: {
             /** @enum {string} */
-            type: "order" | "producer_application" | "auction";
+            type: "order" | "producer_application" | "auction" | "product";
             /** @example 507f1f77bcf86cd799439011 */
             id: string;
         };
         NotificationResponseDto: {
             id: string;
             /** @enum {string} */
-            eventType: "order_created" | "order_status_changed" | "refund_requested" | "refund_decision" | "producer_application_approved" | "producer_application_rejected" | "producer_suspended" | "producer_reinstated" | "auction_won" | "auction_lost" | "auction_closed" | "auction_payment_method_expired";
+            eventType: "order_created" | "order_status_changed" | "refund_requested" | "refund_decision" | "producer_application_approved" | "producer_application_rejected" | "producer_suspended" | "producer_reinstated" | "product_hidden" | "product_restored" | "auction_won" | "auction_lost" | "auction_closed" | "auction_payment_method_expired";
             title: string;
             message: string;
             resource: components["schemas"]["NotificationResourceDto"];

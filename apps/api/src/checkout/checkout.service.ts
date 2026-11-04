@@ -261,7 +261,12 @@ export class CheckoutService {
 
       const lineIssues: CheckoutQuoteLineIssueDto[] = [];
 
-      if (!product.published) {
+      if (
+        !product.published ||
+        // Lean legacy documents may lack these fields entirely.
+        Boolean(product.archivedAt) ||
+        Boolean(product.moderatedAt)
+      ) {
         const issue: CheckoutQuoteLineIssueDto = {
           code: CheckoutQuoteIssueCode.UnavailableProduct,
           message: 'Product is currently unpublished or unavailable.',
@@ -617,6 +622,8 @@ export class CheckoutService {
                 _id: new Types.ObjectId(item.productId),
                 producerId: new Types.ObjectId(group.producerId),
                 published: true,
+                archivedAt: null,
+                moderatedAt: null,
                 availableStock: { $gte: item.quantity },
               },
               {

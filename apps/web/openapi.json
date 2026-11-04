@@ -5748,7 +5748,8 @@
             "enum": [
               "order",
               "producer_application",
-              "auction"
+              "auction",
+              "product"
             ]
           },
           "id": {
@@ -5778,6 +5779,8 @@
               "producer_application_rejected",
               "producer_suspended",
               "producer_reinstated",
+              "product_hidden",
+              "product_restored",
               "auction_won",
               "auction_lost",
               "auction_closed",

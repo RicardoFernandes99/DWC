@@ -240,6 +240,23 @@ replaced are not requirements.
   `suspensionReason` on their application status and the admin item, and is non-null
   only while suspended. Suspending and reinstating each create one inbox
   notification for the producer.
+- Content moderation (ticket 036): admins hide a product that breaks marketplace
+  rules (prohibited item, false claim, offensive image/text, scam or duplicate)
+  without suspending its producer, and hide reported reviews. Both are reversible:
+  `POST /api/admin/products/:id/hide` / `restore` and
+  `POST /api/admin/reviews/:id/hide` / `restore`, admin only, with
+  `{ revision, reason }` for hide (reason 1-500 chars) and `{ revision }` for
+  restore. A stale revision, hiding hidden content or restoring visible content
+  answers 409.
+- Hiding records reason, admin and time and keeps the record, the producer's
+  publication choice and all order/auction snapshots. Restoring a product makes it
+  public again only if it is still published, unarchived and its producer is
+  approved. Active and scheduled auctions of a hidden product follow normal
+  auction rules; their reserved lot is not released or rewritten.
+- Hiding or restoring a product sends one inbox notification to its producer with
+  the reason; the producer also sees `moderationReason` on their product list.
+  Hiding or restoring a review notifies nobody. Reporter identity and report notes
+  appear only in admin responses.
 
 ## Open decisions
 

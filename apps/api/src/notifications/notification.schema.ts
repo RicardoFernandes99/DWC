@@ -10,6 +10,8 @@ export enum NotificationEventType {
   ProducerApplicationRejected = 'producer_application_rejected',
   ProducerSuspended = 'producer_suspended',
   ProducerReinstated = 'producer_reinstated',
+  ProductHidden = 'product_hidden',
+  ProductRestored = 'product_restored',
   AuctionWon = 'auction_won',
   AuctionLost = 'auction_lost',
   AuctionClosed = 'auction_closed',
@@ -20,6 +22,7 @@ export enum NotificationResourceType {
   Order = 'order',
   ProducerApplication = 'producer_application',
   Auction = 'auction',
+  Product = 'product',
 }
 
 @Schema({ _id: false })
