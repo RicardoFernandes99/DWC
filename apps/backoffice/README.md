@@ -36,13 +36,40 @@ by Laravel's CSRF middleware. Laravel keeps the API access token, opaque refresh
 cookie and the API cookie's absolute expiry in an encrypted file session. Each
 protected request calls `/auth/me`; it refreshes once after an access-token 401.
 It clears expired/revoked and non-admin sessions and shows a safe unavailable
-page when the API cannot be reached. API errors and credentials are not rendered
+page when the API cannot be reached. Internal errors and credentials are not rendered
 or logged. Logout always clears the Laravel browser session; API revocation is
 best effort if the API is unavailable.
 
 The API accepts the exact `BACKOFFICE_ORIGIN` for refresh and logout while
 `WEB_ORIGIN` continues to govern React and Socket.IO. API login is server-to-
 server and does not forward the browser's cookies.
+
+## Producer decisions
+
+The signed-in administrator can open **Producer applications** from the home
+screen. The list reads submitted applications from NestJS, accepts `status` and
+1-based `page` filters, and requests at most 20 rows per page. Select a farm to
+review its submitted name, description, collection address, city and coordinates.
+
+Approve and reject are available only while an application is pending. Rejection
+requires a 1–500 character reason. Suspension is a separate account-standing
+action available only to an approved producer; it requires a reason of the same
+length. The confirmation explains that suspension hides normal-sale products
+and blocks new sales and auctions while existing orders and active auctions
+continue. Reinstatement is available only while suspended and returns the
+producer to approved without changing product publication or moderation state.
+
+Every decision sends the current revision to NestJS once. The API decides whether
+the transition is valid. On a stale revision the backoffice reloads the current
+record and retains the submitted reason for review; it never retries the action.
+If an API 401/403 arrives after the page gate, Laravel revokes the current API
+cookie when possible, clears the encrypted session and returns the administrator
+to sign-in. A connection loss during a decision reports that the outcome is
+unknown and retains the reason draft until the administrator refreshes the
+producer's current status. If the current-identity check returns 503 before the
+decision controller runs, the backoffice retains only the validated reason,
+action and producer ID, says the mutation was not sent, and links to the
+producer's status page for recovery.
 
 The login photo is the existing local Orchard landscape asset from the web app.
 Fraunces is copied with its SIL Open Font License notice in `public/fonts`.

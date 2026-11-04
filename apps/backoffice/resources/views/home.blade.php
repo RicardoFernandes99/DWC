@@ -24,8 +24,9 @@
 
     <section class="empty-state" aria-labelledby="empty-title">
         <div>
-            <h2 id="empty-title">Your workspace is ready</h2>
-            <p>Administrative tools will appear here as they are added to the backoffice.</p>
+            <h2 id="empty-title">Producer applications</h2>
+            <p>Review submitted farm details, decide who can sell, and manage producer account standing.</p>
+            <a class="primary-button home-action" href="{{ route('producer-applications.index') }}">Review applications</a>
         </div>
     </section>
 </main>
