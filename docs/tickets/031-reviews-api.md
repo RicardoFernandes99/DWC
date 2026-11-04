@@ -1,10 +1,10 @@
 # 031: Review a producer once per completed order and report reviews
 
 - Macro: M06
-- Status: In progress
+- Status: In review
 - Depends on: 019, 028
-- PR: Not opened
-- Branch / parent: Not assigned
+- PR: https://github.com/RicardoFernandes99/DWC/pull/45
+- Branch / parent: `codex/age-031-reviews-api` on `codex/age-030-live-auction-web` (PR #44, `f81929e`); native stack #34
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -33,11 +33,11 @@ users can report reviews for administration.
 
 ## Acceptance criteria
 
-- [ ] One review per completed owned order; auction collection orders qualify.
-- [ ] Pending/cancelled/foreign orders and invalid stars/comments fail appropriately.
-- [ ] Concurrent duplicates result in one review and a handled conflict.
-- [ ] Hidden reviews are absent from public lists and rating totals.
-- [ ] Report retries do not duplicate reports or expose reporter/private order data.
+- [x] One review per completed owned order; auction collection orders qualify.
+- [x] Pending/cancelled/foreign orders and invalid stars/comments fail appropriately.
+- [x] Concurrent duplicates result in one review and a handled conflict.
+- [x] Hidden reviews are absent from public lists and rating totals.
+- [x] Report retries do not duplicate reports or expose reporter/private order data.
 
 ## Checks
 
@@ -47,4 +47,11 @@ Review a completed delivery/collection order, retry it and report a review. Chec
 
 ## Delivery notes
 
-Not implemented. Record actual evidence and PR/stack metadata here.
+- Orchestrator/reviewer: Claude Opus 5.5. Builder: Claude Sonnet (Agent tool), one handoff, 0 correction rounds. Usage measurements unavailable.
+- User decisions: public reviews show the reviewer first name only; reports need a category (spam, offensive, off_topic, false_information, other) plus an optional note up to 500 characters.
+- Frontier verdict: APPROVED on implementation `29b75bd` (parent `f81929e`).
+- Checks on `29b75bd`: API typecheck and build, `pnpm contract:check`, web
+  typecheck, root lint, scoped Prettier: pass.
+- Real-stack fixture `demos/ticket-031-review/review-api.ts` against Mongo/Redis
+  and the built API (port 3131, `REVIEW_API` env): 14/14 groups pass. Covers delivered and auction-collected reviews, a retry 409, a concurrent duplicate pair (one 201, one 409, DB count 1), pending/cancelled/shipped 409, foreign 404, invalid input 400, public pagination and summary, a hidden review excluded from list and totals, report dedupe/own 403/hidden 404/401, and no private data in public output. The fixture cleans only its own records.
+- Limitations: no hide endpoint until 036 (hidden state set in Mongo for verification); the concurrency check is a real race, not exhaustive.
