@@ -1,9 +1,9 @@
 # 038: Scaffold the Laravel backoffice and connect admin authentication
 
 - Macro: M08
-- Status: In progress
+- Status: In review
 - Depends on: 003, 009
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/52
 - Branch / parent: `codex/age-038-laravel-auth-foundation` / `codex/age-037-admin-inspection-api` at `a17919212aa70d1acbad35309e11b86ee501148b`
 - Blockers: None. Tooling and authentication/session choices are recorded in product decisions.
 
@@ -58,8 +58,10 @@ stack and automatic API refresh within a separate server-side Laravel session.
   No model adaptation or formal correction rounds. Initial implementation review
   feedback fixed session mapping, exception cache headers, Docker environment
   passthrough and shell typography before approval. Usage/cost is unavailable.
-- Frontier verdict: APPROVED against PR #51 at the parent SHA above. Publication
-  and the reviewed implementation commit are recorded after the PR exists.
+- Frontier verdict: APPROVED on implementation `87a0926aa7908d50b9d4430b129f6393a6bcbe1b`
+  against PR #51 at the parent SHA above. PR #52 is ready for review in native
+  GitHub stack #34. No merge. The orchestrator removed one trailing space from
+  the copied font license before committing; the license text is unchanged.
 - Passed `pnpm backoffice:setup`, actual PHP platform requirements, Pint on 27
   PHP files and Larastan. Passed API typecheck/build, web typecheck/build including
   React Compiler verification, tools typecheck, root lint, contract generation
