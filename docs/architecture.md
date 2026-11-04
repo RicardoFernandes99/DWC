@@ -65,6 +65,17 @@ command also exercises database persistence, a Redis value round-trip and TTL,
 and object upload/download/delete. These
 checks do not imply catalogue, order or auction behavior is implemented.
 
+Read-only administrator inspection lives in NestJS for the Laravel backoffice.
+`GET /api/admin/users`, `/orders`, and `/auctions` use bounded pages, explicit
+filters and stable timestamp/ID ordering. Detail responses select safe fields,
+including order-specific refund allocations and auction settlement links. Admin
+routes return `Cache-Control: no-store`. `GET /api/admin/health` reports bounded
+MongoDB, Redis and storage checks without dependency errors or configuration.
+The public `/api/health/ready` response remains unchanged. Because `AdminGuard`
+checks the Redis-backed session, an HTTP admin health request may itself return
+503 during a Redis outage; the health service can still report Redis as down when
+called in-process.
+
 ## Realtime transport
 
 Socket.IO runs on the API's existing HTTP server and configured `WEB_ORIGIN`.

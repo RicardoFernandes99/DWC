@@ -99,6 +99,9 @@ export type UserDocument = HydratedDocument<User> & {
 };
 export const UserSchema = SchemaFactory.createForClass(User);
 UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index({ role: 1, createdAt: -1, _id: -1 });
+UserSchema.index({ producerStatus: 1, createdAt: -1, _id: -1 });
+UserSchema.index({ role: 1, producerStatus: 1, createdAt: -1, _id: -1 });
 UserSchema.index({
   role: 1,
   producerStatus: 1,

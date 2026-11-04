@@ -104,6 +104,9 @@ export type AuctionDocument = HydratedDocument<Auction> & {
 
 export const AuctionSchema = SchemaFactory.createForClass(Auction);
 AuctionSchema.index({ producerId: 1, status: 1, startsAt: -1, _id: -1 });
+AuctionSchema.index({ status: 1, createdAt: -1, _id: -1 });
+AuctionSchema.index({ producerId: 1, createdAt: -1, _id: -1 });
+AuctionSchema.index({ producerId: 1, status: 1, createdAt: -1, _id: -1 });
 AuctionSchema.index({ status: 1, startsAt: 1, _id: 1 });
 AuctionSchema.index({ status: 1, endsAt: 1, _id: 1 });
 AuctionSchema.index({ status: 1, closureNotificationsPending: 1, _id: 1 });

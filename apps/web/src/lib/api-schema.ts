@@ -767,6 +767,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminInspectionController_listUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminInspectionController_getUser"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminInspectionController_listOrders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminInspectionController_getOrder"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/auctions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminInspectionController_listAuctions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/auctions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminInspectionController_getAuction"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminInspectionController_serviceHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2360,6 +2472,290 @@ export interface components {
             /** @description Top 5 by revenue, then order count, then product id. */
             bestSellers: components["schemas"]["BestSellerDto"][];
             lowStock: components["schemas"]["LowStockMetricsDto"];
+        };
+        AdminUserListItemDto: {
+            id: string;
+            name: string;
+            email: string;
+            /** @enum {string} */
+            role: "buyer" | "producer" | "admin";
+            /** @enum {string|null} */
+            producerStatus: "pending" | "approved" | "rejected" | "suspended" | null;
+            farmName: string | null;
+            city: string | null;
+            /** Format: date-time */
+            createdAt: string | null;
+        };
+        AdminUsersPageDto: {
+            items: components["schemas"]["AdminUserListItemDto"][];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+        AdminProducerApplicationDto: {
+            farmName: string;
+            description: string;
+            city: string;
+            /** Format: date-time */
+            submittedAt: string | null;
+        };
+        AdminUserDetailDto: {
+            id: string;
+            name: string;
+            email: string;
+            /** @enum {string} */
+            role: "buyer" | "producer" | "admin";
+            /** @enum {string|null} */
+            producerStatus: "pending" | "approved" | "rejected" | "suspended" | null;
+            farmName: string | null;
+            city: string | null;
+            /** Format: date-time */
+            createdAt: string | null;
+            producerApplication: components["schemas"]["AdminProducerApplicationDto"] | null;
+            producerRejectionReason: string | null;
+            producerSuspensionReason: string | null;
+            producerDecisionRevision: number;
+            producerDecisionBy: string | null;
+            /** Format: date-time */
+            producerDecisionAt: string | null;
+            /** Format: date-time */
+            updatedAt: string | null;
+        };
+        AdminOrderListItemDto: {
+            id: string;
+            checkoutId: string | null;
+            auctionId: string | null;
+            buyerId: string;
+            producerId: string;
+            paymentId: string;
+            /** @enum {string} */
+            status: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+            /** @enum {string} */
+            origin: "catalogue" | "auction";
+            /** @enum {string} */
+            fulfilmentMethod: "delivery" | "collection";
+            totalCents: number;
+            refundedCents: number;
+            /** Format: date-time */
+            createdAt: string | null;
+        };
+        AdminOrdersPageDto: {
+            items: components["schemas"]["AdminOrderListItemDto"][];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+        AdminOrderOwnerDto: {
+            id: string;
+            name: string | null;
+            email: string | null;
+            /** @enum {string|null} */
+            role: "buyer" | "producer" | "admin" | null;
+        };
+        AdminOrderPaymentDto: {
+            id: string;
+            /** @enum {string} */
+            status: "succeeded" | "failed";
+            amountCents: number;
+            checkoutId: string | null;
+            auctionId: string | null;
+        };
+        AdminOrderItemDto: {
+            productId: string;
+            productName: string;
+            /** @enum {string} */
+            productUnit: "unit" | "bunch" | "box" | "jar" | "bottle" | "bag" | "kg" | "g_500" | "g_250" | "l" | "ml_500";
+            quantity: number;
+            unitPriceCents: number;
+            lineTotalCents: number;
+        };
+        AdminOrderHistoryDto: {
+            /** @enum {string} */
+            status: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+            /** Format: date-time */
+            timestamp: string | null;
+            actorId: string;
+            /** @enum {string} */
+            actorRole: "buyer" | "producer" | "admin";
+            note: string | null;
+        };
+        AdminRefundAllocationDto: {
+            paymentId: string;
+            /** Format: date-time */
+            refundedAt: string | null;
+        };
+        AdminRefundRequestDto: {
+            /** @enum {string} */
+            status: "open" | "declined" | "accepted";
+            requestedBy: string;
+            /** Format: date-time */
+            requestedAt: string | null;
+            reason: string | null;
+            decidedBy: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+            refundedCents: number | null;
+        };
+        AdminOrderDetailDto: {
+            id: string;
+            checkoutId: string | null;
+            auctionId: string | null;
+            buyerId: string;
+            producerId: string;
+            paymentId: string;
+            /** @enum {string} */
+            status: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+            /** @enum {string} */
+            origin: "catalogue" | "auction";
+            /** @enum {string} */
+            fulfilmentMethod: "delivery" | "collection";
+            totalCents: number;
+            refundedCents: number;
+            /** Format: date-time */
+            createdAt: string | null;
+            buyer: components["schemas"]["AdminOrderOwnerDto"];
+            producer: components["schemas"]["AdminOrderOwnerDto"];
+            payment: components["schemas"]["AdminOrderPaymentDto"] | null;
+            items: components["schemas"]["AdminOrderItemDto"][];
+            statusHistory: components["schemas"]["AdminOrderHistoryDto"][];
+            subtotalCents: number;
+            deliveryFeeCents: number;
+            refundAllocation: components["schemas"]["AdminRefundAllocationDto"] | null;
+            refundRequest: components["schemas"]["AdminRefundRequestDto"] | null;
+            revision: number;
+            /** Format: date-time */
+            updatedAt: string | null;
+        };
+        AdminAuctionProductDto: {
+            name: string;
+            description: string;
+            /** @enum {string} */
+            category: "vegetables" | "fruits" | "dairy" | "eggs" | "meat" | "bakery" | "pantry" | "beverages" | "other";
+            /** @enum {string} */
+            productionMethod: "organic" | "sustainable" | "conventional" | "artisanal" | "biodynamic";
+            seasons: ("spring" | "summer" | "autumn" | "winter" | "year_round")[];
+            /** @enum {string} */
+            unit: "unit" | "bunch" | "box" | "jar" | "bottle" | "bag" | "kg" | "g_500" | "g_250" | "l" | "ml_500";
+        };
+        AdminAuctionListItemDto: {
+            id: string;
+            producerId: string;
+            productId: string;
+            product: components["schemas"]["AdminAuctionProductDto"];
+            /** @enum {string} */
+            status: "scheduled" | "active" | "finished" | "cancelled";
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            quantity: number;
+            currentBidCents: number | null;
+            /** Format: date-time */
+            createdAt: string | null;
+        };
+        AdminAuctionsPageDto: {
+            items: components["schemas"]["AdminAuctionListItemDto"][];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+        AdminAuctionProducerDto: {
+            id: string;
+            name: string | null;
+            email: string | null;
+            /** @enum {string|null} */
+            role: "buyer" | "producer" | "admin" | null;
+            /** @enum {string|null} */
+            status: "pending" | "approved" | "rejected" | "suspended" | null;
+        };
+        AdminAuctionBidDto: {
+            id: string;
+            buyerId: string;
+            bidderName: string;
+            amountCents: number;
+            /** Format: date-time */
+            acceptedAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            revision: number;
+        };
+        AdminAuctionBidPageDto: {
+            items: components["schemas"]["AdminAuctionBidDto"][];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+        AdminAuctionSettlementOrderDto: {
+            id: string;
+            /** @enum {string} */
+            status: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+            totalCents: number;
+            paymentId: string;
+            buyerId: string;
+            producerId: string;
+            /** Format: date-time */
+            createdAt: string | null;
+        };
+        AdminAuctionSettlementPaymentDto: {
+            id: string;
+            /** @enum {string} */
+            status: "succeeded" | "failed";
+            amountCents: number;
+            refundedCents: number;
+            buyerId: string;
+            /** Format: date-time */
+            createdAt: string | null;
+        };
+        AdminAuctionSettlementDto: {
+            order: components["schemas"]["AdminAuctionSettlementOrderDto"] | null;
+            payment: components["schemas"]["AdminAuctionSettlementPaymentDto"] | null;
+        };
+        AdminAuctionDetailDto: {
+            id: string;
+            producerId: string;
+            productId: string;
+            product: components["schemas"]["AdminAuctionProductDto"];
+            /** @enum {string} */
+            status: "scheduled" | "active" | "finished" | "cancelled";
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            quantity: number;
+            currentBidCents: number | null;
+            /** Format: date-time */
+            createdAt: string | null;
+            producer: components["schemas"]["AdminAuctionProducerDto"];
+            startingPriceCents: number;
+            minimumIncrementCents: number;
+            currentBidderId: string | null;
+            currentBidderName: string | null;
+            /** Format: date-time */
+            lastBidAt: string | null;
+            revision: number;
+            /** Format: date-time */
+            updatedAt: string | null;
+            bidHistory: components["schemas"]["AdminAuctionBidPageDto"];
+            settlement: components["schemas"]["AdminAuctionSettlementDto"];
+        };
+        AdminServiceHealthDto: {
+            /** @enum {string} */
+            status: "ok" | "degraded";
+            /** @enum {string} */
+            api: "up";
+            /** @enum {string} */
+            mongodb: "up" | "down";
+            /** @enum {string} */
+            redis: "up" | "down";
+            /** @enum {string} */
+            storage: "up" | "down";
+            mongodbLatencyMs: number;
+            redisLatencyMs: number;
+            storageLatencyMs: number;
         };
     };
     responses: never;
@@ -5165,6 +5561,376 @@ export interface operations {
                 content?: never;
             };
             /** @description Authentication unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminInspectionController_listUsers: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                role?: "buyer" | "producer" | "admin";
+                producerStatus?: "pending" | "approved" | "rejected" | "suspended";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUsersPageDto"];
+                };
+            };
+            /** @description Invalid filter or pagination. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminInspectionController_getUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserDetailDto"];
+                };
+            };
+            /** @description Malformed user ID. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminInspectionController_listOrders: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                status?: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+                origin?: "catalogue" | "auction";
+                fulfilmentMethod?: "delivery" | "collection";
+                buyerId?: string;
+                producerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOrdersPageDto"];
+                };
+            };
+            /** @description Invalid filter or pagination. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminInspectionController_getOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOrderDetailDto"];
+                };
+            };
+            /** @description Malformed order ID. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminInspectionController_listAuctions: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                status?: "scheduled" | "active" | "finished" | "cancelled";
+                producerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAuctionsPageDto"];
+                };
+            };
+            /** @description Invalid filter or pagination. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminInspectionController_getAuction: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAuctionDetailDto"];
+                };
+            };
+            /** @description Malformed auction ID or pagination. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Auction not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminInspectionController_serviceHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminServiceHealthDto"];
+                };
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
             503: {
                 headers: {
                     [name: string]: unknown;

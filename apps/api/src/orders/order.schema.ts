@@ -169,6 +169,9 @@ export type OrderDocument = HydratedDocument<Order> & {
 export const OrderSchema = SchemaFactory.createForClass(Order);
 OrderSchema.index({ buyerId: 1, createdAt: -1 });
 OrderSchema.index({ producerId: 1, createdAt: -1 });
+OrderSchema.index({ status: 1, createdAt: -1, _id: -1 });
+OrderSchema.index({ origin: 1, createdAt: -1, _id: -1 });
+OrderSchema.index({ fulfilmentMethod: 1, createdAt: -1, _id: -1 });
 OrderSchema.index({ checkoutId: 1 });
 OrderSchema.index(
   { auctionId: 1 },
