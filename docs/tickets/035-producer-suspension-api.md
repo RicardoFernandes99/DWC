@@ -3,7 +3,7 @@
 - Macro: M08
 - Status: In review
 - Depends on: 009, 013, 019, 026
-- PR: Not opened
+- PR: [#49](https://github.com/RicardoFernandes99/DWC/pull/49) (ready for review, native stack #34)
 - Branch / parent: `codex/age-035-producer-suspension-api` on `codex/age-034-producer-dashboard-web` (PR #48, `32aec23`)
 - Blockers: None beyond dependencies; buyer suspension is separate ticket 042
 
@@ -86,3 +86,4 @@ Suspend/reinstate a local producer, verify hidden catalogue/direct links and ret
   checkout accept answers 400 from the quote recheck (`producer_suspended`), the
   in-transaction path 409. The web banner does not yet show `suspensionReason`.
   No automated tests added; usage figures are unavailable.
+- PR #49 is ready for review in native stack #34. The reviewed implementation commit is `3c0e273`.
