@@ -751,6 +751,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/producer/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProducerMetricsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2243,6 +2259,97 @@ export interface components {
             /** @description Total visible reviews. */
             total: number;
             summary: components["schemas"]["ReviewSummaryDto"];
+        };
+        SalesBreakdownDto: {
+            /** @example 4 */
+            orderCount: number;
+            /**
+             * @description Sum of original order line totals, in cents.
+             * @example 12500
+             */
+            productRevenueCents: number;
+        };
+        SalesMetricsDto: {
+            /** @example 4 */
+            orderCount: number;
+            /**
+             * @description Sum of original order line totals, in cents.
+             * @example 12500
+             */
+            productRevenueCents: number;
+            /**
+             * @description Delivery fees charged on these orders, reported separately.
+             * @example 800
+             */
+            deliveryFeesCents: number;
+            catalogue: components["schemas"]["SalesBreakdownDto"];
+            auction: components["schemas"]["SalesBreakdownDto"];
+        };
+        UnitsSoldDto: {
+            /** @enum {string} */
+            unit: "unit" | "bunch" | "box" | "jar" | "bottle" | "bag" | "kg" | "g_500" | "g_250" | "l" | "ml_500";
+            /** @example 12 */
+            quantity: number;
+        };
+        BestSellerDto: {
+            /** @example 665f1c2e8f1b2a0012345678 */
+            productId: string;
+            /** @description Most recent order snapshot name. */
+            productName: string;
+            /** @example 3 */
+            orderCount: number;
+            /** @example 5400 */
+            productRevenueCents: number;
+            /** @description Quantities per unit; different units are never summed. */
+            unitsSold: components["schemas"]["UnitsSoldDto"][];
+        };
+        LowStockItemDto: {
+            /** @example 665f1c2e8f1b2a0012345678 */
+            productId: string;
+            name: string;
+            /** @enum {string} */
+            unit: "unit" | "bunch" | "box" | "jar" | "bottle" | "bag" | "kg" | "g_500" | "g_250" | "l" | "ml_500";
+            /**
+             * @description Sellable stock; already excludes auction-reserved stock.
+             * @example 2
+             */
+            availableStock: number;
+            /**
+             * @description Stock held by auctions, for information.
+             * @example 5
+             */
+            reservedStock: number;
+            /** @example 3 */
+            lowStockThreshold: number;
+            published: boolean;
+        };
+        LowStockMetricsDto: {
+            /**
+             * @description All matching products.
+             * @example 7
+             */
+            totalCount: number;
+            /** @description Up to 50 products, lowest available stock first. */
+            items: components["schemas"]["LowStockItemDto"][];
+        };
+        ProducerMetricsResponseDto: {
+            /** @enum {string} */
+            period: "7d" | "30d" | "90d" | "all";
+            /**
+             * Format: date-time
+             * @description Window start (inclusive); null for "all".
+             */
+            from: string | null;
+            /**
+             * Format: date-time
+             * @description Server time.
+             */
+            to: string;
+            /** @description All non-cancelled (so non-refunded) orders in the window. */
+            sales: components["schemas"]["SalesMetricsDto"];
+            /** @description Top 5 by revenue, then order count, then product id. */
+            bestSellers: components["schemas"]["BestSellerDto"][];
+            lowStock: components["schemas"]["LowStockMetricsDto"];
         };
     };
     responses: never;
@@ -4998,6 +5105,57 @@ export interface operations {
             };
             /** @description Producer not found or unavailable. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerMetricsController_get: {
+        parameters: {
+            query?: {
+                /** @description Rolling window ending at server time, applied to order creation time. "all" has no lower bound. */
+                period?: "7d" | "30d" | "90d" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sales totals, best sellers and low-stock warnings for the authenticated producer only. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerMetricsResponseDto"];
+                };
+            };
+            /** @description Invalid period or unknown query fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved or suspended producers (historical metrics) may view metrics. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication unavailable. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

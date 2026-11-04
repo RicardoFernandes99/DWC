@@ -19,6 +19,7 @@ import { RealtimeModule } from './realtime/realtime.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { AuctionsModule } from './auctions/auctions.module.js';
 import { ReviewsModule } from './reviews/reviews.module.js';
+import { ProducerMetricsModule } from './producer-metrics/producer-metrics.module.js';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ReviewsModule } from './reviews/reviews.module.js';
     NotificationsModule,
     AuctionsModule,
     ReviewsModule,
+    ProducerMetricsModule,
     UsersModule,
     RedisModule,
     StorageModule,

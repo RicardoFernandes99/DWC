@@ -1,11 +1,11 @@
 # 033: Calculate producer sales metrics and low-stock warnings
 
 - Macro: M07
-- Status: Blocked
+- Status: In progress
 - Depends on: 010, 020, 028
 - PR: Not opened
-- Branch / parent: Not assigned
-- Blockers: Agree reporting periods, revenue recognition and best-seller ranking definition
+- Branch / parent: `codex/age-033-producer-metrics-api` on PR #46 `codex/age-032-reviews-web` (`a103d40`)
+- Blockers: None (metric definitions resolved 2026-11-04, see product decisions)
 
 ## Outcome
 
@@ -33,11 +33,11 @@ low-stock warnings from authoritative order/product data.
 
 ## Acceptance criteria
 
-- [ ] Metrics match fixtures across store/auction and cancelled/refunded orders.
-- [ ] Boundaries/time periods and definition of revenue/rank follow resolved rules.
-- [ ] Producers cannot query another producer's metrics or see buyer/payment details.
-- [ ] Threshold boundaries and reserved stock produce correct low-stock warnings.
-- [ ] Empty datasets return honest zeros/empty lists, not fabricated trends.
+- [x] Metrics match fixtures across store/auction and cancelled/refunded orders.
+- [x] Boundaries/time periods and definition of revenue/rank follow resolved rules.
+- [x] Producers cannot query another producer's metrics or see buyer/payment details.
+- [x] Threshold boundaries and reserved stock produce correct low-stock warnings.
+- [x] Empty datasets return honest zeros/empty lists, not fabricated trends.
 
 ## Checks
 
@@ -47,4 +47,29 @@ After defining the metrics, compare displayed API totals with a small known fixt
 
 ## Delivery notes
 
-Not implemented. Resolve metric definitions before starting; record evidence here.
+- Decisions (user, 2026-11-04): sales are all non-cancelled orders from creation;
+  rolling `7d|30d|90d|all` periods (default 30d) on order `createdAt`; best
+  sellers top 5 by product revenue, ties by order count then product ID. Recorded
+  in [product decisions](../product-decisions.md#producer-dashboard).
+- `GET /api/producer/metrics?period=` in `apps/api/src/producer-metrics/`:
+  approved or suspended producers only (403 otherwise), producer ID from the
+  token, `Cache-Control: no-store`. Returns sales totals split by catalogue and
+  auction, product revenue from original line totals with delivery fees separate,
+  best sellers with `unitsSold` grouped per snapshot unit, and up to 50 low-stock
+  products (non-archived, `availableStock <= lowStockThreshold`; reserved auction
+  stock is already outside `availableStock`) plus a total count. Best-seller
+  names come from the latest order snapshot.
+- Indexes: none added. Orders use `{producerId, createdAt}` and low stock uses
+  `{producerId, archivedAt, createdAt}`; the low-stock sort is per producer.
+- Builder: Claude Sonnet (Agent tool), frontier review by Claude Opus 5.5.
+  Verdict APPROVED after 0 correction rounds; no frontier code edits.
+- Checks on the reviewed revision: `pnpm --filter @dwc/api typecheck` and
+  `build`, root `pnpm lint`, `pnpm contract:generate` then `contract:check`,
+  scoped Prettier and `git diff --check` all pass.
+- Real stack: API built from this branch on port 3131 against local Mongo. The
+  fixture script `demos/ticket-033-review/metrics-api.ts` (kept local) seeded
+  store, auction, cancelled/refunded and other-producer orders across all
+  periods and passed 9/9 groups: totals, fee separation, ranking tie-break,
+  unit grouping, low-stock boundaries (equal/below/above, archived, reserved),
+  privacy, 400/401/403 refusals, suspended access and empty-producer zeros.
+- Limitations: no automated tests added; usage figures are unavailable.

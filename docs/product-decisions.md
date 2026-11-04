@@ -187,8 +187,21 @@ replaced are not requirements.
 
 - Show sales totals, order counts, best-selling products and low-stock warnings.
 - Each product has a configurable low-stock threshold.
-- Sales include auction sales and exclude cancelled/refunded orders. Reporting
-  periods and the exact definition of each metric will be settled in its tickets.
+- Sales include auction sales and exclude cancelled/refunded orders. Because a
+  refund always cancels a whole Pending order, every non-cancelled order counts
+  as a sale from when it was placed (Pending through Delivered/Collected; auction
+  orders from settlement). Completed fulfilment is not required.
+- Revenue is product revenue: the sum of the original order line amounts.
+  Delivery fees are reported separately and never mixed into product revenue.
+- Reporting periods are rolling presets measured back from the server's current
+  time: last 7, 30 or 90 days, or all time (default 30 days). Orders are dated by
+  their creation time, so no calendar time zone is involved.
+- Best sellers are the top 5 products by product revenue in the period, ties
+  broken by order count and then product ID. Units sold are shown per product in
+  that product's own unit and are never summed across products.
+- Low-stock warnings list the producer's non-archived products whose current
+  available catalogue stock is at or below their threshold. Stock reserved for
+  auctions is already removed from available stock and does not count.
 
 ## Laravel administration and suspension
 
@@ -226,5 +239,4 @@ Resolve these with the affected tickets, without blocking unrelated work:
 
 - Invoice format, required information and PDF download.
 - Account recovery scope. Session implementation details are drafted in ticket 003.
-- Buyer suspension behavior, including effects on existing bids/orders, and
-  detailed dashboard metric definitions.
+- Buyer suspension behavior, including effects on existing bids/orders.

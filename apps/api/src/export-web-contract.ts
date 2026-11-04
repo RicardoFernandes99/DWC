@@ -35,6 +35,8 @@ import {
   ReviewsController,
 } from './reviews/reviews.controller.js';
 import { ReviewsService } from './reviews/reviews.service.js';
+import { ProducerMetricsController } from './producer-metrics/producer-metrics.controller.js';
+import { ProducerMetricsService } from './producer-metrics/producer-metrics.service.js';
 
 // Contract-only module: controllers and DTO metadata are real; no service is called.
 @Module({
@@ -55,6 +57,7 @@ import { ReviewsService } from './reviews/reviews.service.js';
     PublicAuctionsController,
     ReviewsController,
     ProducerReviewsController,
+    ProducerMetricsController,
   ],
   providers: [
     { provide: AuthService, useValue: {} },
@@ -70,6 +73,7 @@ import { ReviewsService } from './reviews/reviews.service.js';
     { provide: NotificationsService, useValue: {} },
     { provide: AuctionsService, useValue: {} },
     { provide: ReviewsService, useValue: {} },
+    { provide: ProducerMetricsService, useValue: {} },
     {
       provide: ConfigService,
       useValue: { getOrThrow: () => 'http://localhost' },
