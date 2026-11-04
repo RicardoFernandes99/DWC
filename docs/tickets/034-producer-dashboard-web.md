@@ -3,7 +3,7 @@
 - Macro: M07
 - Status: In review
 - Depends on: 012, 021, 033
-- PR: Not opened
+- PR: [#48](https://github.com/RicardoFernandes99/DWC/pull/48) (ready for review, native stack #34)
 - Branch / parent: `codex/age-034-producer-dashboard-web` on `codex/age-033-producer-metrics-api` (PR #47, `d73638e`)
 - Blockers: None beyond dependencies
 
@@ -64,7 +64,7 @@ Compare the dashboard with known data, edit a low-stock threshold and inspect em
   fix itself: `Account` reads the pathname with `useLocation` instead of
   `window.location`, so the dashboard hides after in-app navigation to the edit
   route.
-- Frontier verdict: APPROVED.
+- Frontier verdict: APPROVED on `1f2e1ce` (implementation); PR #48 opened ready for review on parent #47 at `d73638e`.
 - Checks on the reviewed revision: web typecheck, web build ("React Compiler
   output verified"), root lint, scoped Prettier and `git diff --check` passed.
 - Real-stack browser check: `demos/ticket-034-review/review-browser.ts`
