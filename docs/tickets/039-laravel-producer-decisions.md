@@ -1,9 +1,9 @@
 # 039: Review producer applications and suspension in Laravel
 
 - Macro: M08
-- Status: In progress
+- Status: In review
 - Depends on: 035, 038
-- PR: Not opened
+- PR: [#53](https://github.com/RicardoFernandes99/DWC/pull/53), ready for review in native stack #34
 - Branch / parent: `codex/age-039-laravel-producer-decisions` / `codex/age-038-laravel-auth-foundation` at `89f1f2de2f4759ac6daa46b37330b66f825fa8be` (PR #52)
 - Blockers: None beyond dependencies
 
@@ -46,6 +46,9 @@ Use backoffice static checks and manually approve/reject/suspend a producer thro
 
 ## Delivery notes
 
+- Published against PR #52 with frontier APPROVED on implementation revision
+  `f1504980182b82fa7cfd981813c914c4cba18323`. The subsequent publication metadata
+  update changes documentation only. No merge was performed.
 - Added Blade application list/detail with status filters and bounded 20-row
   pagination, submitted farm/location details, reasons and separate review and
   standing controls. PHP validates API responses into typed DTOs and enum-backed
