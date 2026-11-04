@@ -44,6 +44,14 @@ const EVENT_RESOURCE_TYPES: ReadonlyMap<
     NotificationEventType.ProducerApplicationRejected,
     NotificationResourceType.ProducerApplication,
   ],
+  [
+    NotificationEventType.ProducerSuspended,
+    NotificationResourceType.ProducerApplication,
+  ],
+  [
+    NotificationEventType.ProducerReinstated,
+    NotificationResourceType.ProducerApplication,
+  ],
   [NotificationEventType.AuctionWon, NotificationResourceType.Auction],
   [NotificationEventType.AuctionLost, NotificationResourceType.Auction],
   [NotificationEventType.AuctionClosed, NotificationResourceType.Auction],

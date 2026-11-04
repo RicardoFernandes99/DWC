@@ -170,6 +170,15 @@ export class ProducerApplicationResponseDto {
 
   @ApiProperty({
     type: String,
+    nullable: true,
+    example: null,
+    description:
+      'Administrator explanation for the current suspension; null unless suspended.',
+  })
+  suspensionReason!: string | null;
+
+  @ApiProperty({
+    type: String,
     format: 'date-time',
     nullable: true,
     example: '2026-11-01T12:00:00.000Z',
@@ -282,6 +291,45 @@ export class RejectProducerApplicationDto {
   reason!: string;
 }
 
+export class SuspendProducerDto {
+  @ApiProperty({
+    example: 1,
+    minimum: 1,
+    description:
+      'Current producer decision revision to prevent stale or concurrent overwrite.',
+  })
+  @IsInt()
+  @Min(1)
+  revision!: number;
+
+  @ApiProperty({
+    example: 'Repeated reports of undelivered orders.',
+    minLength: 1,
+    maxLength: 500,
+    description:
+      'Required administrator explanation, visible to the producer and in their notification.',
+  })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @MinLength(1)
+  @MaxLength(500)
+  reason!: string;
+}
+
+export class ReinstateProducerDto {
+  @ApiProperty({
+    example: 2,
+    minimum: 1,
+    description:
+      'Current producer decision revision to prevent stale or concurrent overwrite.',
+  })
+  @IsInt()
+  @Min(1)
+  revision!: number;
+}
+
 export class AdminProducerApplicationItemDto {
   @ApiProperty({ example: '671f0f98ac53ba58e26c4789' })
   id!: string;
@@ -309,6 +357,14 @@ export class AdminProducerApplicationItemDto {
     example: null,
   })
   rejectionReason!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Reason for the current suspension; null unless suspended.',
+  })
+  suspensionReason!: string | null;
 
   @ApiProperty({
     type: String,

@@ -884,6 +884,11 @@ export interface components {
              */
             rejectionReason: string | null;
             /**
+             * @description Administrator explanation for the current suspension; null unless suspended.
+             * @example null
+             */
+            suspensionReason: string | null;
+            /**
              * Format: date-time
              * @description ISO-8601 timestamp of most recent application submission.
              * @example 2026-11-01T12:00:00.000Z
@@ -1035,6 +1040,11 @@ export interface components {
             revision: number;
             /** @example null */
             rejectionReason: string | null;
+            /**
+             * @description Reason for the current suspension; null unless suspended.
+             * @example null
+             */
+            suspensionReason: string | null;
             /**
              * Format: date-time
              * @example 2026-11-01T12:00:00.000Z
@@ -2066,7 +2076,7 @@ export interface components {
         NotificationResponseDto: {
             id: string;
             /** @enum {string} */
-            eventType: "order_created" | "order_status_changed" | "refund_requested" | "refund_decision" | "producer_application_approved" | "producer_application_rejected" | "auction_won" | "auction_lost" | "auction_closed" | "auction_payment_method_expired";
+            eventType: "order_created" | "order_status_changed" | "refund_requested" | "refund_decision" | "producer_application_approved" | "producer_application_rejected" | "producer_suspended" | "producer_reinstated" | "auction_won" | "auction_lost" | "auction_closed" | "auction_payment_method_expired";
             title: string;
             message: string;
             resource: components["schemas"]["NotificationResourceDto"];

@@ -157,6 +157,8 @@ Authenticated administrators can inspect and decide submitted producer applicati
 - `GET /api/admin/producer-applications/:id` — application review details and current `revision`.
 - `POST /api/admin/producer-applications/:id/approve` — atomically approves a pending application matching `{ revision }`.
 - `POST /api/admin/producer-applications/:id/reject` — atomically rejects a pending application matching `{ revision, reason }`.
+- `POST /api/admin/producers/:id/suspend` — suspends an approved producer matching `{ revision, reason }` (reason 1-500 chars, shown to the producer). Notifies the producer.
+- `POST /api/admin/producers/:id/reinstate` — returns a suspended producer to approved matching `{ revision }` and clears the reason. Notifies the producer. Other statuses answer `409`.
 
 ## Public catalogue
 

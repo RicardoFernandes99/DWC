@@ -3485,6 +3485,12 @@
             "example": null,
             "description": "Administrator explanation for application rejection, if rejected."
           },
+          "suspensionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Administrator explanation for the current suspension; null unless suspended."
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time",
@@ -3513,6 +3519,7 @@
         "required": [
           "status",
           "rejectionReason",
+          "suspensionReason",
           "submittedAt",
           "decidedAt",
           "application"
@@ -3743,6 +3750,12 @@
             "nullable": true,
             "example": null
           },
+          "suspensionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Reason for the current suspension; null unless suspended."
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time",
@@ -3771,6 +3784,7 @@
           "status",
           "revision",
           "rejectionReason",
+          "suspensionReason",
           "submittedAt",
           "decidedAt",
           "decidedBy",
@@ -5762,6 +5776,8 @@
               "refund_decision",
               "producer_application_approved",
               "producer_application_rejected",
+              "producer_suspended",
+              "producer_reinstated",
               "auction_won",
               "auction_lost",
               "auction_closed",

@@ -8,6 +8,8 @@ export enum NotificationEventType {
   RefundDecision = 'refund_decision',
   ProducerApplicationApproved = 'producer_application_approved',
   ProducerApplicationRejected = 'producer_application_rejected',
+  ProducerSuspended = 'producer_suspended',
+  ProducerReinstated = 'producer_reinstated',
   AuctionWon = 'auction_won',
   AuctionLost = 'auction_lost',
   AuctionClosed = 'auction_closed',

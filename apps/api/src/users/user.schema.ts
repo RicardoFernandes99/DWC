@@ -73,6 +73,9 @@ export class User {
   @Prop({ type: String, trim: true, maxlength: 500, default: null })
   producerRejectionReason!: string | null;
 
+  @Prop({ type: String, trim: true, maxlength: 500, default: null })
+  producerSuspensionReason!: string | null;
+
   @Prop({ type: Number, default: 0, min: 0 })
   producerDecisionRevision!: number;
 

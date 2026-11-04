@@ -232,6 +232,14 @@ replaced are not requirements.
 - Producer status decisions must update `producerDecisionAt`; the scheduler uses
   it to detect reinstatement after a missed auction start. Profile edits do not
   count as status decisions.
+- Suspension API: `POST /api/admin/producers/:id/suspend` (`{ revision, reason }`) and
+  `POST /api/admin/producers/:id/reinstate` (`{ revision }`), admin only. Only an
+  approved producer can be suspended; reinstatement only from suspended and always
+  returns to approved. Other statuses or stale revisions answer 409.
+- The suspension reason (required, 1-500 chars) is visible to the producer through
+  `suspensionReason` on their application status and the admin item, and is non-null
+  only while suspended. Suspending and reinstating each create one inbox
+  notification for the producer.
 
 ## Open decisions
 

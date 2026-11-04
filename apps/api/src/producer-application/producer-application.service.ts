@@ -28,8 +28,10 @@ import {
   ListAdminProducerApplicationsQueryDto,
   ProducerApplicationResponseDto,
   ProducerProfileResponseDto,
+  ReinstateProducerDto,
   RejectProducerApplicationDto,
   SubmitProducerApplicationDto,
+  SuspendProducerDto,
   UpdateProducerProfileDto,
 } from './producer-application.dto.js';
 
@@ -38,6 +40,12 @@ function formatDate(value: Date | string | null | undefined): string | null {
     return null;
   }
   return (value instanceof Date ? value : new Date(value)).toISOString();
+}
+
+function toSuspensionReason(user: UserDocument): string | null {
+  return user.producerStatus === ProducerStatus.Suspended
+    ? (user.producerSuspensionReason ?? null)
+    : null;
 }
 
 function toResponse(user: UserDocument): ProducerApplicationResponseDto {
@@ -51,6 +59,7 @@ function toResponse(user: UserDocument): ProducerApplicationResponseDto {
   return {
     status,
     rejectionReason,
+    suspensionReason: toSuspensionReason(user),
     submittedAt: app ? formatDate(app.submittedAt) : null,
     decidedAt: formatDate(user.producerDecisionAt),
     application: app
@@ -81,6 +90,7 @@ function toAdminItem(user: UserDocument): AdminProducerApplicationItemDto {
     status,
     revision: user.producerDecisionRevision ?? 1,
     rejectionReason: isRejected ? (user.producerRejectionReason ?? null) : null,
+    suspensionReason: toSuspensionReason(user),
     submittedAt: formatDate(app.submittedAt) ?? new Date(0).toISOString(),
     decidedAt: formatDate(user.producerDecisionAt),
     decidedBy: user.producerDecisionBy
@@ -383,6 +393,129 @@ export class ProducerApplicationService {
 
     if (!updated) {
       return await this.throwDecisionConflict(id, 'rejected');
+    }
+    if (notification)
+      this.notificationIntegration.publishCommitted(notification);
+    return toAdminItem(updated);
+  }
+
+  suspend(
+    id: string,
+    adminId: string,
+    input: SuspendProducerDto,
+  ): Promise<AdminProducerApplicationItemDto> {
+    return this.transitionStanding(id, adminId, input.revision, {
+      from: ProducerStatus.Approved,
+      to: ProducerStatus.Suspended,
+      reason: input.reason,
+      eventType: NotificationEventType.ProducerSuspended,
+      title: 'Producer account suspended',
+      // Notification messages are capped at 500 characters, like the reason.
+      message:
+        `Your producer account has been suspended: ${input.reason}`.slice(
+          0,
+          500,
+        ),
+    });
+  }
+
+  reinstate(
+    id: string,
+    adminId: string,
+    input: ReinstateProducerDto,
+  ): Promise<AdminProducerApplicationItemDto> {
+    return this.transitionStanding(id, adminId, input.revision, {
+      from: ProducerStatus.Suspended,
+      to: ProducerStatus.Approved,
+      reason: null,
+      eventType: NotificationEventType.ProducerReinstated,
+      title: 'Producer account reinstated',
+      message:
+        'Your producer account has been reinstated. You can sell and create auctions again.',
+    });
+  }
+
+  private async transitionStanding(
+    id: string,
+    adminId: string,
+    revision: number,
+    change: {
+      from: ProducerStatus;
+      to: ProducerStatus;
+      reason: string | null;
+      eventType: NotificationEventType;
+      title: string;
+      message: string;
+    },
+  ): Promise<AdminProducerApplicationItemDto> {
+    const now = new Date();
+    const session = await this.connection.startSession();
+    let updated: UserDocument | null = null;
+    let notification: NotificationDocument | null = null;
+    try {
+      await session.withTransaction(async () => {
+        updated = null;
+        notification = null;
+        updated = await this.users.findOneAndUpdate(
+          {
+            _id: new Types.ObjectId(id),
+            role: UserRole.Producer,
+            producerStatus: change.from,
+            producerApplication: { $ne: null },
+            producerDecisionRevision: revision,
+          },
+          {
+            $set: {
+              producerStatus: change.to,
+              producerSuspensionReason: change.reason,
+              producerDecisionBy: new Types.ObjectId(adminId),
+              producerDecisionAt: now,
+            },
+            // The eligibility revision is the producer write fence shared with
+            // checkout, product creation and auction scheduling.
+            $inc: {
+              producerDecisionRevision: 1,
+              auctionEligibilityRevision: 1,
+            },
+          },
+          { returnDocument: 'after', runValidators: true, session },
+        );
+        if (updated) {
+          notification = await this.notificationIntegration.persist(
+            {
+              recipientId: id,
+              eventType: change.eventType,
+              title: change.title,
+              message: change.message,
+              resource: {
+                type: NotificationResourceType.ProducerApplication,
+                id,
+              },
+              sourceEventKey: `producer:${id}:decision:${revision + 1}`,
+            },
+            session,
+          );
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    if (!updated) {
+      const existing = await this.users.findById(id);
+      if (!existing || existing.role !== UserRole.Producer) {
+        throw new NotFoundException('Producer not found.');
+      }
+      if (existing.producerStatus !== change.from) {
+        const verb =
+          change.to === ProducerStatus.Suspended ? 'suspended' : 'reinstated';
+        throw new ConflictException(
+          `Only ${change.from} producers can be ${verb}; this producer is ${existing.producerStatus ?? 'unsubmitted'}.`,
+        );
+      }
+      throw new ConflictException(
+        'Producer was updated or decided concurrently. Refresh and try again.',
+      );
     }
     if (notification)
       this.notificationIntegration.publishCommitted(notification);

@@ -594,7 +594,9 @@ export class CheckoutService {
               role: UserRole.Producer,
               producerStatus: ProducerStatus.Approved,
             },
-            { $inc: { __v: 0 } },
+            // Real write: auctionEligibilityRevision is the producer
+            // eligibility fence, so a concurrent suspension conflicts here.
+            { $inc: { auctionEligibilityRevision: 1 } },
             { session, new: true },
           );
           if (!producer) {

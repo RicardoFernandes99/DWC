@@ -8,8 +8,9 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import type { Connection } from 'mongoose';
 import {
   StorageService,
   type SignedGetUrlResult,
@@ -111,6 +112,7 @@ export class ProductsService {
     private readonly products: Model<Product>,
     @InjectModel(User.name)
     private readonly users: Model<User>,
+    @InjectConnection() private readonly connection: Connection,
     private readonly storage: StorageService,
   ) {}
 
@@ -181,26 +183,60 @@ export class ProductsService {
     userId: string,
     input: CreateProducerProductDto,
   ): Promise<ProducerProductResponseDto> {
-    await this.requireApprovedProducer(userId);
-    const product = await this.products.create({
-      producerId: new Types.ObjectId(userId),
-      name: input.name,
-      description: input.description,
-      category: input.category,
-      productionMethod: input.productionMethod,
-      seasons: input.seasons,
-      priceCents: input.priceCents,
-      unit: input.unit,
-      availableStock: input.availableStock,
-      reservedStock: 0,
-      lowStockThreshold: input.lowStockThreshold,
-      published: input.published ?? true,
-      archivedAt: null,
-      moderatedAt: null,
-      moderationReason: null,
-      image: null,
-      revision: 1,
-    });
+    const producerId = new Types.ObjectId(userId);
+    const session = await this.connection.startSession();
+    let product: ProductDocument | null = null;
+    try {
+      await session.withTransaction(async () => {
+        product = null;
+        // Real write on the producer: a concurrent suspension conflicts with
+        // it, so the insert either commits first or the producer is refused.
+        const fenced = await this.users.findOneAndUpdate(
+          {
+            _id: producerId,
+            role: UserRole.Producer,
+            producerStatus: ProducerStatus.Approved,
+          },
+          { $inc: { auctionEligibilityRevision: 1 } },
+          { session },
+        );
+        if (!fenced) {
+          throw new ForbiddenException(
+            'Only approved producers may manage products.',
+          );
+        }
+        const [created] = await this.products.create(
+          [
+            {
+              producerId,
+              name: input.name,
+              description: input.description,
+              category: input.category,
+              productionMethod: input.productionMethod,
+              seasons: input.seasons,
+              priceCents: input.priceCents,
+              unit: input.unit,
+              availableStock: input.availableStock,
+              reservedStock: 0,
+              lowStockThreshold: input.lowStockThreshold,
+              published: input.published ?? true,
+              archivedAt: null,
+              moderatedAt: null,
+              moderationReason: null,
+              image: null,
+              revision: 1,
+            },
+          ],
+          { session },
+        );
+        product = created ?? null;
+      });
+    } finally {
+      await session.endSession();
+    }
+    if (!product) {
+      throw new ServiceUnavailableException('Product could not be created.');
+    }
     return toProducerProductResponse(product, this.storage);
   }
 
