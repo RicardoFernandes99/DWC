@@ -3,7 +3,7 @@
 - Macro: M08
 - Status: In review
 - Depends on: 009, 013, 031
-- PR: Not opened
+- PR: [#50](https://github.com/RicardoFernandes99/DWC/pull/50) (ready for review, native stack #34)
 - Branch / parent: `codex/age-036-content-moderation-api` on PR #49 `codex/age-035-producer-suspension-api` (`fb352f6`)
 - Blockers: None beyond dependencies
 
@@ -92,3 +92,4 @@ Hide one product and one review, then inspect public views/totals and preserved 
   aggregates over all reports (fine at project scale). Auction code is unchanged;
   its behaviour with a hidden product was checked only through the stored snapshot.
   No automated tests added; usage figures are unavailable.
+- PR #50 is ready for review in native stack #34. The reviewed implementation commit is `3d94279`.
