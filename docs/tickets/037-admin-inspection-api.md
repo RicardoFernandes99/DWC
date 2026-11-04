@@ -57,8 +57,7 @@ parent commit `242a9dee39c5808b567b95aeac7f272a6c5e259e`.
   formal correction rounds. Review feedback during implementation corrected
   response metadata, explicit field mappings and DTO declaration ordering.
   Token and cost measurements are unavailable.
-- Reviewed implementation: `577e975`. PR 51 is ready for review in native stack
-  34. No merge performed.
+- Reviewed implementation: `577e975`. PR 51 is ready for review in native stack 34. No merge performed.
 
 - `pnpm --filter @dwc/api typecheck`: passed.
 - `pnpm --filter @dwc/api build`: passed through contract generation/check.
