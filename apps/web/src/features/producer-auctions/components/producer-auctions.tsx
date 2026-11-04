@@ -141,6 +141,7 @@ function AuctionListView({
     staleTime: 0,
   });
   const canCreate = status === 'approved' && writable;
+  const showHeaderCreate = canCreate && query.data?.items.length !== 0;
   return (
     <section className="space-y-5" aria-labelledby="producer-auctions-title">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -152,7 +153,7 @@ function AuctionListView({
             Review scheduled lots, current auctions and completed sales.
           </p>
         </div>
-        {canCreate && (
+        {showHeaderCreate && (
           <Button
             onClick={() => void navigate({ to: '/producer/auctions/new' })}
           >
@@ -181,28 +182,28 @@ function AuctionListView({
       )}
       {query.data && query.data.items.length === 0 && (
         <Card className="p-5 md:p-6">
-          <div className="flex gap-3">
-            <CalendarClock
-              className="mt-0.5 size-5 text-primary"
-              aria-hidden="true"
-            />
-            <div>
-              <h2 className="font-semibold">No auctions yet</h2>
-              <p className="mt-1 max-w-[60ch] text-sm text-muted-foreground">
-                A fixed lot reserves its quantity from your product stock until
-                the auction is cancelled or settled.
-              </p>
-              {canCreate && (
-                <Button
-                  className="mt-4"
-                  onClick={() =>
-                    void navigate({ to: '/producer/auctions/new' })
-                  }
-                >
-                  <Plus aria-hidden="true" /> Schedule your first lot
-                </Button>
-              )}
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <CalendarClock
+                className="mt-0.5 size-5 shrink-0 text-primary"
+                aria-hidden="true"
+              />
+              <div className="min-w-0">
+                <h2 className="font-semibold">No auctions yet</h2>
+                <p className="mt-1 max-w-[60ch] text-sm text-muted-foreground">
+                  A fixed lot reserves its quantity from your product stock
+                  until the auction is cancelled or settled.
+                </p>
+              </div>
             </div>
+            {canCreate && (
+              <Button
+                className="w-full md:w-auto md:shrink-0"
+                onClick={() => void navigate({ to: '/producer/auctions/new' })}
+              >
+                <Plus aria-hidden="true" /> Schedule your first lot
+              </Button>
+            )}
           </div>
         </Card>
       )}

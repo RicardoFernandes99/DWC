@@ -81,3 +81,22 @@ controls. Active terms are locked. Public room links await the route in 030.
   excluded and verified byte-identical across all eight preserved files.
 - Published through native `gh stack` in stack #34. The first push met a GitHub
   internal server error; the native retry succeeded. No merge was performed.
+
+### Visual polish follow-up
+
+A later review with the frontend skill set (`interface-design`, Impeccable
+polish, Emil interaction guidance) found and fixed: the empty state now gives
+its copy the full width with a single right-aligned action on tablet/desktop
+(stacked on mobile) and no duplicate header action; validation errors are
+per-field, associated through `aria-describedby` and focus the first invalid
+field; a queued offline save locks the editable fields while keeping values and
+connection status visible. The field lock keeps normal group spacing.
+
+- Orchestrated by Codex, finished by Claude Opus 5.5 (frontier) after handover;
+  the fieldset spacing fix was a one-line frontier change.
+- Passed: API and web typecheck, `pnpm contract:check`, root lint, web build
+  with React Compiler verification, scoped Prettier. Bundle-size advisory remains.
+- Real Chrome/Mongo/API rerun (`demos/ticket-030-review/review-producer-after.ts`)
+  passed all earlier flows plus error focus/ARIA and queued-save field locking.
+  Before images: `demos/ticket-029-review/before-polish/`; after images:
+  `demos/ticket-029-review/after/` at 390, 900 and 1440 pixels.

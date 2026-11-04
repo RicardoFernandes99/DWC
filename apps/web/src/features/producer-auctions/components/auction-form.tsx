@@ -24,6 +24,17 @@ import { useAuctionBeforeStart } from './use-auction-before-start';
 type CreateAuction = components['schemas']['CreateAuctionDto'];
 type UpdateAuction = components['schemas']['UpdateAuctionDto'];
 type AuctionChanges = Omit<UpdateAuction, 'revision'>;
+type AuctionFieldName =
+  | 'productId'
+  | 'quantity'
+  | 'startingPrice'
+  | 'increment'
+  | 'startsAt'
+  | 'endsAt';
+
+function fieldDescriptionIds(id: string, hasError: boolean) {
+  return `${id}-description${hasError ? ` ${id}-error` : ''}`;
+}
 
 function asLocalDateTime(value: string) {
   const date = new Date(value);
@@ -77,7 +88,9 @@ export function AuctionForm({
   const [chosenProductId, setChosenProductId] = useState(
     auction?.productId ?? '',
   );
-  const [fieldError, setFieldError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<AuctionFieldName, string>>
+  >({});
   const [stockNote, setStockNote] = useState('');
   const existingProductQuery = useQuery({
     queryKey: baseAuction
@@ -92,6 +105,11 @@ export function AuctionForm({
     ? existingProductQuery.data
     : productsQuery.data?.items.find((item) => item.id === selectedProductId);
   const beforeStart = useAuctionBeforeStart(baseAuction?.startsAt);
+  const clearFieldError = (name: AuctionFieldName) => {
+    setFieldErrors((current) =>
+      current[name] ? { ...current, [name]: undefined } : current,
+    );
+  };
   const write = useMutation({
     mutationFn: async (input: CreateAuction | AuctionChanges) => {
       if (baseAuction)
@@ -149,48 +167,47 @@ export function AuctionForm({
       const maxQuantity = selected
         ? selected.availableStock + (baseAuction?.quantity ?? 0)
         : 0;
-      const validation =
-        !selected && !baseAuction
-          ? 'Choose one of your published products.'
-          : !Number.isInteger(quantity) || quantity < 1 || quantity > 1_000_000
-            ? 'Enter a whole lot quantity from 1 to 1,000,000.'
-            : quantity > maxQuantity
-              ? `Only ${maxQuantity} ${maxQuantity === 1 ? 'unit is' : 'units are'} currently available for this lot.`
-              : !Number.isSafeInteger(startingPriceCents) ||
-                  startingPriceCents < 1 ||
-                  startingPriceCents > 100_000_000
-                ? 'Enter a starting price from €0.01 to €1,000,000.00, using up to two decimal places.'
-                : !Number.isSafeInteger(minimumIncrementCents) ||
-                    minimumIncrementCents < 1 ||
-                    minimumIncrementCents > 100_000_000
-                  ? 'Enter a minimum increment from €0.01 to €1,000,000.00.'
-                  : !startsAt ||
-                      !endsAt ||
-                      new Date(startsAt) <= new Date() ||
-                      new Date(endsAt) <= new Date(startsAt)
-                    ? 'Choose a future start time and an end time after it.'
-                    : '';
-      setFieldError(validation);
-      if (validation) {
-        if (!selected && !baseAuction)
+      const validation: Partial<Record<AuctionFieldName, string>> = {};
+      if (!selected && !baseAuction)
+        validation.productId = 'Choose one of your published products.';
+      if (!Number.isInteger(quantity) || quantity < 1 || quantity > 1_000_000)
+        validation.quantity = 'Enter a whole lot quantity from 1 to 1,000,000.';
+      else if (quantity > maxQuantity)
+        validation.quantity = `Only ${maxQuantity} ${maxQuantity === 1 ? 'unit is' : 'units are'} currently available for this lot.`;
+      if (
+        !Number.isSafeInteger(startingPriceCents) ||
+        startingPriceCents < 1 ||
+        startingPriceCents > 100_000_000
+      )
+        validation.startingPrice =
+          'Enter a starting price from €0.01 to €1,000,000.00, using up to two decimal places.';
+      if (
+        !Number.isSafeInteger(minimumIncrementCents) ||
+        minimumIncrementCents < 1 ||
+        minimumIncrementCents > 100_000_000
+      )
+        validation.increment =
+          'Enter a minimum increment from €0.01 to €1,000,000.00.';
+      const startDate = startsAt ? new Date(startsAt) : undefined;
+      const endDate = endsAt ? new Date(endsAt) : undefined;
+      if (!startDate || startDate <= new Date())
+        validation.startsAt = 'Choose a future start time.';
+      if (!endDate || !startDate || endDate <= startDate)
+        validation.endsAt = 'Choose an end time after the start time.';
+
+      setFieldErrors(validation);
+      if (Object.keys(validation).length > 0) {
+        if (validation.productId)
           document.getElementById('auction-product')?.focus();
-        else if (
-          !Number.isInteger(quantity) ||
-          quantity < 1 ||
-          quantity > maxQuantity
-        )
+        else if (validation.quantity)
           document.getElementById('auction-quantity')?.focus();
-        else if (
-          !Number.isSafeInteger(startingPriceCents) ||
-          startingPriceCents < 1
-        )
+        else if (validation.startingPrice)
           document.getElementById('auction-starting-price')?.focus();
-        else if (
-          !Number.isSafeInteger(minimumIncrementCents) ||
-          minimumIncrementCents < 1
-        )
+        else if (validation.increment)
           document.getElementById('auction-increment')?.focus();
-        else document.getElementById('auction-starts-at')?.focus();
+        else if (validation.startsAt)
+          document.getElementById('auction-starts-at')?.focus();
+        else document.getElementById('auction-ends-at')?.focus();
         return;
       }
       setStockNote('');
@@ -248,7 +265,7 @@ export function AuctionForm({
       form.setFieldValue('startsAt', asLocalDateTime(fresh.startsAt));
       form.setFieldValue('endsAt', asLocalDateTime(fresh.endsAt));
       write.reset();
-      setFieldError('');
+      setFieldErrors({});
       setStockNote(
         'Current auction revision and product stock are loaded. Review the values before saving again.',
       );
@@ -390,198 +407,230 @@ export function AuctionForm({
             void form.handleSubmit();
           }}
         >
-          {!baseAuction && (
-            <form.Field name="productId">
-              {(field) => (
-                <FormField
-                  id="auction-product"
-                  label="Product"
-                  description="Only published products are available. Stock shown here is the server’s current available amount."
-                >
-                  <select
+          <fieldset disabled={write.isPending} className="min-w-0 space-y-5">
+            {!baseAuction && (
+              <form.Field name="productId">
+                {(field) => (
+                  <FormField
                     id="auction-product"
-                    required
-                    value={field.state.value}
-                    onChange={(event) => {
-                      field.handleChange(event.target.value);
-                      setChosenProductId(event.target.value);
-                    }}
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    label="Product"
+                    description="Only published products are available. Stock shown here is the server’s current available amount."
+                    error={fieldErrors.productId}
                   >
-                    <option value="">Choose a product</option>
-                    {(productsQuery.data?.items ?? [])
-                      .filter(
-                        (item) =>
-                          item.published &&
-                          !item.archivedAt &&
-                          !item.moderatedAt,
-                      )
-                      .map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name} — {item.availableStock} available ·{' '}
-                          {item.reservedStock} reserved
-                        </option>
-                      ))}
-                  </select>
-                </FormField>
-              )}
-            </form.Field>
-          )}
-          {selectedProduct && (
-            <div className="rounded-lg border bg-secondary/40 p-4 text-sm">
-              <h3 className="font-medium">{selectedProduct.name}</h3>
-              <p className="mt-1 text-muted-foreground">
-                {selectedProduct.availableStock}{' '}
-                {formatUnit(selectedProduct.unit)} available ·{' '}
-                {selectedProduct.reservedStock}{' '}
-                {formatUnit(selectedProduct.unit)} reserved
-              </p>
-              {baseAuction && (
+                    <select
+                      id="auction-product"
+                      name={field.name}
+                      required
+                      value={field.state.value}
+                      aria-invalid={Boolean(fieldErrors.productId)}
+                      aria-describedby={fieldDescriptionIds(
+                        'auction-product',
+                        Boolean(fieldErrors.productId),
+                      )}
+                      onChange={(event) => {
+                        clearFieldError('productId');
+                        field.handleChange(event.target.value);
+                        setChosenProductId(event.target.value);
+                      }}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    >
+                      <option value="">Choose a product</option>
+                      {(productsQuery.data?.items ?? [])
+                        .filter(
+                          (item) =>
+                            item.published &&
+                            !item.archivedAt &&
+                            !item.moderatedAt,
+                        )
+                        .map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name} — {item.availableStock} available ·{' '}
+                            {item.reservedStock} reserved
+                          </option>
+                        ))}
+                    </select>
+                  </FormField>
+                )}
+              </form.Field>
+            )}
+            {selectedProduct && (
+              <div className="rounded-lg border bg-secondary/40 p-4 text-sm">
+                <h3 className="font-medium">{selectedProduct.name}</h3>
                 <p className="mt-1 text-muted-foreground">
-                  This auction already reserves {baseAuction.quantity}{' '}
-                  {formatUnit(selectedProduct.unit)}. You may use the current
-                  available stock plus this lot when changing its quantity.
+                  {selectedProduct.availableStock}{' '}
+                  {formatUnit(selectedProduct.unit)} available ·{' '}
+                  {selectedProduct.reservedStock}{' '}
+                  {formatUnit(selectedProduct.unit)} reserved
                 </p>
-              )}
-            </div>
-          )}
-          <div className="grid gap-4 md:grid-cols-2">
-            <form.Field name="quantity">
-              {(field) => (
-                <FormField
-                  id="auction-quantity"
-                  label={`Lot quantity${selectedProduct ? ` (${formatUnit(selectedProduct.unit)})` : ''}`}
-                  description="Use a whole number of product units."
-                  error={
-                    fieldError.includes('quantity') ||
-                    fieldError.includes('available')
-                      ? fieldError
-                      : undefined
-                  }
-                >
-                  <Input
+                {baseAuction && (
+                  <p className="mt-1 text-muted-foreground">
+                    This auction already reserves {baseAuction.quantity}{' '}
+                    {formatUnit(selectedProduct.unit)}. You may use the current
+                    available stock plus this lot when changing its quantity.
+                  </p>
+                )}
+              </div>
+            )}
+            <div className="grid gap-4 md:grid-cols-2">
+              <form.Field name="quantity">
+                {(field) => (
+                  <FormField
                     id="auction-quantity"
-                    type="number"
-                    min="1"
-                    max="1000000"
-                    step="1"
-                    inputMode="numeric"
-                    required
-                    value={field.state.value}
-                    aria-invalid={
-                      fieldError.includes('quantity') ||
-                      fieldError.includes('available')
-                    }
-                    onChange={(event) => field.handleChange(event.target.value)}
-                  />
-                </FormField>
-              )}
-            </form.Field>
-            <form.Field name="startingPrice">
-              {(field) => (
-                <FormField
-                  id="auction-starting-price"
-                  label="Starting price for the whole lot (€)"
-                  description="Enter euros and cents. This is the opening bid for the entire quantity."
-                  error={
-                    fieldError.includes('starting price')
-                      ? fieldError
-                      : undefined
-                  }
-                >
-                  <Input
+                    label={`Lot quantity${selectedProduct ? ` (${formatUnit(selectedProduct.unit)})` : ''}`}
+                    description="Use a whole number of product units."
+                    error={fieldErrors.quantity}
+                  >
+                    <Input
+                      id="auction-quantity"
+                      name={field.name}
+                      type="number"
+                      min="1"
+                      max="1000000"
+                      step="1"
+                      inputMode="numeric"
+                      required
+                      value={field.state.value}
+                      aria-invalid={Boolean(fieldErrors.quantity)}
+                      aria-describedby={fieldDescriptionIds(
+                        'auction-quantity',
+                        Boolean(fieldErrors.quantity),
+                      )}
+                      onChange={(event) => {
+                        clearFieldError('quantity');
+                        field.handleChange(event.target.value);
+                      }}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+              <form.Field name="startingPrice">
+                {(field) => (
+                  <FormField
                     id="auction-starting-price"
-                    type="number"
-                    min="0.01"
-                    max="1000000"
-                    step="0.01"
-                    inputMode="decimal"
-                    required
-                    value={field.state.value}
-                    aria-invalid={fieldError.includes('starting price')}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                  />
-                </FormField>
-              )}
-            </form.Field>
-            <form.Field name="increment">
-              {(field) => (
-                <FormField
-                  id="auction-increment"
-                  label="Minimum bid increment (€)"
-                  description="The next bid must be at least this much above the current high bid."
-                  error={
-                    fieldError.includes('increment') ? fieldError : undefined
-                  }
-                >
-                  <Input
+                    label="Starting price for the whole lot (€)"
+                    description="Enter euros and cents. This is the opening bid for the entire quantity."
+                    error={fieldErrors.startingPrice}
+                  >
+                    <Input
+                      id="auction-starting-price"
+                      name={field.name}
+                      type="number"
+                      min="0.01"
+                      max="1000000"
+                      step="0.01"
+                      inputMode="decimal"
+                      required
+                      value={field.state.value}
+                      aria-invalid={Boolean(fieldErrors.startingPrice)}
+                      aria-describedby={fieldDescriptionIds(
+                        'auction-starting-price',
+                        Boolean(fieldErrors.startingPrice),
+                      )}
+                      onChange={(event) => {
+                        clearFieldError('startingPrice');
+                        field.handleChange(event.target.value);
+                      }}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+              <form.Field name="increment">
+                {(field) => (
+                  <FormField
                     id="auction-increment"
-                    type="number"
-                    min="0.01"
-                    max="1000000"
-                    step="0.01"
-                    inputMode="decimal"
-                    required
-                    value={field.state.value}
-                    aria-invalid={fieldError.includes('increment')}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                  />
-                </FormField>
-              )}
-            </form.Field>
-            <form.Field name="startsAt">
-              {(field) => (
-                <FormField
-                  id="auction-starts-at"
-                  label="Auction starts"
-                  description="Displayed in your local time; sent to the server as an exact timestamp."
-                >
-                  <Input
+                    label="Minimum bid increment (€)"
+                    description="The next bid must be at least this much above the current high bid."
+                    error={fieldErrors.increment}
+                  >
+                    <Input
+                      id="auction-increment"
+                      name={field.name}
+                      type="number"
+                      min="0.01"
+                      max="1000000"
+                      step="0.01"
+                      inputMode="decimal"
+                      required
+                      value={field.state.value}
+                      aria-invalid={Boolean(fieldErrors.increment)}
+                      aria-describedby={fieldDescriptionIds(
+                        'auction-increment',
+                        Boolean(fieldErrors.increment),
+                      )}
+                      onChange={(event) => {
+                        clearFieldError('increment');
+                        field.handleChange(event.target.value);
+                      }}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+              <form.Field name="startsAt">
+                {(field) => (
+                  <FormField
                     id="auction-starts-at"
-                    type="datetime-local"
-                    required
-                    value={field.state.value}
-                    aria-invalid={Boolean(
-                      fieldError && fieldError.includes('time'),
-                    )}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                  />
-                </FormField>
-              )}
-            </form.Field>
-            <form.Field name="endsAt">
-              {(field) => (
-                <FormField
-                  id="auction-ends-at"
-                  label="Auction ends"
-                  description="The end must be after the start."
-                >
-                  <Input
+                    label="Auction starts"
+                    description="Displayed in your local time; sent to the server as an exact timestamp."
+                    error={fieldErrors.startsAt}
+                  >
+                    <Input
+                      id="auction-starts-at"
+                      name={field.name}
+                      type="datetime-local"
+                      required
+                      value={field.state.value}
+                      aria-invalid={Boolean(fieldErrors.startsAt)}
+                      aria-describedby={fieldDescriptionIds(
+                        'auction-starts-at',
+                        Boolean(fieldErrors.startsAt),
+                      )}
+                      onChange={(event) => {
+                        clearFieldError('startsAt');
+                        field.handleChange(event.target.value);
+                      }}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+              <form.Field name="endsAt">
+                {(field) => (
+                  <FormField
                     id="auction-ends-at"
-                    type="datetime-local"
-                    required
-                    value={field.state.value}
-                    aria-invalid={Boolean(
-                      fieldError && fieldError.includes('time'),
-                    )}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                  />
-                </FormField>
-              )}
-            </form.Field>
-          </div>
-          {(fieldError ||
-            (write.isError &&
-              write.error instanceof ApiError &&
-              write.error.status !== 409)) && (
-            <p role="alert" className="text-sm text-destructive">
-              {fieldError ||
-                errorMessage(
+                    label="Auction ends"
+                    description="The end must be after the start."
+                    error={fieldErrors.endsAt}
+                  >
+                    <Input
+                      id="auction-ends-at"
+                      name={field.name}
+                      type="datetime-local"
+                      required
+                      value={field.state.value}
+                      aria-invalid={Boolean(fieldErrors.endsAt)}
+                      aria-describedby={fieldDescriptionIds(
+                        'auction-ends-at',
+                        Boolean(fieldErrors.endsAt),
+                      )}
+                      onChange={(event) => {
+                        clearFieldError('endsAt');
+                        field.handleChange(event.target.value);
+                      }}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+            </div>
+          </fieldset>
+          {write.isError &&
+            write.error instanceof ApiError &&
+            write.error.status !== 409 && (
+              <p role="alert" className="text-sm text-destructive">
+                {errorMessage(
                   write.error,
                   baseAuction ? 'save the auction' : 'create the auction',
                 )}
-            </p>
-          )}
+              </p>
+            )}
           {write.isError &&
             write.error instanceof ApiError &&
             write.error.status === 409 && (
