@@ -5124,7 +5124,8 @@
           "checkoutId": {
             "type": "string",
             "example": "60d5ecb8b392d13b48f10e01",
-            "description": "Associated multi-producer checkout session identifier."
+            "description": "Associated checkout session, or null for an auction order.",
+            "nullable": true
           },
           "buyerId": {
             "type": "string",
@@ -5397,7 +5398,8 @@
               "producer_application_rejected",
               "auction_won",
               "auction_lost",
-              "auction_closed"
+              "auction_closed",
+              "auction_payment_method_expired"
             ]
           },
           "title": {
@@ -5544,6 +5546,7 @@
             "enum": [
               "scheduled",
               "active",
+              "finished",
               "cancelled"
             ]
           },

@@ -47,6 +47,10 @@ const EVENT_RESOURCE_TYPES: ReadonlyMap<
   [NotificationEventType.AuctionWon, NotificationResourceType.Auction],
   [NotificationEventType.AuctionLost, NotificationResourceType.Auction],
   [NotificationEventType.AuctionClosed, NotificationResourceType.Auction],
+  [
+    NotificationEventType.AuctionPaymentMethodExpired,
+    NotificationResourceType.Auction,
+  ],
 ]);
 
 @Injectable()

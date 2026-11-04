@@ -68,11 +68,12 @@ API process.
 
 ## Server to client
 
-| Event                  | Payload                             | Recipient                                       |
-| ---------------------- | ----------------------------------- | ----------------------------------------------- |
-| `notification.created` | `{ notificationId: string }`        | The notification owner's authenticated sockets. |
-| `auction.state`        | Current public auction state        | Watching sockets in the derived auction room.   |
-| `auction.bid.accepted` | `{ bid, state }` with public fields | Watching sockets after a committed bid.         |
+| Event                  | Payload                                                                                  | Recipient                                       |
+| ---------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `notification.created` | `{ notificationId: string }`                                                             | The notification owner's authenticated sockets. |
+| `auction.state`        | Current public auction state                                                             | Watching sockets in the derived auction room.   |
+| `auction.bid.accepted` | `{ bid, state }` with public fields                                                      | Watching sockets after a committed bid.         |
+| `auction.closed`       | `{ auctionId, state: "finished", winningAmountCents, winnerName, revision, serverTime }` | Watching sockets after settlement commits.      |
 
 The notification payload contains only the persisted notification ID; clients
 fetch its content through the authenticated inbox API. Revocation or expiry
@@ -90,3 +91,6 @@ emission can omit an event; reconnecting clients fetch authoritative state and
 history. Concurrent responses can arrive out of revision order, so clients must
 ignore older auction revisions, including original-state acknowledgements for
 retried bids. Viewer counts may change without changing the auction revision.
+`auction.closed` contains only the public winner name and lot amount; it never
+includes buyer, order, or payment identifiers. A missed completion event is
+recovered by reading the finished auction and order through HTTP.

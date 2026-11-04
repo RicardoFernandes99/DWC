@@ -229,10 +229,12 @@ export class OrderResponseDto {
   id!: string;
 
   @ApiProperty({
+    type: String,
     example: '60d5ecb8b392d13b48f10e01',
-    description: 'Associated multi-producer checkout session identifier.',
+    description: 'Associated checkout session, or null for an auction order.',
+    nullable: true,
   })
-  checkoutId!: string;
+  checkoutId!: string | null;
 
   @ApiProperty({
     example: '60d5ecb8b392d13b48f10f01',

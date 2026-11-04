@@ -23,6 +23,8 @@ import { AuthService } from '../auth/auth.service.js';
 import { UserRole } from '../users/user.schema.js';
 import { AuctionBidRequestDto, AuctionRoomRequestDto } from './auction.dto.js';
 import { AuctionsService } from './auctions.service.js';
+import { AuctionCompletionPublisher } from './auction-completion.publisher.js';
+import type { AuctionCompletionPayload } from './auction-completion.publisher.js';
 import type {
   AuctionBidAcknowledgement,
   AuctionJoinAcknowledgement,
@@ -68,9 +70,17 @@ export class PublicAuctionsGateway
   constructor(
     private readonly auctions: AuctionsService,
     private readonly auth: AuthService,
+    completion: AuctionCompletionPublisher,
     config: ConfigService,
   ) {
     this.webOrigin = config.getOrThrow<string>('WEB_ORIGIN');
+    completion.bind((payload) => this.publishCompletion(payload));
+  }
+
+  private publishCompletion(payload: AuctionCompletionPayload): void {
+    this.namespace
+      ?.to(this.room(payload.auctionId))
+      .emit('auction.closed', payload);
   }
 
   afterInit(namespace: AuctionNamespace) {

@@ -11,6 +11,7 @@ export enum NotificationEventType {
   AuctionWon = 'auction_won',
   AuctionLost = 'auction_lost',
   AuctionClosed = 'auction_closed',
+  AuctionPaymentMethodExpired = 'auction_payment_method_expired',
 }
 
 export enum NotificationResourceType {

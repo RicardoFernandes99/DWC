@@ -104,8 +104,11 @@ export const OrderStatusHistoryEntrySchema = SchemaFactory.createForClass(
 
 @Schema({ timestamps: true, autoIndex: true })
 export class Order {
-  @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'Checkout' })
-  checkoutId!: Types.ObjectId;
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Checkout', default: null })
+  checkoutId!: Types.ObjectId | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Auction', default: null })
+  auctionId!: Types.ObjectId | null;
 
   @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'User' })
   buyerId!: Types.ObjectId;
@@ -167,3 +170,10 @@ export const OrderSchema = SchemaFactory.createForClass(Order);
 OrderSchema.index({ buyerId: 1, createdAt: -1 });
 OrderSchema.index({ producerId: 1, createdAt: -1 });
 OrderSchema.index({ checkoutId: 1 });
+OrderSchema.index(
+  { auctionId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { auctionId: { $type: 'objectId' } },
+  },
+);

@@ -6,6 +6,7 @@ export type {
   AuctionBidAcceptedPayload,
   AuctionBidAcknowledgement,
   AuctionBidPayload,
+  AuctionClosedPayload,
   AuctionJoinAcknowledgement,
   AuctionLeaveAcknowledgement,
   AuctionLiveStatePayload,

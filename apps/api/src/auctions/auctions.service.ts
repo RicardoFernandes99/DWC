@@ -34,6 +34,20 @@ import {
 } from './auction.dto.js';
 import { PaymentMethod } from '../payment-methods/payment-method.schema.js';
 import { UserResponseDto } from '../users/user-response.dto.js';
+import { Payment, PaymentStatus } from '../checkout/payment.schema.js';
+import {
+  FulfilmentMethod,
+  Order,
+  OrderOrigin,
+  OrderStatus,
+} from '../orders/order.schema.js';
+import { NotificationIntegrationService } from '../notifications/notification-integration.service.js';
+import {
+  NotificationEventType,
+  NotificationResourceType,
+} from '../notifications/notification.schema.js';
+import type { NotificationDocument } from '../notifications/notification.schema.js';
+import { AuctionCompletionPublisher } from './auction-completion.publisher.js';
 
 export interface AcceptedBidResult {
   duplicate: boolean;
@@ -106,7 +120,11 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
     private readonly bids: Model<AuctionBid>,
     @InjectModel(PaymentMethod.name)
     private readonly paymentMethods: Model<PaymentMethod>,
+    @InjectModel(Payment.name) private readonly payments: Model<Payment>,
+    @InjectModel(Order.name) private readonly orders: Model<Order>,
     @InjectConnection() private readonly connection: Connection,
+    private readonly notificationIntegration: NotificationIntegrationService,
+    private readonly completionPublisher: AuctionCompletionPublisher,
   ) {}
 
   onModuleInit(): void {
@@ -467,6 +485,7 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
       $or: [
         { status: AuctionStatus.Scheduled, startsAt: { $gt: now } },
         { status: AuctionStatus.Active },
+        { status: AuctionStatus.Finished },
       ],
     };
     if (query.state === AuctionPublicState.Upcoming) {
@@ -480,9 +499,13 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
       delete filter.$or;
     }
     if (query.state === AuctionPublicState.Finished) {
-      filter.status = AuctionStatus.Active;
-      filter.endsAt = { $lte: now };
-      delete filter.$or;
+      filter.$or = [
+        { status: AuctionStatus.Finished },
+        {
+          status: AuctionStatus.Active,
+          endsAt: { $lte: now },
+        },
+      ];
     }
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -507,6 +530,7 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
       _id: new Types.ObjectId(id),
       $or: [
         { status: AuctionStatus.Active },
+        { status: AuctionStatus.Finished },
         { status: AuctionStatus.Scheduled, startsAt: { $gt: new Date() } },
       ],
     });
@@ -522,6 +546,7 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
       _id: new Types.ObjectId(id),
       $or: [
         { status: AuctionStatus.Active },
+        { status: AuctionStatus.Finished },
         { status: AuctionStatus.Scheduled, startsAt: { $gt: new Date() } },
       ],
     });
@@ -591,7 +616,7 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
             },
           })
           .session(session)
-          .select({ _id: 1 });
+          .select({ _id: 1, last4: 1, expiryMonth: 1, expiryYear: 1 });
         if (!method)
           throw new ForbiddenException(
             'Choose a saved payment method that belongs to you and has not expired.',
@@ -685,6 +710,11 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
               buyerId,
               bidderName: buyer.name.slice(0, 100),
               paymentMethodId,
+              paymentMethodSnapshot: {
+                last4: method.last4,
+                expiryMonth: method.expiryMonth,
+                expiryYear: method.expiryYear,
+              },
               requestId: input.requestId,
               amountCents: input.amountCents,
               startingPriceCents: updated.startingPriceCents,
@@ -803,11 +833,399 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
           );
         }
       }
+      const ended = await this.auctions
+        .find({
+          status: AuctionStatus.Active,
+          $expr: { $lte: ['$endsAt', '$$NOW'] },
+        })
+        .sort({ endsAt: 1, _id: 1 })
+        .limit(50)
+        .select({ _id: 1 });
+      for (const item of ended) {
+        try {
+          await this.settleDueAuction(item._id);
+        } catch (error) {
+          const detail =
+            error instanceof Error ? error.message : 'Unknown error';
+          this.logger.warn(
+            `Auction settlement remains retryable for ${item._id.toString()}: ${detail}`,
+          );
+        }
+      }
+      await this.recoverClosureNotifications();
     } catch {
       this.logger.warn('Auction scheduler could not query due records.');
     } finally {
       this.processing = false;
     }
+  }
+
+  private async settleDueAuction(id: Types.ObjectId): Promise<void> {
+    let completion: {
+      auctionId: string;
+      state: 'finished';
+      winningAmountCents: number | null;
+      winnerName: string | null;
+      revision: number;
+      serverTime: string;
+    } | null = null;
+    const notifications: NotificationDocument[] = [];
+    await this.withTransaction(async (session) => {
+      notifications.length = 0;
+      completion = null;
+      const auction = await this.auctions
+        .findOne({
+          _id: id,
+          status: AuctionStatus.Active,
+          $expr: { $lte: ['$endsAt', '$$NOW'] },
+        })
+        .session(session);
+      if (!auction) return;
+
+      const winnerId = auction.currentBidderId;
+      const amountCents = auction.currentBidCents;
+      let snapshot: {
+        last4: string;
+        expiryMonth: number;
+        expiryYear: number;
+      } | null = null;
+      let winnerBid: AuctionBidDocument | null = null;
+      if (winnerId && amountCents !== null) {
+        winnerBid = await this.bids
+          .findOne({
+            auctionId: auction._id,
+            buyerId: winnerId,
+            amountCents,
+          })
+          .sort({ acceptedAt: -1, _id: -1 })
+          .session(session);
+        snapshot = winnerBid?.paymentMethodSnapshot ?? null;
+        if (!snapshot && winnerBid) {
+          const method = await this.paymentMethods
+            .findOne({ _id: winnerBid.paymentMethodId, ownerId: winnerId })
+            .session(session)
+            .select({ last4: 1, expiryMonth: 1, expiryYear: 1 });
+          if (method) {
+            snapshot = {
+              last4: method.last4,
+              expiryMonth: method.expiryMonth,
+              expiryYear: method.expiryYear,
+            };
+            await this.bids.updateOne(
+              { _id: winnerBid._id, paymentMethodSnapshot: null },
+              { $set: { paymentMethodSnapshot: snapshot } },
+              { session },
+            );
+          }
+        }
+        if (!winnerBid || !snapshot) {
+          throw new ConflictException(
+            'Accepted winner payment snapshot is unavailable; settlement will retry.',
+          );
+        }
+      }
+
+      const finished = await this.auctions.findOneAndUpdate(
+        {
+          _id: auction._id,
+          status: AuctionStatus.Active,
+          revision: auction.revision,
+          endsAt: auction.endsAt,
+          $expr: { $lte: ['$endsAt', '$$NOW'] },
+        },
+        [
+          {
+            $set: {
+              status: AuctionStatus.Finished,
+              closureNotificationsPending: true,
+              closureNotificationCursor: null,
+              closedAt: '$$NOW',
+              revision: { $add: ['$revision', 1] },
+              updatedAt: '$$NOW',
+            },
+          },
+        ],
+        { session, returnDocument: 'after', updatePipeline: true },
+      );
+      if (!finished) return;
+
+      if (!winnerId || amountCents === null || !winnerBid || !snapshot) {
+        await this.releaseStock(
+          auction.productId,
+          auction.producerId,
+          auction.quantity,
+          session,
+        );
+      } else {
+        const consumed = await this.products.findOneAndUpdate(
+          {
+            _id: auction.productId,
+            producerId: auction.producerId,
+            reservedStock: { $gte: auction.quantity },
+          },
+          { $inc: { reservedStock: -auction.quantity, revision: 1 } },
+          { session, returnDocument: 'after', runValidators: true },
+        );
+        if (!consumed)
+          throw new ConflictException(
+            'Auction reserved stock could not be consumed safely.',
+          );
+
+        const payment = await this.payments.create(
+          [
+            {
+              checkoutId: null,
+              auctionId: auction._id,
+              buyerId: winnerId,
+              paymentMethodId: winnerBid.paymentMethodId,
+              paymentMethodSnapshot: snapshot,
+              amountCents,
+              status: PaymentStatus.Succeeded,
+              refundedCents: 0,
+            },
+          ],
+          { session },
+        );
+        const lotLabel = `lot of ${auction.quantity} ${auction.quantity === 1 ? auction.productSnapshot.unit : `${auction.productSnapshot.unit}s`}`;
+        const order = await this.orders.create(
+          [
+            {
+              checkoutId: null,
+              auctionId: auction._id,
+              buyerId: winnerId,
+              producerId: auction.producerId,
+              paymentId: payment[0]._id,
+              items: [
+                {
+                  productId: auction.productId,
+                  productName: `${auction.productSnapshot.name} (${lotLabel})`,
+                  productUnit: auction.productSnapshot.unit,
+                  quantity: 1,
+                  unitPriceCents: amountCents,
+                  lineTotalCents: amountCents,
+                },
+              ],
+              fulfilmentMethod: FulfilmentMethod.Collection,
+              deliveryAddress: null,
+              subtotalCents: amountCents,
+              deliveryFeeCents: 0,
+              totalCents: amountCents,
+              status: OrderStatus.Confirmed,
+              statusHistory: [
+                {
+                  status: OrderStatus.Confirmed,
+                  timestamp: finished.closedAt ?? new Date(),
+                  actorId: auction.producerId,
+                  actorRole: UserRole.Producer,
+                  note: 'Auction lot paid and confirmed automatically.',
+                },
+              ],
+              origin: OrderOrigin.Auction,
+              revision: 1,
+              refundRequest: null,
+            },
+          ],
+          { session },
+        );
+        notifications.push(
+          await this.notificationIntegration.persist(
+            {
+              recipientId: auction.producerId.toString(),
+              eventType: NotificationEventType.OrderCreated,
+              title: 'Auction order confirmed',
+              message: 'A paid auction lot is ready for collection.',
+              resource: {
+                type: NotificationResourceType.Order,
+                id: order[0]._id.toString(),
+              },
+              sourceEventKey: `auction:${auction._id.toString()}:order-created`,
+            },
+            session,
+          ),
+        );
+        notifications.push(
+          await this.notificationIntegration.persist(
+            {
+              recipientId: winnerId.toString(),
+              eventType: NotificationEventType.AuctionWon,
+              title: 'Auction won',
+              message:
+                'Your payment succeeded and your collection order is confirmed.',
+              resource: {
+                type: NotificationResourceType.Auction,
+                id: auction._id.toString(),
+              },
+              sourceEventKey: `auction:${auction._id.toString()}:result:${winnerId.toString()}`,
+            },
+            session,
+          ),
+        );
+
+        const currentMethod = await this.paymentMethods
+          .exists({ _id: winnerBid.paymentMethodId, ownerId: winnerId })
+          .session(session);
+        const expiredAtClosure = await this.paymentMethods
+          .exists({
+            _id: winnerBid.paymentMethodId,
+            ownerId: winnerId,
+            $expr: {
+              $lt: [
+                { $add: [{ $multiply: ['$expiryYear', 12] }, '$expiryMonth'] },
+                {
+                  $add: [
+                    { $multiply: [{ $year: '$$NOW' }, 12] },
+                    { $month: '$$NOW' },
+                  ],
+                },
+              ],
+            },
+          })
+          .session(session);
+        if (!currentMethod || expiredAtClosure) {
+          notifications.push(
+            await this.notificationIntegration.persist(
+              {
+                recipientId: winnerId.toString(),
+                eventType: NotificationEventType.AuctionPaymentMethodExpired,
+                title: 'Add a new payment card',
+                message:
+                  'Your auction order is paid and confirmed. Your saved card has expired or was removed; add a new card for future purchases and bids.',
+                resource: {
+                  type: NotificationResourceType.Auction,
+                  id: auction._id.toString(),
+                },
+                sourceEventKey: `auction:${auction._id.toString()}:payment-method-warning`,
+              },
+              session,
+            ),
+          );
+        }
+      }
+
+      notifications.push(
+        await this.notificationIntegration.persist(
+          {
+            recipientId: auction.producerId.toString(),
+            eventType: NotificationEventType.AuctionClosed,
+            title: 'Auction closed',
+            message: winnerId
+              ? 'The auction has closed and its collection order is confirmed.'
+              : 'The auction closed without bids and its reserved stock was released.',
+            resource: {
+              type: NotificationResourceType.Auction,
+              id: auction._id.toString(),
+            },
+            sourceEventKey: `auction:${auction._id.toString()}:producer-closed`,
+          },
+          session,
+        ),
+      );
+      completion = {
+        auctionId: auction._id.toString(),
+        state: 'finished',
+        winningAmountCents: amountCents,
+        winnerName: auction.currentBidderName,
+        revision: finished.revision,
+        serverTime: (finished.closedAt ?? new Date()).toISOString(),
+      };
+    });
+    for (const notification of notifications)
+      this.notificationIntegration.publishCommitted(notification);
+    if (completion) this.completionPublisher.publishCommitted(completion);
+  }
+
+  private async recoverClosureNotifications(): Promise<void> {
+    let cursor: Types.ObjectId | null = null;
+    for (let page = 0; page < 10; page += 1) {
+      const filter: Record<string, unknown> = {
+        status: AuctionStatus.Finished,
+        closureNotificationsPending: true,
+      };
+      if (cursor) filter._id = { $gt: cursor };
+      const auction = await this.auctions.findOne(filter).sort({ _id: 1 });
+      if (!auction) {
+        break;
+      }
+      cursor = auction._id;
+      try {
+        await this.persistParticipantNotificationPage(auction._id);
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : 'Unknown error';
+        this.logger.warn(
+          `Auction participant notifications remain pending for ${auction._id.toString()}: ${detail}`,
+        );
+      }
+    }
+  }
+
+  private async persistParticipantNotificationPage(
+    auctionId: Types.ObjectId,
+  ): Promise<void> {
+    const notifications: NotificationDocument[] = [];
+    await this.withTransaction(async (session) => {
+      notifications.length = 0;
+      const auction = await this.auctions
+        .findOne({
+          _id: auctionId,
+          status: AuctionStatus.Finished,
+          closureNotificationsPending: true,
+        })
+        .session(session);
+      if (!auction) return;
+      const filter: Record<string, unknown> = { auctionId };
+      if (auction.closureNotificationCursor)
+        filter._id = { $gt: auction.closureNotificationCursor };
+      const bids = await this.bids
+        .find(filter)
+        .sort({ _id: 1 })
+        .limit(100)
+        .session(session);
+      for (const bid of bids) {
+        const winner = auction.currentBidderId?.equals(bid.buyerId) ?? false;
+        notifications.push(
+          await this.notificationIntegration.persist(
+            {
+              recipientId: bid.buyerId.toString(),
+              eventType: winner
+                ? NotificationEventType.AuctionWon
+                : NotificationEventType.AuctionLost,
+              title: winner ? 'Auction won' : 'Auction result',
+              message: winner
+                ? 'Your payment succeeded and your collection order is confirmed.'
+                : 'Another buyer won this auction.',
+              resource: {
+                type: NotificationResourceType.Auction,
+                id: auction._id.toString(),
+              },
+              sourceEventKey: `auction:${auction._id.toString()}:result:${bid.buyerId.toString()}`,
+            },
+            session,
+          ),
+        );
+      }
+      const last = bids.at(-1);
+      const hasMore = bids.length === 100;
+      const updated = await this.auctions.updateOne(
+        {
+          _id: auction._id,
+          status: AuctionStatus.Finished,
+          closureNotificationsPending: true,
+          closureNotificationCursor: auction.closureNotificationCursor,
+        },
+        {
+          $set: {
+            closureNotificationCursor:
+              last?._id ?? auction.closureNotificationCursor,
+            closureNotificationsPending: hasMore,
+          },
+        },
+        { session },
+      );
+      if (updated.modifiedCount !== 1)
+        throw new ConflictException('Auction notification cursor changed.');
+    });
+    for (const notification of notifications)
+      this.notificationIntegration.publishCommitted(notification);
   }
 
   private async activateOrCancelDue(id: Types.ObjectId): Promise<void> {

@@ -2,6 +2,7 @@ export interface ServerToClientEvents {
   'notification.created': (payload: NotificationCreatedPayload) => void;
   'auction.state': (payload: AuctionLiveStatePayload) => void;
   'auction.bid.accepted': (payload: AuctionBidAcceptedPayload) => void;
+  'auction.closed': (payload: AuctionClosedPayload) => void;
 }
 
 export interface ClientToServerEvents {
@@ -61,6 +62,15 @@ export interface AuctionBidPayload {
 export interface AuctionBidAcceptedPayload {
   bid: AuctionBidPayload;
   state: AuctionLiveStatePayload;
+}
+
+export interface AuctionClosedPayload {
+  auctionId: string;
+  state: 'finished';
+  winningAmountCents: number | null;
+  winnerName: string | null;
+  revision: number;
+  serverTime: string;
 }
 
 export type AuctionRefusalCode =

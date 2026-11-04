@@ -143,9 +143,21 @@ replaced are not requirements.
 - At closure, a winner receives a Confirmed collection order for the lot and
   the simulated payment is recorded automatically. No second checkout is needed.
 - An auction without accepted bids releases its reserved quantity back to stock.
-- Detailed handling of payment-method removal/expiry after bidding and failure
-  during winner settlement remains TBD. Closing/settlement must not create
-  duplicate orders or payments when retried.
+- Closing/settlement must not create duplicate orders or payments when retried.
+
+### Auction settlement policy (ticket 028)
+
+- Accepting a bid snapshots the saved method's last four digits and expiry.
+  The simulated winner payment succeeds automatically at auction close even if
+  that card has since expired or been removed. The buyer receives a warning to
+  add a new card for future purchases and bids; the warning never blocks the
+  paid Confirmed collection order. No random declines or real gateway behavior
+  are simulated. Technical/database failures roll back and leave settlement
+  retryable with a logged failure.
+- A legacy accepted bid with no snapshot may settle from the still-existing
+  payment method owned by that bidder. If it is missing, settlement remains due
+  and fails with a logged retryable error; card data is never invented and the
+  accepted winner is never silently discarded.
 
 ## Notifications and reviews
 
@@ -189,7 +201,8 @@ replaced are not requirements.
   for bids and ready for settlement). If suspension is still in force, or the
   producer was reinstated after the missed start, the auction is cancelled and
   its lot is released. Active auctions finish normally while the producer is
-  suspended. Auction settlement and no-bid stock handling remain ticket 028.
+  suspended. Auction settlement and no-bid stock handling follow the policy
+  above.
 - Producer status decisions must update `producerDecisionAt`; the scheduler uses
   it to detect reinstatement after a missed auction start. Profile edits do not
   count as status decisions.
@@ -200,6 +213,5 @@ Resolve these with the affected tickets, without blocking unrelated work:
 
 - Invoice format, required information and PDF download.
 - Account recovery scope. Session implementation details are drafted in ticket 003.
-- Auction settlement edge cases.
 - Buyer suspension behavior, including effects on existing bids/orders, and
   detailed dashboard metric definitions.

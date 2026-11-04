@@ -749,7 +749,7 @@ export class OrdersService {
 
       return {
         id: order._id.toString(),
-        checkoutId: order.checkoutId.toString(),
+        checkoutId: order.checkoutId?.toString() ?? null,
         buyerId: order.buyerId.toString(),
         buyerName: nameMap.get(order.buyerId.toString()) ?? null,
         producerId: order.producerId.toString(),

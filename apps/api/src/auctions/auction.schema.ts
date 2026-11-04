@@ -6,10 +6,15 @@ import {
   ProductUnit,
   ProductionMethod,
 } from '../products/product.schema.js';
+import {
+  PaymentMethodSnapshot,
+  PaymentMethodSnapshotSchema,
+} from '../checkout/payment.schema.js';
 
 export enum AuctionStatus {
   Scheduled = 'scheduled',
   Active = 'active',
+  Finished = 'finished',
   Cancelled = 'cancelled',
 }
 
@@ -81,6 +86,15 @@ export class Auction {
 
   @Prop({ required: true, default: 1, min: 1 })
   revision!: number;
+
+  @Prop({ required: true, default: false })
+  closureNotificationsPending!: boolean;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'AuctionBid', default: null })
+  closureNotificationCursor!: Types.ObjectId | null;
+
+  @Prop({ type: Date, default: null })
+  closedAt!: Date | null;
 }
 
 export type AuctionDocument = HydratedDocument<Auction> & {
@@ -92,6 +106,7 @@ export const AuctionSchema = SchemaFactory.createForClass(Auction);
 AuctionSchema.index({ producerId: 1, status: 1, startsAt: -1, _id: -1 });
 AuctionSchema.index({ status: 1, startsAt: 1, _id: 1 });
 AuctionSchema.index({ status: 1, endsAt: 1, _id: 1 });
+AuctionSchema.index({ status: 1, closureNotificationsPending: 1, _id: 1 });
 
 @Schema({ timestamps: { createdAt: true, updatedAt: false }, autoIndex: true })
 export class AuctionBid {
@@ -106,6 +121,9 @@ export class AuctionBid {
 
   @Prop({ type: SchemaTypes.ObjectId, ref: 'PaymentMethod', required: true })
   paymentMethodId!: Types.ObjectId;
+
+  @Prop({ type: PaymentMethodSnapshotSchema, default: null })
+  paymentMethodSnapshot!: PaymentMethodSnapshot | null;
 
   @Prop({ required: true, match: /^[0-9a-f-]{36}$/i })
   requestId!: string;

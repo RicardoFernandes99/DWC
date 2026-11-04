@@ -1814,10 +1814,10 @@ export interface components {
              */
             id: string;
             /**
-             * @description Associated multi-producer checkout session identifier.
+             * @description Associated checkout session, or null for an auction order.
              * @example 60d5ecb8b392d13b48f10e01
              */
-            checkoutId: string;
+            checkoutId: string | null;
             /**
              * @description Buyer user identifier.
              * @example 60d5ecb8b392d13b48f10f01
@@ -1952,7 +1952,7 @@ export interface components {
         NotificationResponseDto: {
             id: string;
             /** @enum {string} */
-            eventType: "order_created" | "order_status_changed" | "refund_requested" | "refund_decision" | "producer_application_approved" | "producer_application_rejected" | "auction_won" | "auction_lost" | "auction_closed";
+            eventType: "order_created" | "order_status_changed" | "refund_requested" | "refund_decision" | "producer_application_approved" | "producer_application_rejected" | "auction_won" | "auction_lost" | "auction_closed" | "auction_payment_method_expired";
             title: string;
             message: string;
             resource: components["schemas"]["NotificationResourceDto"];
@@ -1991,7 +1991,7 @@ export interface components {
             /** @enum {string} */
             state: "upcoming" | "active" | "finished";
             /** @enum {string} */
-            status: "scheduled" | "active" | "cancelled";
+            status: "scheduled" | "active" | "finished" | "cancelled";
             currentBidCents: number | null;
             revision: number;
             /** Format: date-time */
