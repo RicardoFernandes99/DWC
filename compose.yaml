@@ -48,6 +48,21 @@ services:
       - floci-data:/app/data
     # Use the image's built-in readiness probe; the native image has no curl.
 
+  backoffice:
+    profiles: [backoffice]
+    build:
+      context: ./apps/backoffice
+    ports:
+      - '127.0.0.1:8080:8080'
+    env_file:
+      - ./apps/backoffice/.env
+    environment:
+      APP_DEBUG: 'false'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - ./apps/backoffice:/var/www/html
+
 volumes:
   mongodb-data:
   redis-data:

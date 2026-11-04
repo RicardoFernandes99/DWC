@@ -1,4 +1,11 @@
 node_modules/
+apps/backoffice/vendor/
+apps/backoffice/bootstrap/cache/
+apps/backoffice/storage/framework/cache/
+apps/backoffice/storage/framework/sessions/
+apps/backoffice/storage/framework/views/
+apps/backoffice/storage/logs/
+apps/backoffice/database/*.sqlite
 dist/
 coverage/
 pnpm-lock.yaml

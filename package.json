@@ -8,6 +8,10 @@
   },
   "scripts": {
     "setup:local": "node scripts/setup-local.ts",
+    "backoffice:setup": "node scripts/backoffice.ts setup",
+    "backoffice:dev": "node scripts/backoffice.ts dev",
+    "backoffice:check": "node scripts/backoffice.ts check",
+    "backoffice:format": "node scripts/backoffice.ts format",
     "infra:up": "docker compose up -d --wait && pnpm --filter @dwc/api storage:init",
     "infra:down": "docker compose down",
     "dev": "concurrently -k -n api,web -c blue,green \"pnpm --filter @dwc/api dev\" \"pnpm --filter @dwc/web dev\"",

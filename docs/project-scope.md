@@ -61,8 +61,9 @@ reference material; explicit user decisions take precedence over its examples.
 
 ## Current foundation
 
-Workspace tooling, a minimal frontend, API health/docs, MongoDB connectivity,
-S3 initialization and buyer/producer registration are implemented. Authentication sessions are implemented; catalogue, ordering, auctions and Laravel
-remain future feature work.
+Workspace tooling, the React frontend, NestJS authentication, catalogue,
+checkout/orders, auctions and administrator API features are implemented. The
+Laravel authentication foundation is in place; its business screens remain
+future feature work.
 Redis infrastructure is configured and the API manages a required Redis connection
 for readiness. Authentication sessions use hashed refresh credentials, atomic rotation and absolute TTLs.

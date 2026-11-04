@@ -70,9 +70,12 @@ docs/             project scope, architecture, agent workflow and research
 .claude/skills/   symlink to the shared skills
 ```
 
-Laravel backoffice remains planned as `apps/backoffice`; it is not scaffolded in
-this Web/API foundation. The API supports buyer/producer registration and Redis-backed authentication sessions.
-Other business features remain unimplemented.
+The Laravel backoffice lives in `apps/backoffice`. Start it alongside the API
+with `pnpm backoffice:setup` once, then `pnpm backoffice:dev` in a separate
+terminal. It listens on port 8080 and authenticates administrators through the
+API. Root `setup:local` adds `BACKOFFICE_ORIGIN` to an existing `.env` without
+replacing credentials. Run `pnpm backoffice:check` for Pint and Larastan.
+Administrative business screens follow in later tickets.
 
 ## Working with agents
 

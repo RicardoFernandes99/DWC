@@ -126,8 +126,8 @@ not macro IDs and not promises that unrelated dependencies already exist.
 
 Blocked decision tickets cover product values/precision (010), elapsed scheduled
 auctions during suspension (026), payment settlement edge cases (028), metric
-definitions (033), Laravel setup/auth (038), buyer suspension (042) and invoice
-output (043). Account recovery is still an open scope question rather than an
+definitions (033), buyer suspension (042) and invoice output (043). Laravel
+setup/auth decisions are resolved in ticket 038. Account recovery is still an open scope question rather than an
 assumed password-reset feature. Do not invent it while building auth.
 
 ## Shared implementation standards

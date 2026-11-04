@@ -207,6 +207,25 @@ replaced are not requirements.
 
 - Laravel is the planned additional backoffice, not a React administration app.
   NestJS remains authoritative for business rules and permissions.
+- Tooling is Laravel 13, PHP 8.4, Blade, Composer, Pint and Larastan. Run it in
+  Docker because PHP and Composer are not required on the host. Root pnpm wrappers
+  provide setup, dev, format and check commands.
+- Laravel uses an independent HttpOnly `dwc_backoffice_session` browser cookie,
+  encrypted file sessions and Laravel CSRF protection. Per-session file-cache
+  locks cover login, protected pages and logout so refresh rotation cannot race
+  logout. The absolute expiry comes from NestJS's existing seven-day refresh
+  cookie and is never extended by Laravel's idle session lifetime.
+- Laravel keeps API access and refresh credentials only in its server-side
+  session. It calls `/api/auth/me` on every protected request, refreshes once
+  after an access-token 401, and fails closed. Expired or revoked sessions are
+  cleared with sign-in feedback. A current non-admin is logged out of the API
+  and denied. API failures display a sanitized unavailable page. Do not retry
+  login, refresh or logout automatically.
+- `BACKOFFICE_ORIGIN` is a separate exact-origin setting. The API accepts it
+  only for refresh/logout while preserving `WEB_ORIGIN` for the React app and
+  Socket.IO. Laravel never forwards browser cookies to NestJS.
+- The Laravel app has no SQL migrations, user model or local password store.
+  Its shell remains empty until later admin tickets add real NestJS-backed tools.
 - Admin tools include producer approval/rejection, user suspension, hiding
   products/reviews, read-only order/auction inspection and service health.
 - Suspended producers see: "Your account is suspended until the issue is

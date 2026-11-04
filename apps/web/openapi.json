@@ -51,7 +51,7 @@
           {
             "name": "Origin",
             "in": "header",
-            "description": "Must equal configured WEB_ORIGIN, including non-browser clients.",
+            "description": "Must equal configured WEB_ORIGIN or BACKOFFICE_ORIGIN, including non-browser clients.",
             "required": true,
             "schema": {
               "type": "string"
@@ -96,7 +96,7 @@
           {
             "name": "Origin",
             "in": "header",
-            "description": "Must equal configured WEB_ORIGIN.",
+            "description": "Must equal configured WEB_ORIGIN or BACKOFFICE_ORIGIN.",
             "required": true,
             "schema": {
               "type": "string"

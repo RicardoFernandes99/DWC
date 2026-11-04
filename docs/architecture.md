@@ -16,9 +16,16 @@ sessions. Refresh uses atomic Lua compare-and-set rotation; logout revokes only
 the current cookie session. Each authenticated request verifies JWT signature,
 issuer/audience, session existence and current MongoDB user status.
 
-`apps/backoffice` will hold Laravel. Prefer consuming authenticated NestJS
-administrative endpoints to avoid duplicating business rules. Choose its auth
-flow and PHP tooling when scaffolding that app.
+`apps/backoffice` is Laravel 13 on PHP 8.4 with Blade. Its separate browser
+session uses encrypted, file-backed Laravel sessions and CSRF protection; the
+session stores NestJS access and opaque refresh credentials server-side only.
+Every protected request checks `GET /api/auth/me`, refreshing once after an
+access-token 401. The API's refresh-cookie expiry sets the absolute seven-day
+session cap. Laravel sends `BACKOFFICE_ORIGIN` for refresh and logout; NestJS
+continues to use `WEB_ORIGIN` for the React app and Socket.IO. NestJS remains the
+only user store and the authority for roles and business rules. Laravel does not
+connect to MongoDB or create a second SQL user database. See the backoffice
+README and app guidance for the Docker-based runtime and checks.
 
 ## Local services
 

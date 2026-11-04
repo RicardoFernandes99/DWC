@@ -2822,7 +2822,7 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description Must equal configured WEB_ORIGIN, including non-browser clients. */
+                /** @description Must equal configured WEB_ORIGIN or BACKOFFICE_ORIGIN, including non-browser clients. */
                 Origin: string;
             };
             path?: never;
@@ -2866,7 +2866,7 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description Must equal configured WEB_ORIGIN. */
+                /** @description Must equal configured WEB_ORIGIN or BACKOFFICE_ORIGIN. */
                 Origin: string;
             };
             path?: never;

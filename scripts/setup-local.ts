@@ -21,5 +21,13 @@ try {
     error.code !== 'EEXIST'
   )
     throw error;
+  const existing = await readFile(new URL('.env', root), 'utf8');
+  if (!/^BACKOFFICE_ORIGIN=/m.test(existing)) {
+    await writeFile(
+      new URL('.env', root),
+      `${existing.trimEnd()}\nBACKOFFICE_ORIGIN=http://localhost:8080\n`,
+    );
+    console.log('Added the local backoffice origin to the existing .env.');
+  }
   console.log('Existing .env preserved.');
 }
