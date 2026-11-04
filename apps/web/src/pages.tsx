@@ -35,6 +35,7 @@ import {
 import { sessionOptions } from './lib/session-query';
 import { useCart } from '@/features/cart/use-cart';
 import { NotificationRuntime } from '@/features/notifications/components/notification-runtime';
+import './pages.css';
 
 const sessionKey = ['session'] as const;
 export function Shell() {
@@ -50,7 +51,10 @@ export function Shell() {
   return (
     <>
       <header className="site-header">
-        <nav className="site-nav" aria-label="Main navigation">
+        <nav
+          className="site-nav mobile-auction-nav"
+          aria-label="Main navigation"
+        >
           <Link to="/" className="brand-link">
             <span className="brand-mark">
               <Sprout aria-hidden="true" />
@@ -62,6 +66,15 @@ export function Shell() {
           <div className="site-nav-links">
             <Link to="/" className="home-link">
               Home
+            </Link>
+            <Link
+              to="/auctions"
+              search={{ page: 1 }}
+              activeProps={{
+                className: 'text-primary underline underline-offset-4',
+              }}
+            >
+              Auctions
             </Link>
             {canPurchase(query.data) && (
               <Link

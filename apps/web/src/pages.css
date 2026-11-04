@@ -1,0 +1,33 @@
+@media (max-width: 767px) {
+  .site-header .site-nav.mobile-auction-nav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    min-height: 0;
+    padding: 10px 16px;
+  }
+
+  .site-header .site-nav.mobile-auction-nav .brand-link {
+    min-width: 0;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+
+  .site-header .site-nav.mobile-auction-nav .site-nav-links {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: clamp(4px, 2vw, 10px);
+    font-size: 12px;
+  }
+
+  .site-header .site-nav.mobile-auction-nav .site-nav-links > a {
+    padding-block: 5px;
+    white-space: nowrap;
+  }
+
+  .site-header .site-nav.mobile-auction-nav .site-nav-links .home-link,
+  .site-header .site-nav.mobile-auction-nav .site-nav-links .nav-register {
+    display: none;
+  }
+}

@@ -636,6 +636,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auctions/{id}/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the current server auction state and time. */
+        get: operations["PublicAuctionsController_live"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auctions/{id}/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the authenticated buyer’s persisted auction result. */
+        get: operations["PublicAuctionsController_result"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auctions/{id}/bids": {
         parameters: {
             query?: never;
@@ -2048,6 +2082,28 @@ export interface components {
              * @example 1
              */
             revision: number;
+        };
+        AuctionLiveStateDto: {
+            auctionId: string;
+            /** @enum {string} */
+            state: "upcoming" | "active" | "finished";
+            startingPriceCents: number;
+            minimumIncrementCents: number;
+            currentBidCents: number | null;
+            currentBidderName: string | null;
+            /** Format: date-time */
+            serverTime: string;
+            /** Format: date-time */
+            endsAt: string;
+            revision: number;
+            viewerCount: number;
+        };
+        AuctionBuyerResultResponseDto: {
+            /** @enum {string} */
+            state: "pending" | "won" | "not_winner";
+            orderId: string | null;
+            /** @enum {string|null} */
+            paymentStatus: "succeeded" | null;
         };
         AuctionBidResponseDto: {
             id: string;
@@ -4443,6 +4499,7 @@ export interface operations {
                 page?: components["schemas"]["Object"];
                 limit?: components["schemas"]["Object"];
                 state?: "upcoming" | "active" | "finished";
+                producerId?: string;
             };
             header?: never;
             path?: never;
@@ -4494,6 +4551,90 @@ export interface operations {
                 content?: never;
             };
             /** @description Auction not found or not publicly visible. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PublicAuctionsController_live: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuctionLiveStateDto"];
+                };
+            };
+            /** @description Invalid auction identifier. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Auction not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PublicAuctionsController_result: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuctionBuyerResultResponseDto"];
+                };
+            };
+            /** @description Invalid auction identifier. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Buyer session is unavailable. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only buyers may read this result. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Auction not found. */
             404: {
                 headers: {
                     [name: string]: unknown;

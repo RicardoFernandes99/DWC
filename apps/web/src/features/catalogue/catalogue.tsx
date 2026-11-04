@@ -20,6 +20,7 @@ import { formatLabel, formatMoney, formatUnit } from '@/lib/format';
 import { ApiError, publicRequest } from '@/lib/session';
 import { useCart } from '@/features/cart/use-cart';
 import { CatalogueFilters } from './components/catalogue-filters';
+import { ProducerAuctionsSection } from '@/features/auctions/components/producer-auctions-section';
 import {
   producerKey,
   useListingSearch,
@@ -489,6 +490,10 @@ export function ProducerPage({ producerId }: { producerId: string }) {
         <CatalogueFilters scope={producerId} />
         <ListingResults scope={producerId} />
       </section>
+      <ProducerAuctionsSection
+        producerId={producerId}
+        farmName={producer.farmName}
+      />
     </main>
   );
 }

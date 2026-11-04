@@ -49,6 +49,15 @@ room join event. Joining emits `auction.state` and returns the same current
 state in its acknowledgement. Reconnect by joining again, then fetch paginated
 history from `GET /api/auctions/{id}/bids`.
 
+The public HTTP API also exposes `GET /api/auctions/{id}/live` for an
+authoritative state and `serverTime` snapshot when Socket.IO is disconnected.
+Its viewer count is zero because an HTTP request is not a watching socket.
+Clients must keep the last socket viewer count while connected and show the
+count as unavailable while disconnected. `GET
+/api/auctions/{id}/result` requires a buyer session and reports only that
+buyer's result: pending, won with their persisted order and payment status, or
+not the winner. The result response is not cached.
+
 The state includes the auction ID, public state, starting price, increment,
 current bid and bidder display name, server time, deadline, revision and
 `viewerCount`. Viewer count means connected watching sockets, including guests;

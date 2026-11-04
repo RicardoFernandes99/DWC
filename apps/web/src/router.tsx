@@ -14,6 +14,8 @@ import { CheckoutPage } from './features/checkout/components/checkout-page';
 import { NotificationPage } from './features/notifications/components/notification-page';
 import { OrderTrackingPage } from './features/orders/components/order-tracking-page';
 import { ProducerAuctions } from './features/producer-auctions/components/producer-auctions';
+import { AuctionsPage } from './features/auctions/components/auction-list';
+import { AuctionRoomRoute } from './features/auctions/components/auction-room';
 import {
   CataloguePage,
   ProductDetailRoute,
@@ -72,6 +74,20 @@ function validateCatalogueSearch(search: Record<string, unknown>): SearchState {
         : numberValue(search.maxPriceCents, 0, 10_000_000),
     sort: enumValue(search.sort, sorts) ?? 'newest',
     page: numberValue(search.page, 1, 1000) ?? 1,
+  };
+}
+const auctionStates = ['upcoming', 'active', 'finished'] as const;
+function validateAuctionSearch(search: Record<string, unknown>) {
+  const state = enumValue(search.state, auctionStates);
+  const producerId =
+    typeof search.producerId === 'string' &&
+    /^[a-f\d]{24}$/i.test(search.producerId)
+      ? search.producerId
+      : undefined;
+  return {
+    page: numberValue(search.page, 1, 1000) ?? 1,
+    ...(state ? { state } : {}),
+    ...(producerId ? { producerId } : {}),
   };
 }
 const root = createRootRoute({
@@ -162,6 +178,17 @@ const publicProducerRoute = createRoute({
   validateSearch: validateCatalogueSearch,
   component: ProducerDetailRoute,
 });
+const auctionsRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/auctions',
+  validateSearch: validateAuctionSearch,
+  component: AuctionsPage,
+});
+const auctionRoomRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/auctions/$auctionId',
+  component: AuctionRoomRoute,
+});
 const uiDesign = createRoute({
   getParentRoute: () => root,
   path: '/ui-design',
@@ -241,6 +268,8 @@ export const router = createRouter({
     producerOrdersRoute,
     producerOrderDetailRoute,
     publicProducerRoute,
+    auctionsRoute,
+    auctionRoomRoute,
     uiDesign,
     loginRoute,
     registerRoute,

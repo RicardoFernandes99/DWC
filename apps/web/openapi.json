@@ -2701,6 +2701,15 @@
                 "finished"
               ]
             }
+          },
+          {
+            "name": "producerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2757,6 +2766,93 @@
           }
         },
         "summary": "Read a public auction and its immutable product snapshot.",
+        "tags": [
+          "Auctions"
+        ]
+      }
+    },
+    "/api/auctions/{id}/live": {
+      "get": {
+        "operationId": "PublicAuctionsController_live",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionLiveStateDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid auction identifier."
+          },
+          "404": {
+            "description": "Auction not found."
+          }
+        },
+        "summary": "Read the current server auction state and time.",
+        "tags": [
+          "Auctions"
+        ]
+      }
+    },
+    "/api/auctions/{id}/result": {
+      "get": {
+        "operationId": "PublicAuctionsController_result",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionBuyerResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid auction identifier."
+          },
+          "401": {
+            "description": "Buyer session is unavailable."
+          },
+          "403": {
+            "description": "Only buyers may read this result."
+          },
+          "404": {
+            "description": "Auction not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the authenticated buyer’s persisted auction result.",
         "tags": [
           "Auctions"
         ]
@@ -5711,6 +5807,95 @@
         },
         "required": [
           "revision"
+        ]
+      },
+      "AuctionLiveStateDto": {
+        "type": "object",
+        "properties": {
+          "auctionId": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "upcoming",
+              "active",
+              "finished"
+            ]
+          },
+          "startingPriceCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "minimumIncrementCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "currentBidCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "currentBidderName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          },
+          "serverTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "type": "number"
+          },
+          "viewerCount": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "auctionId",
+          "state",
+          "startingPriceCents",
+          "minimumIncrementCents",
+          "currentBidCents",
+          "currentBidderName",
+          "serverTime",
+          "endsAt",
+          "revision",
+          "viewerCount"
+        ]
+      },
+      "AuctionBuyerResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "won",
+              "not_winner"
+            ]
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "succeeded"
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "state",
+          "orderId",
+          "paymentStatus"
         ]
       },
       "AuctionBidResponseDto": {

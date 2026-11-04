@@ -212,33 +212,43 @@ function AuctionListView({
           <ul className="divide-y divide-border" aria-label="Producer auctions">
             {query.data.items.map((auction) => (
               <li key={auction.id}>
-                <Link
-                  to="/producer/auctions/$auctionId"
-                  params={{ auctionId: auction.id }}
-                  className="grid gap-3 p-4 transition-colors hover:bg-secondary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:px-5"
-                >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="truncate font-semibold">
-                        {auction.product.name}
-                      </h2>
-                      <span
-                        className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${statusClass(auction)}`}
-                      >
-                        {statusLabel(auction)}
-                      </span>
+                <div className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:px-5">
+                  <Link
+                    to="/producer/auctions/$auctionId"
+                    params={{ auctionId: auction.id }}
+                    className="grid min-w-0 gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="truncate font-semibold">
+                          {auction.product.name}
+                        </h2>
+                        <span
+                          className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${statusClass(auction)}`}
+                        >
+                          {statusLabel(auction)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {auction.quantity} {auctionUnit(auction.product.unit)} ·
+                        Starts {localDateTime(auction.startsAt)}
+                      </p>
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {auction.quantity} {auctionUnit(auction.product.unit)} ·
-                      Starts {localDateTime(auction.startsAt)}
+                    <p className="text-sm font-medium tabular-nums md:text-right">
+                      {auction.currentBidCents
+                        ? `High bid ${formatMoney(auction.currentBidCents)}`
+                        : `Opening at ${formatMoney(auction.startingPriceCents)}`}
                     </p>
-                  </div>
-                  <p className="text-sm font-medium tabular-nums md:text-right">
-                    {auction.currentBidCents
-                      ? `High bid ${formatMoney(auction.currentBidCents)}`
-                      : `Opening at ${formatMoney(auction.startingPriceCents)}`}
-                  </p>
-                </Link>
+                  </Link>
+                  <Link
+                    to="/auctions/$auctionId"
+                    params={{ auctionId: auction.id }}
+                    className="inline-flex min-h-11 items-center text-sm text-primary underline underline-offset-4 md:justify-self-end"
+                    data-auction-card-link
+                  >
+                    Open public room
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>
@@ -489,6 +499,11 @@ function AuctionDetail({
               Edit scheduled auction
             </Button>
           )}
+          <Button asChild variant="outline">
+            <Link to="/auctions/$auctionId" params={{ auctionId: auction.id }}>
+              Open public room
+            </Link>
+          </Button>
         </div>
         <dl className="mt-6 grid gap-x-6 gap-y-4 border-t pt-5 text-sm sm:grid-cols-2 xl:grid-cols-3">
           <div>

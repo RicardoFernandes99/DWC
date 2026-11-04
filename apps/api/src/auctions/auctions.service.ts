@@ -20,6 +20,7 @@ import type { AuctionBidDocument, AuctionDocument } from './auction.schema.js';
 import {
   AuctionBidRequestDto,
   AuctionBidResponseDto,
+  AuctionBuyerResultResponseDto,
   AuctionHistoryQueryDto,
   AuctionHistoryResponseDto,
   AuctionLiveStateDto,
@@ -488,6 +489,8 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
         { status: AuctionStatus.Finished },
       ],
     };
+    if (query.producerId)
+      filter.producerId = new Types.ObjectId(query.producerId);
     if (query.state === AuctionPublicState.Upcoming) {
       filter.status = AuctionStatus.Scheduled;
       filter.startsAt = { $gt: now };
@@ -552,6 +555,36 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
     });
     if (!auction) throw new NotFoundException('Auction not found.');
     return this.toLiveState(auction, new Date(), viewerCount);
+  }
+
+  async getBuyerResult(
+    auctionId: string,
+    buyer: UserResponseDto,
+  ): Promise<AuctionBuyerResultResponseDto> {
+    if (buyer.role !== UserRole.Buyer)
+      throw new ForbiddenException('Buyer access is required.');
+    const id = new Types.ObjectId(auctionId);
+    const auction = await this.auctions.findOne({ _id: id }).select({
+      status: 1,
+    });
+    if (!auction) throw new NotFoundException('Auction not found.');
+    if (auction.status !== AuctionStatus.Finished)
+      return { state: 'pending', orderId: null, paymentStatus: null };
+
+    const order = await this.orders
+      .findOne({ auctionId: id, buyerId: new Types.ObjectId(buyer.id) })
+      .select({ _id: 1, paymentId: 1 });
+    if (!order)
+      return { state: 'not_winner', orderId: null, paymentStatus: null };
+    const payment = await this.payments
+      .findOne({ _id: order.paymentId, buyerId: new Types.ObjectId(buyer.id) })
+      .select({ status: 1 });
+    return {
+      state: 'won',
+      orderId: order._id.toString(),
+      paymentStatus:
+        payment?.status === PaymentStatus.Succeeded ? 'succeeded' : null,
+    };
   }
 
   async listPublicHistory(

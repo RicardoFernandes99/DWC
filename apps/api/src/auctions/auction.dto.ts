@@ -181,6 +181,22 @@ export class ListPublicAuctionsQueryDto extends ListAuctionsQueryDto {
   @ValidateIf((_object, value: unknown) => value !== undefined)
   @IsEnum(AuctionPublicState)
   state?: AuctionPublicState;
+
+  @ApiPropertyOptional({ example: '671f0f98ac53ba58e26c4789' })
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsMongoId()
+  producerId?: string;
+}
+
+export class AuctionBuyerResultResponseDto {
+  @ApiProperty({ enum: ['pending', 'won', 'not_winner'] })
+  state!: 'pending' | 'won' | 'not_winner';
+
+  @ApiProperty({ type: String, nullable: true })
+  orderId!: string | null;
+
+  @ApiProperty({ enum: ['succeeded'], nullable: true })
+  paymentStatus!: 'succeeded' | null;
 }
 
 export class AuctionProductSnapshotResponseDto {
