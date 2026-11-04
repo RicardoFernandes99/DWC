@@ -1,9 +1,9 @@
 # 033: Calculate producer sales metrics and low-stock warnings
 
 - Macro: M07
-- Status: In progress
+- Status: In review
 - Depends on: 010, 020, 028
-- PR: Not opened
+- PR: [#47](https://github.com/RicardoFernandes99/DWC/pull/47)
 - Branch / parent: `codex/age-033-producer-metrics-api` on PR #46 `codex/age-032-reviews-web` (`a103d40`)
 - Blockers: None (metric definitions resolved 2026-11-04, see product decisions)
 
@@ -72,4 +72,5 @@ After defining the metrics, compare displayed API totals with a small known fixt
   periods and passed 9/9 groups: totals, fee separation, ranking tie-break,
   unit grouping, low-stock boundaries (equal/below/above, archived, reserved),
   privacy, 400/401/403 refusals, suspended access and empty-producer zeros.
+- PR #47 is ready for review in native stack #34. The reviewed implementation commit is `c8b929f`.
 - Limitations: no automated tests added; usage figures are unavailable.
