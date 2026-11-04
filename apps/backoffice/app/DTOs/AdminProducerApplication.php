@@ -40,7 +40,7 @@ final readonly class AdminProducerApplication
         $application = $payload['application'] ?? null;
         if ($status === null || ! is_array($application)
             || preg_match('/\A[a-f\d]{24}\z/i', $payload['id']) !== 1
-            || strlen($payload['name']) > 200 || strlen($payload['email']) > 254
+            || mb_strlen($payload['name']) > 100 || strlen($payload['email']) > 254
             || $payload['revision'] < 1 || strtotime($payload['submittedAt']) === false
             || ($payload['decidedAt'] !== null && strtotime($payload['decidedAt']) === false)
             || ! is_string($application['farmName'] ?? null)

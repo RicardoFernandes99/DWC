@@ -62,11 +62,12 @@ Use backoffice static checks and manually approve/reject/suspend a producer thro
   the user confirmed availability. Frontier verdict APPROVED after three
   correction rounds: action-scoped recovery, scoped CSS formatting and
   identity-gate outage recovery. Trivial frontier fixes added textarea font
-  inheritance and clarified documentation. Token/cache/cost measurements were
+  inheritance, matched the API's character-based name limit and clarified documentation. Token/cache/cost measurements were
   not exposed and are unavailable.
 - Checks passed: `pnpm backoffice:format`, `pnpm backoffice:check` with platform
   checks, Pint on 33 PHP files and Larastan; root ESLint, tools TypeScript check,
-  scoped Prettier and `git diff --check`. No Node application code or contract
+  scoped Prettier, `git diff --check` and a valid 100-character Unicode name at
+  the PHP API boundary. No Node application code or contract
   changed, and Laravel has no JavaScript build.
 - Real Chrome/NestJS evidence under `demos/ticket-039-review/` covers rejection,
   resubmission, approval, changed-revision and opposite-decision conflicts,
