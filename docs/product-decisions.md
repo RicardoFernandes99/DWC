@@ -169,6 +169,19 @@ replaced are not requirements.
   including auction orders: a 1-5 star rating and optional comment.
 - Reviews can be reported, and administrators can hide them. Reviews are about
   the producer rather than separate ratings for every purchased product.
+- Review API rules: only the order's buyer reviews, once per Delivered or
+  Collected order (auction included; enforced by a unique order index, duplicate
+  or concurrent retries get 409 `review_exists`; non-completed orders get 409
+  `order_not_reviewable`; foreign or missing orders get 404). Comments are
+  trimmed plain text up to 1000 characters; blank becomes none. Public lists
+  show only visible reviews, newest first, with the reviewer's first name only
+  and a visible-only average (one decimal) and count. Producers cannot review.
+- Reporting: buyers and producers may report a visible review with a required
+  category (spam, offensive, off_topic, false_information, other) and optional
+  note up to 500 characters. One report per user and review; retries return
+  success and keep the first report. Reporting your own review is refused (403
+  `own_review`); hidden or missing reviews are 404. Reporter identity and notes
+  are never public, and report counts never hide a review automatically.
 
 ## Producer dashboard
 

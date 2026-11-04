@@ -687,6 +687,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ReviewsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/orders/{orderId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ReviewsController_getOrderStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/{reviewId}/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ReviewsController_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/producers/{producerId}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProducerReviewsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2121,6 +2185,64 @@ export interface components {
             total: number;
             page: number;
             limit: number;
+        };
+        CreateReviewDto: {
+            /**
+             * @description Delivered or collected order owned by the authenticated buyer.
+             * @example 60d5ecb8b392d13b48f10b01
+             */
+            orderId: string;
+            /** @example 5 */
+            rating: number;
+            /** @description Plain-text comment, trimmed. Empty or whitespace-only becomes null. Never interpreted as HTML. */
+            comment?: string | null;
+        };
+        OwnReviewDto: {
+            id: string;
+            orderId: string;
+            producerId: string;
+            rating: number;
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        OrderReviewStatusDto: {
+            /** @description True when the order is delivered or collected and has no review yet. */
+            eligible: boolean;
+            review: components["schemas"]["OwnReviewDto"] | null;
+        };
+        ReportReviewDto: {
+            /** @enum {string} */
+            category: "spam" | "offensive" | "off_topic" | "false_information" | "other";
+            /** @description Optional plain-text note, trimmed; empty becomes null. */
+            note?: string | null;
+        };
+        ReviewReportResultDto: {
+            /** @example true */
+            reported: boolean;
+        };
+        PublicReviewDto: {
+            id: string;
+            rating: number;
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description First word of the reviewer name; no other identity data. */
+            reviewerFirstName: string;
+        };
+        ReviewSummaryDto: {
+            /** @description Average of visible ratings rounded to one decimal; null without reviews. */
+            averageRating: number | null;
+            /** @description Number of visible reviews. */
+            ratingCount: number;
+        };
+        ProducerReviewListDto: {
+            items: components["schemas"]["PublicReviewDto"][];
+            page: number;
+            limit: number;
+            /** @description Total visible reviews. */
+            total: number;
+            summary: components["schemas"]["ReviewSummaryDto"];
         };
     };
     responses: never;
@@ -4673,6 +4795,208 @@ export interface operations {
                 content?: never;
             };
             /** @description Auction not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ReviewsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReviewDto"];
+            };
+        };
+        responses: {
+            /** @description Review created for the producer of a delivered or collected order owned by the buyer (auction orders included). */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnReviewDto"];
+                };
+            };
+            /** @description Invalid order ID, rating (integer 1-5) or comment (max 1000 characters). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only buyers may create reviews. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order not found or not owned by the buyer. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description order_not_reviewable (order not delivered/collected) or review_exists (order already reviewed). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ReviewsController_getOrderStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Whether the buyer may review this order now, and the existing review if any. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderReviewStatusDto"];
+                };
+            };
+            /** @description Invalid order ID. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only buyers may use this endpoint. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order not found or not owned by the buyer. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ReviewsController_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportReviewDto"];
+            };
+        };
+        responses: {
+            /** @description Report recorded. Retries by the same user are idempotent and keep the first report. Reporter identity is never exposed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewReportResultDto"];
+                };
+            };
+            /** @description Invalid review ID, category (spam, offensive, off_topic, false_information, other) or note (max 500 characters). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Role not allowed, or own_review: authors cannot report their own review. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Review not found or not visible. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerReviewsController_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                producerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public, newest-first page of visible reviews with a visible-only rating summary. Exposes the reviewer first name only. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerReviewListDto"];
+                };
+            };
+            /** @description Invalid producer ID or pagination (page >= 1, limit 1-50). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Producer not found or unavailable. */
             404: {
                 headers: {
                     [name: string]: unknown;

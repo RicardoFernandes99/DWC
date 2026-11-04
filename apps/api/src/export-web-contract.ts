@@ -30,6 +30,11 @@ import { NotificationsService } from './notifications/notifications.service.js';
 import { AuctionsService } from './auctions/auctions.service.js';
 import { ProducerAuctionsController } from './auctions/producer-auctions.controller.js';
 import { PublicAuctionsController } from './auctions/public-auctions.controller.js';
+import {
+  ProducerReviewsController,
+  ReviewsController,
+} from './reviews/reviews.controller.js';
+import { ReviewsService } from './reviews/reviews.service.js';
 
 // Contract-only module: controllers and DTO metadata are real; no service is called.
 @Module({
@@ -48,6 +53,8 @@ import { PublicAuctionsController } from './auctions/public-auctions.controller.
     NotificationsController,
     ProducerAuctionsController,
     PublicAuctionsController,
+    ReviewsController,
+    ProducerReviewsController,
   ],
   providers: [
     { provide: AuthService, useValue: {} },
@@ -62,6 +69,7 @@ import { PublicAuctionsController } from './auctions/public-auctions.controller.
     { provide: OrdersService, useValue: {} },
     { provide: NotificationsService, useValue: {} },
     { provide: AuctionsService, useValue: {} },
+    { provide: ReviewsService, useValue: {} },
     {
       provide: ConfigService,
       useValue: { getOrThrow: () => 'http://localhost' },
