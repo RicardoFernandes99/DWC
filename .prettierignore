@@ -11,6 +11,11 @@ pnpm-lock.yaml
 .agents/skills/emil-design-eng/
 .agents/skills/impeccable/
 .agents/skills/taste-skill/
+.agents/skills/interface-design/
+.agents/skills/frontend-design/
+.agents/skills/unslop/
+.agents/skills/web-design-guidelines/
+.agents/skills/vercel-react-best-practices/
 demos/takes/
 demos/**/*.record-demo/
 demos/**/*.produce-demo/

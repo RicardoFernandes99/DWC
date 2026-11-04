@@ -74,6 +74,10 @@ Shared task instructions live in `.agents/skills/<name>/SKILL.md`:
 - `nestjs-best-practices`: feature modules, injection, Mongoose and API boundaries.
 - `design-engineering`: React composition, forms, accessibility and UI polish.
 - `animate`: purposeful motion, timing, easing and interruption.
+- Frontend design and review (vendored): `interface-design`, `frontend-design`,
+  `impeccable`, `taste-skill`, `emil-design-eng`, `web-design-guidelines`,
+  `vercel-react-best-practices` (client rules only) and `unslop` for copy. The
+  build skill's `references/frontend.md` says which to use when.
 - `plan`: short implementation bullets in chat.
 - `build`: implement a numbered ticket with a cheaper builder, frontier review
   and an `Age N - ...` ready-for-review PR stacked on the latest open feature PR.
