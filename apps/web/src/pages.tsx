@@ -509,6 +509,17 @@ export function Account() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-12 md:py-20">
       <h1 className="text-3xl font-semibold">Your account</h1>
+      {current.role === 'producer' && (
+        <div className="mt-4">
+          <Button asChild variant="outline">
+            <Link to="/producer/auctions">
+              {current.producerStatus === 'suspended'
+                ? 'View auctions'
+                : 'Manage auctions'}
+            </Link>
+          </Button>
+        </div>
+      )}
       {query.isError && (
         <div role="alert" className="mt-5 rounded-lg border p-4 text-sm">
           <p>

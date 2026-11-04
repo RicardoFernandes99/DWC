@@ -1,7 +1,7 @@
 # 029: Create and manage producer auction lots
 
 - Macro: M05
-- Status: Draft
+- Status: In progress
 - Depends on: 012, 026
 - PR: Not opened
 - Branch / parent: Not assigned

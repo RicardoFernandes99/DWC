@@ -3,6 +3,7 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
 import { Archive, Pencil, Plus, Sprout } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import type { components } from '@/lib/api-schema';
 import {
   formatLabel as label,
@@ -1104,11 +1105,16 @@ export function ProducerProducts({
           </p>
         </div>
         {!isCreate && !editId && (
-          <Button
-            onClick={() => void navigate({ to: '/producer/products/new' })}
-          >
-            <Plus aria-hidden="true" /> Add product
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/producer/auctions">Manage auctions</Link>
+            </Button>
+            <Button
+              onClick={() => void navigate({ to: '/producer/products/new' })}
+            >
+              <Plus aria-hidden="true" /> Add product
+            </Button>
+          </div>
         )}
       </div>
       {isCreate ? (

@@ -13,6 +13,7 @@ import { CartPage } from './features/cart/components/cart-page';
 import { CheckoutPage } from './features/checkout/components/checkout-page';
 import { NotificationPage } from './features/notifications/components/notification-page';
 import { OrderTrackingPage } from './features/orders/components/order-tracking-page';
+import { ProducerAuctions } from './features/producer-auctions/components/producer-auctions';
 import {
   CataloguePage,
   ProductDetailRoute,
@@ -207,6 +208,26 @@ const producerNewProductRoute = createRoute({
   path: '/producer/products/new',
   component: Account,
 });
+const producerAuctionsRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/producer/auctions',
+  component: () => <ProducerAuctions />,
+});
+const producerNewAuctionRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/producer/auctions/new',
+  component: () => <ProducerAuctions />,
+});
+const producerAuctionRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/producer/auctions/$auctionId',
+  component: () => <ProducerAuctions />,
+});
+const producerEditAuctionRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/producer/auctions/$auctionId/edit',
+  component: () => <ProducerAuctions />,
+});
 export const router = createRouter({
   defaultPendingMs: 0,
   routeTree: root.addChildren([
@@ -228,6 +249,10 @@ export const router = createRouter({
     producerSubroute,
     producerProductRoute,
     producerNewProductRoute,
+    producerAuctionsRoute,
+    producerNewAuctionRoute,
+    producerAuctionRoute,
+    producerEditAuctionRoute,
   ]),
 });
 declare module '@tanstack/react-router' {
