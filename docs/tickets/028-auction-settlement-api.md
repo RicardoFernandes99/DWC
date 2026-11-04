@@ -1,9 +1,9 @@
 # 028: Close auctions and settle the winner exactly once
 
 - Macro: M05
-- Status: In progress
+- Status: In review
 - Depends on: 017, 019, 023, 024, 027
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/42
 - Branch / parent: `codex/age-028-auction-settlement` / `codex/age-027-atomic-bids` (PR #41)
 - Blockers: None
 
@@ -61,6 +61,7 @@ Run the scoped fixture with `node --env-file=.env demos/ticket-028-review/verify
 - Executor: `gpt-6-luna`, High effort. Frontier verdict: APPROVED after one
   correction round. Usage and cost measurements were unavailable.
 - Parent SHA: `f2fbe4d6c25eb8dac780b73bf7d548507ca3cab0`.
+- Reviewed implementation: `ecc62ec2b83ed539883339e0431511696d80b9a4`.
 - Passed `pnpm contract:generate`, API typecheck, `pnpm contract:check` including
   API build, root lint, Web production build, scoped Prettier and diff checks.
 - The scoped replica-set fixture passed settlement, rollback/retry, concurrency,
