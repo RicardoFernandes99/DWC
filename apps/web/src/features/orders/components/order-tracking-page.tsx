@@ -5,7 +5,12 @@ import {
   useQueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearch,
+} from '@tanstack/react-router';
 import {
   AlertCircle,
   ArrowLeft,
@@ -14,24 +19,19 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+
 import {
   ApiError,
   authenticatedRequest,
   currentUser,
   type User,
 } from '@/lib/session';
-import { formatMoney, formatUnit } from '@/lib/format';
+import { formatMoney } from '@/lib/format';
 import type { components } from '@/lib/api-schema';
-import {
-  OrderCard,
-  OrderStatusBadge,
-  OrderTimeline,
-  RefundSummary,
-} from './order-presentation';
-import { orderDateLabel, orderSteps } from './order-format';
-import { ProducerOrderActions } from './producer-order-actions';
-
+import { OrderRow } from './order-presentation';
+import { orderSteps } from './order-format';
+import { OrderDetail } from './order-detail';
+import './orders.css';
 type Audience = 'buyer' | 'producer';
 type Order = components['schemas']['OrderResponseDto'];
 type OrderList = components['schemas']['OrderListResponseDto'];
@@ -43,9 +43,6 @@ function isOrderList(value: Order | OrderList): value is OrderList {
 
 const pageSize = 10;
 const queryRoot = ['orders'] as const;
-function moneyLabel(cents: number) {
-  return formatMoney(cents);
-}
 
 function nextStatus(order: Order): OrderStatus | undefined {
   const steps = orderSteps(order.fulfilmentMethod);
@@ -253,73 +250,68 @@ function OrderTrackingContent({
   const next = order && nextStatus(order);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12 xl:py-16">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <main className="orders-screen">
+      {id && (
+        <Button variant="link" className="order-back" onClick={backToList}>
+          <ArrowLeft aria-hidden="true" />
+          Back to orders
+        </Button>
+      )}
+      <header className="orders-heading">
         <div>
-          <p className="text-sm font-medium text-primary">From Farm to Table</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            {id ? 'Order details' : title}
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            {audience === 'buyer'
-              ? 'Follow delivery or collection and review any refund updates.'
-              : 'Fulfil orders one step at a time and manage pending refund requests.'}
+          <h1>{id ? `Order #${id.slice(-8).toUpperCase()}` : title}</h1>
+          <p>
+            {id
+              ? 'Every detail, from farm to handover.'
+              : audience === 'buyer'
+                ? 'Good food. All accounted for.'
+                : 'From your farm to their table.'}
           </p>
         </div>
-        {id && (
-          <Button
-            variant="outline"
-            className="min-h-11 self-start md:self-auto"
-            onClick={backToList}
-          >
-            <ArrowLeft aria-hidden="true" />
-            Back to orders
-          </Button>
+        {!id && orders.data && isOrderList(orders.data) && (
+          <span className="orders-count">
+            <strong>{orders.data.total}</strong>{' '}
+            {orders.data.total === 1 ? 'order' : 'orders'}
+          </span>
         )}
-      </div>
-
+      </header>
       {audience === 'producer' && user.producerStatus === 'suspended' && (
-        <div
-          className="mt-6 rounded-lg border border-highlight bg-highlight/40 p-4 text-sm"
-          role="status"
-        >
-          <p className="font-semibold">Account suspended</p>
-          <p className="mt-1">
-            Your account is suspended until the issue is resolved. You cannot
-            create new auctions or register new products. Existing orders can
-            still be fulfilled.
+        <div className="order-account-notice" role="status">
+          <AlertCircle size={20} aria-hidden="true" />
+          <p>
+            <strong>Your producer account is suspended</strong>
+            <span>
+              You can still fulfil existing orders. New products and auctions
+              are unavailable until the suspension is resolved.
+            </span>
           </p>
         </div>
       )}
-
       {errorMessage && (
-        <div
-          className="mt-6 flex gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm"
-          role="alert"
-        >
-          <AlertCircle
-            className="mt-0.5 size-4 shrink-0 text-destructive"
-            aria-hidden="true"
-          />
+        <div className="order-feedback" data-error="true" role="alert">
+          <AlertCircle size={17} aria-hidden="true" />
           <p>{errorMessage}</p>
         </div>
       )}
       {notice && (
-        <p
-          className="mt-6 rounded-lg border border-primary/30 bg-secondary p-4 text-sm"
-          role="status"
-        >
+        <p className="order-feedback" role="status">
           {notice}
         </p>
       )}
-
       {orders.isPending && (
-        <Card className="mt-6 p-6 text-sm text-muted-foreground" role="status">
-          Loading orders…
-        </Card>
+        <div
+          className="order-loading"
+          role="status"
+          aria-label="Loading orders"
+        >
+          <span>Loading orders…</span>
+          <div />
+          <div />
+          <div />
+        </div>
       )}
       {orders.isError && (
-        <Card className="mt-6 p-6" role="alert">
+        <Card className="mt-6 p-6 shadow-none" role="alert">
           <p className="text-sm text-destructive">
             Could not load orders. Please try again.
           </p>
@@ -334,45 +326,64 @@ function OrderTrackingContent({
         </Card>
       )}
       {orders.isFetching && !orders.isPending && (
-        <p className="mt-4 text-sm text-muted-foreground" role="status">
+        <p className="order-refreshing" role="status">
           Refreshing order details…
         </p>
       )}
-
       {!id && orders.data && isOrderList(orders.data) && (
-        <>
+        <section className="orders-ledger" aria-label="Order history">
+          <div className="orders-list-heading">
+            <h2>Order history</h2>
+            <span>Most recent first</span>
+          </div>
           {orders.data.items.length === 0 ? (
-            <Card className="mt-8 p-6 md:p-8">
-              <h2 className="text-lg font-semibold">No orders yet</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Orders will appear here after checkout.
+            <div className="orders-empty">
+              <h2>Your next good thing starts here.</h2>
+              <p>
+                {audience === 'buyer'
+                  ? 'Orders from local producers will appear here after checkout.'
+                  : 'Your customer orders will appear here, ready to prepare and fulfil.'}
               </p>
-            </Card>
-          ) : (
-            <div className="mt-6 space-y-4" aria-label="Orders">
-              {orders.data.items.map((item) => (
-                <OrderCard
-                  key={item.id}
-                  order={item}
-                  audience={audience}
-                  page={page}
-                />
-              ))}
+              {audience === 'buyer' && (
+                <Button asChild variant="outline">
+                  <Link to="/">Explore the market</Link>
+                </Button>
+              )}
             </div>
+          ) : (
+            <>
+              <div className="orders-column-labels" aria-hidden="true">
+                <span>
+                  {audience === 'buyer'
+                    ? 'Order / producer'
+                    : 'Order / customer'}
+                </span>
+                <span>Placed / fulfilment</span>
+                <span>Status</span>
+                <span>Total</span>
+                <span />
+              </div>
+              <ul className="orders-list" aria-label="Orders">
+                {orders.data.items.map((item) => (
+                  <OrderRow
+                    key={item.id}
+                    order={item}
+                    audience={audience}
+                    page={page}
+                  />
+                ))}
+              </ul>
+            </>
           )}
           {orders.data.totalPages > 1 && (
-            <nav
-              className="mt-6 flex items-center justify-between gap-3"
-              aria-label="Order pages"
-            >
-              <p className="text-sm text-muted-foreground">
-                Page {orders.data.page} of {orders.data.totalPages} ·{' '}
-                {orders.data.total} orders
+            <nav className="orders-pagination" aria-label="Order pages">
+              <p>
+                Page <strong>{orders.data.page}</strong> of{' '}
+                {orders.data.totalPages}
               </p>
-              <div className="flex gap-2">
+              <div>
                 <Button
-                  variant="outline"
-                  className="min-h-11"
+                  variant="ghost"
                   disabled={page <= 1 || orders.isFetching}
                   onClick={() =>
                     void navigate({
@@ -386,7 +397,6 @@ function OrderTrackingContent({
                 </Button>
                 <Button
                   variant="outline"
-                  className="min-h-11"
                   disabled={page >= orders.data.totalPages || orders.isFetching}
                   onClick={() =>
                     void navigate({
@@ -401,180 +411,19 @@ function OrderTrackingContent({
               </div>
             </nav>
           )}
-        </>
-      )}
-
-      {id && order && (
-        <section className="mt-6 space-y-5" aria-label="Order detail">
-          <Card className="p-5 md:p-7">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Order reference</p>
-                <p className="mt-1 break-all font-mono text-sm">{order.id}</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Placed {orderDateLabel(order.createdAt)}
-                </p>
-              </div>
-              <OrderStatusBadge status={order.status} />
-            </div>
-            <p className="mt-5 text-sm leading-relaxed">
-              {statusDescription(order)}
-            </p>
-            {order.origin === 'auction' && (
-              <p className="mt-3 rounded-md bg-secondary p-3 text-sm">
-                Auction win · Collection order confirmed automatically.
-              </p>
-            )}
-            {order.status !== 'cancelled' && <OrderTimeline order={order} />}
-          </Card>
-
-          <Card className="p-5 md:p-7">
-            <h2 className="text-lg font-semibold">Items and totals</h2>
-            <ul className="mt-4 divide-y divide-border">
-              {order.items.map((line) => (
-                <li
-                  key={line.productId}
-                  className="flex flex-col gap-1 py-3 md:flex-row md:items-center md:justify-between"
-                >
-                  <span className="font-medium">
-                    {line.productName}
-                    <span className="ml-2 text-sm font-normal text-muted-foreground">
-                      {line.quantity} {formatUnit(line.productUnit)} ×{' '}
-                      {moneyLabel(line.unitPriceCents)}
-                    </span>
-                  </span>
-                  <span className="tabular-nums">
-                    {moneyLabel(line.lineTotalCents)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <dl className="ml-auto mt-4 max-w-sm space-y-2 border-t pt-4 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Subtotal</dt>
-                <dd className="tabular-nums">
-                  {moneyLabel(order.subtotalCents)}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Delivery fee</dt>
-                <dd className="tabular-nums">
-                  {moneyLabel(order.deliveryFeeCents)}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4 text-base font-semibold">
-                <dt>Order total</dt>
-                <dd className="tabular-nums">{moneyLabel(order.totalCents)}</dd>
-              </div>
-              {order.payment && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Checkout charge</dt>
-                  <dd className="tabular-nums">
-                    {moneyLabel(order.payment.amountCents)}
-                  </dd>
-                </div>
-              )}
-            </dl>
-            {order.fulfilmentMethod === 'delivery' && order.deliveryAddress && (
-              <div className="mt-5 border-t pt-4 text-sm">
-                <h3 className="font-semibold">Delivery address</h3>
-                <p className="mt-2">
-                  {order.deliveryAddress.recipientName}
-                  <br />
-                  {order.deliveryAddress.street}
-                  <br />
-                  {order.deliveryAddress.postalCode}{' '}
-                  {order.deliveryAddress.city}, {order.deliveryAddress.country}
-                </p>
-                {typeof order.deliveryAddress.notes === 'string' &&
-                  order.deliveryAddress.notes && (
-                    <p className="mt-2 text-muted-foreground">
-                      Note: {order.deliveryAddress.notes}
-                    </p>
-                  )}
-              </div>
-            )}
-          </Card>
-
-          {order.refundRequest && (
-            <RefundSummary
-              status={order.refundRequest.status}
-              reason={order.refundRequest.reason}
-              requestedAt={order.refundRequest.requestedAt}
-              decidedAt={order.refundRequest.decidedAt}
-              refundedCents={order.refundRequest.refundedCents}
-            />
-          )}
-
-          {audience === 'buyer' &&
-            order.status === 'pending' &&
-            order.origin === 'catalogue' &&
-            order.refundRequest?.status !== 'open' &&
-            order.refundRequest?.status !== 'accepted' && (
-              <Card className="p-5 md:p-7">
-                <h2 className="text-lg font-semibold">Request a refund</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  The producer will review your request. This order remains
-                  pending, and confirmation is paused while the request is open.
-                </p>
-                <form
-                  className="mt-4 space-y-3"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    if (reason.trim())
-                      act(`orders/${order.id}/refund-requests`, 'POST', {
-                        reason: reason.trim(),
-                      });
-                  }}
-                >
-                  <label
-                    className="block text-sm font-medium"
-                    htmlFor="refund-reason"
-                  >
-                    Reason
-                  </label>
-                  <Textarea
-                    id="refund-reason"
-                    value={reason}
-                    onChange={(event) => setReason(event.target.value)}
-                    maxLength={500}
-                    required
-                    aria-describedby="refund-reason-help"
-                  />
-                  <p
-                    id="refund-reason-help"
-                    className="text-xs text-muted-foreground"
-                  >
-                    Explain why you need the order refunded.
-                  </p>
-                  <Button
-                    disabled={
-                      !reason.trim() ||
-                      mutation.isPending ||
-                      orders.isFetching ||
-                      orders.isError
-                    }
-                    className="min-h-11"
-                  >
-                    {mutation.isPending ? 'Sending…' : 'Send refund request'}
-                  </Button>
-                </form>
-              </Card>
-            )}
-
-          {audience === 'producer' && order.status !== 'cancelled' && (
-            <ProducerOrderActions
-              order={order}
-              next={next}
-              pending={
-                mutation.isPending || orders.isFetching || orders.isError
-              }
-              reason={reason}
-              setReason={setReason}
-              act={act}
-            />
-          )}
         </section>
+      )}
+      {id && order && (
+        <OrderDetail
+          order={order}
+          audience={audience}
+          next={next}
+          description={statusDescription(order) ?? ''}
+          pending={mutation.isPending || orders.isFetching || orders.isError}
+          reason={reason}
+          setReason={setReason}
+          act={act}
+        />
       )}
     </main>
   );

@@ -41,6 +41,8 @@
   --input: var(--border);
   --ring: var(--primary);
   --radius: 0.625rem;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --duration-reveal: 200ms;
   --auth-surface: #f7f5ee;
   --font-editorial: 'Fraunces', Georgia, serif;
 }

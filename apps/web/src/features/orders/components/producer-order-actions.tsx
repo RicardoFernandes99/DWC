@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { ArrowRight, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { formatMoney } from '@/lib/format';
 import type { components } from '@/lib/api-schema';
 import { orderStatusText } from './order-format';
 
 type Order = components['schemas']['OrderResponseDto'];
-type OrderStatus = Order['status'];
-
+export type OrderAction = (
+  endpoint: string,
+  method: 'PATCH' | 'POST',
+  body?: Record<string, unknown>,
+) => void;
 export function ProducerOrderActions({
   order,
   next,
@@ -18,126 +21,77 @@ export function ProducerOrderActions({
   act,
 }: {
   order: Order;
-  next: OrderStatus | undefined;
+  next: Order['status'] | undefined;
   pending: boolean;
   reason: string;
   setReason: (value: string) => void;
-  act: (
-    endpoint: string,
-    method: 'PATCH' | 'POST',
-    body?: Record<string, unknown>,
-  ) => void;
+  act: OrderAction;
 }) {
-  const [confirm, setConfirm] = useState<'accept' | 'cancel' | null>(null);
+  const [decision, setDecision] = useState<
+    'accept' | 'decline' | 'cancel' | null
+  >(null);
+  const decisionTrigger = useRef<HTMLButtonElement | null>(null);
+  function toggleDecision(
+    value: NonNullable<typeof decision>,
+    trigger: HTMLButtonElement,
+  ) {
+    decisionTrigger.current = trigger;
+    setDecision(decision === value ? null : value);
+  }
+  function closeDecision() {
+    setDecision(null);
+    decisionTrigger.current?.focus();
+  }
   const openRequest = order.refundRequest?.status === 'open';
-  const canProgress =
-    Boolean(next) && !(order.status === 'pending' && openRequest);
+  const canProgress = next && !(order.status === 'pending' && openRequest);
+  const canCancel = order.status === 'pending' && order.origin === 'catalogue';
+  if (!openRequest && !canProgress && !canCancel) return null;
   return (
-    <Card className="p-5 md:p-7">
-      <h2 className="text-lg font-semibold">Order actions</h2>
-      {openRequest && (
-        <div className="mt-4 rounded-md border border-highlight bg-highlight/35 p-4 text-sm">
-          <p className="font-medium">Refund request needs a decision</p>
-          <p className="mt-1">
-            Confirmation is blocked while this request is open.
+    <section className="order-actions" aria-label="Order actions">
+      {openRequest ? (
+        <>
+          <div className="order-action-title">
+            <Undo2 size={17} aria-hidden="true" />
+            <h2>A refund needs your decision</h2>
+          </div>
+          <p className="order-action-copy">
+            Confirmation is paused while this request is open.
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="order-button-row">
             <Button
-              type="button"
-              className="min-h-11"
               disabled={pending}
-              onClick={() => setConfirm(confirm === 'accept' ? null : 'accept')}
+              onClick={(event) => toggleDecision('accept', event.currentTarget)}
+              aria-expanded={decision === 'accept'}
             >
               Accept and refund {formatMoney(order.totalCents)}
             </Button>
             <Button
-              type="button"
               variant="outline"
-              className="min-h-11"
               disabled={pending}
-              onClick={() => setConfirm(null)}
+              onClick={(event) =>
+                toggleDecision('decline', event.currentTarget)
+              }
+              aria-expanded={decision === 'decline'}
             >
-              Keep pending
+              Decline request
             </Button>
           </div>
-          {confirm === 'accept' && (
-            <div className="mt-4 rounded-md border bg-card p-4">
-              <p className="text-sm">
-                Accept this request and refund {formatMoney(order.totalCents)}{' '}
-                for this order, including its delivery fee?
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  className="min-h-11"
-                  disabled={pending}
-                  onClick={() =>
-                    act(`orders/${order.id}/refund-requests/accept`, 'POST')
-                  }
-                >
-                  {pending ? 'Processing…' : 'Confirm refund'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="min-h-11"
-                  disabled={pending}
-                  onClick={() => setConfirm(null)}
-                >
-                  Go back
-                </Button>
-              </div>
-            </div>
-          )}
-          <form
-            className="mt-4 space-y-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (reason.trim())
-                act(`orders/${order.id}/refund-requests/decline`, 'POST', {
-                  reason: reason.trim(),
-                });
-            }}
-          >
-            <label
-              className="block text-sm font-medium"
-              htmlFor="decline-reason"
-            >
-              Decline reason
-            </label>
-            <Textarea
-              id="decline-reason"
-              maxLength={500}
-              required
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              aria-describedby="decline-reason-help"
-            />
-            <p
-              id="decline-reason-help"
-              className="text-xs text-muted-foreground"
-            >
-              This reason is shared with the buyer.
+        </>
+      ) : canProgress ? (
+        <div className="order-next-action">
+          <div>
+            <h2>Ready for the next step?</h2>
+            <p className="order-action-copy">
+              {next === 'confirmed'
+                ? 'Confirm that you can fulfil this order.'
+                : next === 'shipped'
+                  ? 'Let the buyer know their order is on its way.'
+                  : next === 'ready_for_collection'
+                    ? 'Let the buyer know their order is ready.'
+                    : 'Record the completed handover.'}
             </p>
-            <Button
-              type="submit"
-              variant="outline"
-              className="min-h-11"
-              disabled={!reason.trim() || pending}
-            >
-              {pending ? 'Sending…' : 'Decline request'}
-            </Button>
-          </form>
-        </div>
-      )}
-      {canProgress && (
-        <div className="mt-5">
-          <p className="text-sm text-muted-foreground">
-            Advance this {order.fulfilmentMethod} order by one step.
-          </p>
+          </div>
           <Button
-            type="button"
-            className="mt-3 min-h-11"
             disabled={pending}
             onClick={() =>
               act(`orders/${order.id}/status`, 'PATCH', {
@@ -146,58 +100,105 @@ export function ProducerOrderActions({
               })
             }
           >
-            {pending ? 'Updating…' : `Mark ${orderStatusText(next!)}`}
+            {pending ? 'Updating…' : `Mark ${orderStatusText(next)}`}
+            <ArrowRight size={15} aria-hidden="true" />
           </Button>
         </div>
-      )}
-      {order.status === 'pending' && order.origin === 'catalogue' && (
-        <div className="mt-5 border-t pt-5">
-          <p className="text-sm text-muted-foreground">
-            Cancel this order and refund its full order total of{' '}
-            {formatMoney(order.totalCents)}, including the delivery fee.
+      ) : null}
+      {decision === 'decline' && openRequest && (
+        <form
+          className="order-decision"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (reason.trim())
+              act(`orders/${order.id}/refund-requests/decline`, 'POST', {
+                reason: reason.trim(),
+              });
+          }}
+        >
+          <label htmlFor="decline-reason">Decline reason</label>
+          <Textarea
+            id="decline-reason"
+            maxLength={500}
+            required
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            aria-describedby="decline-reason-help"
+          />
+          <p id="decline-reason-help" className="order-meta">
+            This reason is shared with the buyer.
           </p>
-          {confirm === 'cancel' ? (
-            <div className="mt-3 rounded-md border p-4">
-              <p className="text-sm">
-                The buyer will be refunded {formatMoney(order.totalCents)}. This
-                action cannot be undone.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="min-h-11"
-                  disabled={pending}
-                  onClick={() =>
-                    act(`orders/${order.id}/cancel-refund`, 'POST')
-                  }
-                >
-                  {pending ? 'Processing…' : 'Confirm cancellation and refund'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="min-h-11"
-                  disabled={pending}
-                  onClick={() => setConfirm(null)}
-                >
-                  Go back
-                </Button>
-              </div>
-            </div>
-          ) : (
+          <div className="order-button-row">
+            <Button
+              type="submit"
+              variant="outline"
+              disabled={!reason.trim() || pending}
+            >
+              {pending ? 'Sending…' : 'Confirm decline'}
+            </Button>
             <Button
               type="button"
-              variant="outline"
-              className="mt-3 min-h-11"
+              variant="ghost"
               disabled={pending}
-              onClick={() => setConfirm('cancel')}
+              onClick={closeDecision}
             >
-              Cancel and refund…
+              Go back
             </Button>
-          )}
+          </div>
+        </form>
+      )}
+      {((decision === 'accept' && openRequest) ||
+        (decision === 'cancel' && canCancel)) && (
+        <div
+          className="order-decision"
+          role="group"
+          aria-label="Confirm refund"
+        >
+          <p className="order-confirm-amount">
+            {formatMoney(order.totalCents)} <span>will be refunded</span>
+          </p>
+          <p className="order-action-copy">
+            {decision === 'accept'
+              ? 'Accept this request and cancel this order, including its delivery fee?'
+              : 'Cancel this order, including its delivery fee?'}{' '}
+            The refund cannot be undone.
+          </p>
+          <div className="order-button-row">
+            <Button
+              variant={decision === 'cancel' ? 'destructive' : 'default'}
+              disabled={pending}
+              onClick={() =>
+                act(
+                  `orders/${order.id}/${decision === 'accept' ? 'refund-requests/accept' : 'cancel-refund'}`,
+                  'POST',
+                )
+              }
+            >
+              {pending
+                ? 'Processing…'
+                : decision === 'accept'
+                  ? 'Confirm refund'
+                  : 'Confirm cancellation and refund'}
+            </Button>
+            <Button variant="ghost" disabled={pending} onClick={closeDecision}>
+              Go back
+            </Button>
+          </div>
         </div>
       )}
-    </Card>
+      {canCancel && (
+        <div className="order-cancel-action">
+          <Button
+            variant="link"
+            disabled={pending}
+            onClick={(event) => toggleDecision('cancel', event.currentTarget)}
+            aria-expanded={decision === 'cancel'}
+          >
+            Cancel and refund…
+          </Button>
+          <span>Refund this order's full {formatMoney(order.totalCents)}.</span>
+        </div>
+      )}
+    </section>
   );
 }
