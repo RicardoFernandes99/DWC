@@ -4,7 +4,7 @@
 - Status: In review
 - Depends on: 019, 028
 - PR: https://github.com/RicardoFernandes99/DWC/pull/45
-- Branch / parent: `codex/age-031-reviews-api` on `codex/age-030-live-auction-web` (PR #44, `f81929e`); native stack #34
+- Branch / parent: `codex/age-031-reviews-api` on `codex/age-030-live-auction-web` (PR #44, `a17de13`); native stack #34
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -49,7 +49,7 @@ Review a completed delivery/collection order, retry it and report a review. Chec
 
 - Orchestrator/reviewer: Claude Opus 5.5. Builder: Claude Sonnet (Agent tool), one handoff, 0 correction rounds. Usage measurements unavailable.
 - User decisions: public reviews show the reviewer first name only; reports need a category (spam, offensive, off_topic, false_information, other) plus an optional note up to 500 characters.
-- Frontier verdict: APPROVED on implementation `29b75bd` (parent `f81929e`).
+- Frontier verdict: APPROVED on implementation `29b75bd` (parent `a17de13`).
 - Checks on `29b75bd`: API typecheck and build, `pnpm contract:check`, web
   typecheck, root lint, scoped Prettier: pass.
 - Real-stack fixture `demos/ticket-031-review/review-api.ts` against Mongo/Redis
