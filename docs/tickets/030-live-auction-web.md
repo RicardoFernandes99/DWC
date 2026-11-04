@@ -3,7 +3,7 @@
 - Macro: M05
 - Status: In review
 - Depends on: 006, 014, 025, 027, 028, 029
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/44
 - Branch / parent: `codex/age-030-live-auction-web` on `codex/age-029-producer-auctions` (PR #43)
 - Blockers: None beyond dependencies
 
@@ -60,7 +60,7 @@ additions: `GET /api/auctions/{id}/live` (state and `serverTime`), buyer-only
 never exposes order/payment IDs publicly, and a producer filter on the public
 list.
 
-- Parent: PR #43 at `8cc45c3` (includes the 029 visual polish follow-up).
+- Reviewed implementation: `10d1779`. Parent: PR #43 at `8cc45c3` (includes the 029 visual polish follow-up).
 - Orchestration started in Codex (`gpt-6-luna` High executor) and was handed
   over mid-review to Claude Opus 5.5 as frontier with a Sonnet 5.5 builder.
   Frontier verdict: APPROVED after one formal correction round, which moved the
