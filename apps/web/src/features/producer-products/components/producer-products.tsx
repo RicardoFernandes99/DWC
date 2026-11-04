@@ -13,6 +13,7 @@ import {
   PRODUCTION_METHODS as methods,
 } from '@/lib/format';
 import { ApiError, authenticatedRequest } from '@/lib/session';
+import { producerMetricsKey } from '@/features/producer-dashboard/metrics';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -119,6 +120,7 @@ function ProductEditor({
         }
       }
       await client.invalidateQueries({ queryKey: productKey });
+      void client.invalidateQueries({ queryKey: producerMetricsKey });
       onSaved();
     },
   });
@@ -564,7 +566,10 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
         method: 'POST',
         body: JSON.stringify({ revision: product.revision }),
       }),
-    onSuccess: () => client.invalidateQueries({ queryKey: productKey }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: producerMetricsKey });
+      return client.invalidateQueries({ queryKey: productKey });
+    },
   });
   if (query.isPending)
     return (
@@ -755,6 +760,7 @@ function ProductRoute({
         product={query.data}
         onSaved={() => {
           void client.invalidateQueries({ queryKey: productKey });
+          void client.invalidateQueries({ queryKey: producerMetricsKey });
           onDone();
         }}
       />

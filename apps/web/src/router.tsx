@@ -22,6 +22,7 @@ import {
   ProducerDetailRoute,
   type SearchState,
 } from './features/catalogue/catalogue';
+import { validateMetricsSearch } from './features/producer-dashboard/metrics';
 import {
   PRODUCT_CATEGORIES,
   PRODUCT_SEASONS,
@@ -218,11 +219,13 @@ const account = createRoute({
 const producer = createRoute({
   getParentRoute: () => root,
   path: '/producer',
+  validateSearch: validateMetricsSearch,
   component: Account,
 });
 const producerSubroute = createRoute({
   getParentRoute: () => root,
   path: '/producer/$',
+  validateSearch: validateMetricsSearch,
   component: Account,
 });
 const producerProductRoute = createRoute({
