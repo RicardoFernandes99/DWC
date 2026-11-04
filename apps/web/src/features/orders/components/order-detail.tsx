@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { formatLabel, formatMoney, formatUnit } from '@/lib/format';
 import type { components } from '@/lib/api-schema';
+import { OrderReview } from '@/features/reviews/components/order-review';
 import { OrderTimeline, RefundSummary } from './order-presentation';
 import { orderDateLabel, orderStatusText } from './order-format';
 import {
@@ -89,6 +90,7 @@ export function OrderDetail({
           />
         )}
         {order.refundRequest && <RefundSummary request={order.refundRequest} />}
+        {audience === 'buyer' && complete && <OrderReview orderId={order.id} />}
         {canRequest && (
           <details className="order-request-disclosure">
             <summary>

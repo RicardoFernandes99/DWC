@@ -19,6 +19,10 @@ import { Button } from '@/components/ui/button';
 import { formatLabel, formatMoney, formatUnit } from '@/lib/format';
 import { ApiError, publicRequest } from '@/lib/session';
 import { useCart } from '@/features/cart/use-cart';
+import {
+  ProducerRatingSummary,
+  ProducerReviews,
+} from '@/features/reviews/components/producer-reviews';
 import { CatalogueFilters } from './components/catalogue-filters';
 import { ProducerAuctionsSection } from '@/features/auctions/components/producer-auctions-section';
 import {
@@ -474,7 +478,8 @@ export function ProducerPage({ producerId }: { producerId: string }) {
           <h1 className="mt-3 break-words text-4xl leading-tight md:text-5xl">
             {producer.farmName}
           </h1>
-          <p className="mt-4 max-w-2xl break-words whitespace-pre-line leading-relaxed">
+          <ProducerRatingSummary producerId={producerId} />
+          <p className="mt-2 max-w-2xl break-words whitespace-pre-line leading-relaxed">
             {producer.description}
           </p>
         </div>
@@ -494,6 +499,7 @@ export function ProducerPage({ producerId }: { producerId: string }) {
         producerId={producerId}
         farmName={producer.farmName}
       />
+      <ProducerReviews producerId={producerId} />
     </main>
   );
 }
