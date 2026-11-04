@@ -3,8 +3,8 @@
 - Macro: M06
 - Status: In review
 - Depends on: 014, 021, 031
-- PR: Not opened
-- Branch / parent: Not assigned
+- PR: https://github.com/RicardoFernandes99/DWC/pull/46
+- Branch / parent: `codex/age-032-reviews-web` / PR #45 `codex/age-031-reviews-api` at `3aac723` (native stack #34)
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -51,7 +51,7 @@ Read/create/report a review in a browser and try a duplicate submission. Check a
 - User decision: the outstanding uncommitted orders-screen redesign found in the checkout was evaluated (typecheck/lint pass, behaviour preserved, token-only feature CSS) and committed separately as `b982ff8` on this branch, per the user's instruction to commit it if it belonged to the project.
 - Frontend skills: `web-feature`, `design-engineering`, `interface-design`, `emil-design-eng`.
 - Implementation: `features/reviews/` (queries, star display/input, producer reviews, report action, order review panel); minimal mounts in `catalogue.tsx` (header summary + Reviews section) and `order-detail.tsx` (buyer, delivered/collected).
-- Frontier verdict: APPROVED on the working tree committed as the ticket commit (parent `3aac723`, PR #45).
+- Frontier verdict: APPROVED on the working tree implementation commit `5ea6f43` (parent `3aac723`, PR #45).
 - Checks: web typecheck, root lint (0 warnings), web build with React Compiler check, scoped Prettier, `git diff --check`: pass. `pnpm --filter @dwc/web test`: 7 failures in `app.test.tsx`/`producer-onboarding.test.tsx` (`isServer` of null), identical on parent `3aac723`, so pre-existing and unrelated.
 - Browser: `demos/ticket-032-review/seed.ts` + `review-browser.ts` (Playwright, Chrome) against the built API on 3131 and Vite on 5174; 16 states at 390/900/1440, no page errors or horizontal overflow. Covers summary/list/pagination by keyboard, empty and error states, hidden review excluded, literal HTML in comments, signed-out report prompt, report required category, error retention, idempotent repeat and 404, delivered and collected review forms, arrow-key star selection, success refreshing the public list, a stale-tab duplicate showing 409 `review_exists`, and API error retention. Frontier re-checked pagination, count agreement and the signed-out report link in the Claude browser. Screenshots stay local under `demos/ticket-032-review/` (untracked).
 - Limitations: the seed adds `ticket032-` tagged records to local Mongo and does not clean them up; re-seed before re-running the browser script. The header summary shares the page-1 query, so it updates after invalidation/refetch.
