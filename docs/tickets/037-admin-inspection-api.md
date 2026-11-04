@@ -1,10 +1,10 @@
 # 037: Inspect users, orders, auctions and service health as admin
 
 - Macro: M08
-- Status: In progress
+- Status: In review
 - Depends on: 002, 009, 019, 028
-- PR: Not opened
-- Branch / parent: `codex/age-037-admin-inspection-api` / `242a9dee39c5808b567b95aeac7f272a6c5e259e`
+- PR: https://github.com/RicardoFernandes99/DWC/pull/51
+- Branch / parent: `codex/age-037-admin-inspection-api` / `codex/age-036-content-moderation-api` (PR 50)
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -57,6 +57,8 @@ parent commit `242a9dee39c5808b567b95aeac7f272a6c5e259e`.
   formal correction rounds. Review feedback during implementation corrected
   response metadata, explicit field mappings and DTO declaration ordering.
   Token and cost measurements are unavailable.
+- Reviewed implementation: `577e975`. PR 51 is ready for review in native stack
+  34. No merge performed.
 
 - `pnpm --filter @dwc/api typecheck`: passed.
 - `pnpm --filter @dwc/api build`: passed through contract generation/check.
