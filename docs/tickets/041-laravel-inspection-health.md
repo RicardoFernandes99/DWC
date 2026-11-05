@@ -1,9 +1,9 @@
 # 041: Inspect marketplace records and health in Laravel
 
 - Macro: M08
-- Status: In progress
+- Status: In review
 - Depends on: 037, 038
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/55
 - Branch / parent: `codex/age-041-laravel-inspection-health` / `codex/age-040-laravel-content-moderation`
 - Blockers: None beyond dependencies
 
@@ -46,7 +46,9 @@ Use backoffice static checks and inspect representative records plus a degraded 
 
 ## Delivery notes
 
-Frontier **APPROVED** after three correction rounds. Publication is pending.
+Frontier **APPROVED** after three correction rounds. Ready-for-review PR 55 is
+stacked on PR 54 through native `gh stack`, stack 34. Reviewed implementation
+commit: `2f933a7b41749384fb1d9e3bfbe1bc270c7cbcb0`.
 
 - Parent PR 54 at `b84ea867765cbf1638bb1972dbf937886be82202`; existing checkout,
   no worktree. API dependency 037 and Laravel authentication 038 are present.
@@ -100,3 +102,6 @@ Frontier **APPROVED** after three correction rounds. Publication is pending.
   the mixed-origin order-row alignment. No API contract or domain write changed.
 - Existing API controller line-ending changes and unrelated demo/temp artifacts
   are excluded from this ticket. No merge is authorized by this delivery.
+- Review API processes, the isolated health API and Laravel container were
+  stopped after verification. MongoDB, Redis and storage remain healthy. No
+  listeners remain on the owned review ports 3000/3002/8080/8081/3141.
