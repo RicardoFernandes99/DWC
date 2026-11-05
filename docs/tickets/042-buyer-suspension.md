@@ -1,9 +1,9 @@
 # 042: Define and implement buyer suspension behavior
 
 - Macro: M08
-- Status: In progress
+- Status: In review
 - Depends on: 027, 028, 039
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/56
 - Branch / parent: `codex/age-042-buyer-suspension` / `codex/age-041-laravel-inspection-health` (PR 55)
 - Blockers: None. User confirmed the policy choices on 2026-11-05.
 
@@ -65,6 +65,11 @@ inbox notification in the same transaction. Reinstatement retains the last
 suspension reason for admin inspection, while `/auth/me` exposes a reason only
 during suspension. Checkout and bid acceptance share a real buyer-document write
 with suspension, inside their respective MongoDB transactions.
+
+Reviewed implementation revision: `0d703dab4b26e2bc339825e57dadd0936fec76dc`.
+Published ready for review as PR 56 through native `gh stack` stack 34, targeting
+PR 55's branch. No merge performed. Final metadata-only update follows this
+reviewed implementation; check final-head CI on the PR.
 
 API/web typecheck and build, tools strict TypeScript, root ESLint with the
 pre-existing untracked `demos/ticket-040-review/review.ts` excluded, scoped
