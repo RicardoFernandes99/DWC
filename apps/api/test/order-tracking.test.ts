@@ -21,6 +21,7 @@ import {
 } from '../dist/checkout/payment.schema.js';
 import {
   type UserDocument,
+  BuyerStatus,
   ProducerStatus,
   UserRole,
 } from '../dist/users/user.schema.js';
@@ -258,6 +259,8 @@ const buyerUser: UserResponseDto = {
   role: UserRole.Buyer,
   producerStatus: null,
   producerRejectionReason: null,
+  buyerStatus: BuyerStatus.Active,
+  buyerSuspensionReason: null,
 };
 
 const producerUser: UserResponseDto = {
@@ -267,6 +270,8 @@ const producerUser: UserResponseDto = {
   role: UserRole.Producer,
   producerStatus: ProducerStatus.Approved,
   producerRejectionReason: null,
+  buyerStatus: BuyerStatus.Active,
+  buyerSuspensionReason: null,
 };
 
 const otherProducerUser: UserResponseDto = {
@@ -276,6 +281,8 @@ const otherProducerUser: UserResponseDto = {
   role: UserRole.Producer,
   producerStatus: ProducerStatus.Approved,
   producerRejectionReason: null,
+  buyerStatus: BuyerStatus.Active,
+  buyerSuspensionReason: null,
 };
 
 const suspendedProducerUser: UserResponseDto = {
@@ -285,6 +292,8 @@ const suspendedProducerUser: UserResponseDto = {
   role: UserRole.Producer,
   producerStatus: ProducerStatus.Suspended,
   producerRejectionReason: null,
+  buyerStatus: BuyerStatus.Active,
+  buyerSuspensionReason: null,
 };
 
 function createSampleOrder(

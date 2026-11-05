@@ -22,7 +22,7 @@ import {
   ProductUnit,
   ProductionMethod,
 } from '../products/product.schema.js';
-import { ProducerStatus, UserRole } from '../users/user.schema.js';
+import { BuyerStatus, ProducerStatus, UserRole } from '../users/user.schema.js';
 
 export class AdminPageQueryDto {
   @ApiPropertyOptional({ type: Number, minimum: 1, maximum: 500, default: 1 })
@@ -106,6 +106,8 @@ export class AdminUserListItemDto {
   @ApiProperty({ enum: UserRole }) role!: UserRole;
   @ApiProperty({ enum: ProducerStatus, nullable: true })
   producerStatus!: ProducerStatus | null;
+  @ApiProperty({ enum: BuyerStatus, nullable: true })
+  buyerStatus!: BuyerStatus | null;
   @ApiProperty({ type: String, nullable: true }) farmName!: string | null;
   @ApiProperty({ type: String, nullable: true }) city!: string | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
@@ -143,6 +145,13 @@ export class AdminUserDetailDto extends AdminUserListItemDto {
   producerDecisionAt!: string | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   updatedAt!: string | null;
+  @ApiProperty({ type: String, nullable: true }) buyerSuspensionReason!:
+    string | null;
+  @ApiProperty({ minimum: 0 }) buyerDecisionRevision!: number;
+  @ApiProperty({ type: String, nullable: true }) buyerDecisionBy!:
+    string | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  buyerDecisionAt!: string | null;
 }
 
 export class AdminOrderListItemDto {

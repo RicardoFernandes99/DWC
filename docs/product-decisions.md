@@ -280,10 +280,40 @@ replaced are not requirements.
   Hiding or restoring a review notifies nobody. Reporter identity and report notes
   appear only in admin responses.
 
+### Buyer suspension policy (ticket 042)
+
+- Suspended buyers can sign in, refresh their session and read their account,
+  existing orders, auction results and private notification inbox. Suspension
+  does not revoke their sessions or change their role.
+- Suspension blocks new catalogue purchases and new auction bids, including
+  submissions from already-open HTTP sessions and sockets. The cart is preserved.
+  The API must serialize acceptance with suspension so a stale eligibility read
+  cannot admit a new commitment after suspension takes effect. An idempotent retry
+  may return an already-accepted commitment without creating another one.
+- Bids accepted before suspension remain valid. If one wins, normal automatic
+  settlement records the payment and creates the Confirmed collection order.
+  Suspension does not remove bids, change the winner or hold settlement.
+- Existing paid orders continue through normal fulfilment. Buyers retain the
+  existing Pending catalogue-order refund-request rights. Producers can decide
+  requests and cancel eligible orders normally. Suspension never automatically
+  cancels or refunds an order and does not extend refund eligibility.
+- Saved-card management, reviews of completed orders, review reports and marking
+  notifications read remain available under their existing rules.
+- Existing sockets stay connected for public auction watching and private
+  notifications. Current sessions receive suspension/reinstatement updates; every
+  new bid is independently checked by the server. Order, refund and auction-result
+  notifications continue during suspension. Reconnect fetches current server state.
+- Admin-only suspend/reinstate controls record the reason, actor and time and
+  reject stale decisions. The buyer sees the active suspension reason and clear
+  purchase/bid restrictions. Producer suspension remains unchanged.
+- Reinstatement restores purchases and bids immediately in existing sessions,
+  subject to all normal eligibility checks. It notifies the buyer and removes the
+  active suspension banner. Admin decision metadata remains available. Blocked
+  submissions are never replayed automatically; the buyer must resubmit them.
+
 ## Open decisions
 
 Resolve these with the affected tickets, without blocking unrelated work:
 
 - Invoice format, required information and PDF download.
 - Account recovery scope. Session implementation details are drafted in ticket 003.
-- Buyer suspension behavior, including effects on existing bids/orders.

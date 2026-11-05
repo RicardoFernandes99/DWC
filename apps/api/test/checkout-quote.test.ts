@@ -22,8 +22,8 @@ import {
   FulfilmentMethod,
 } from '../dist/checkout/checkout.dto.js';
 import {
+  type User,
   ProducerStatus,
-  type UserDocument,
   UserRole,
 } from '../dist/users/user.schema.js';
 import {
@@ -111,7 +111,7 @@ function createMockModels(
 
   return {
     productModel: productModel as unknown as Model<ProductDocument>,
-    userModel: userModel as unknown as Model<UserDocument>,
+    userModel: userModel as unknown as Model<User>,
     didAttemptWrite: () => writeAttempted,
   };
 }
@@ -520,7 +520,7 @@ test('Fails when delivery address is incomplete or missing for delivery fulfilme
 test('Fingerprint is deterministic and responds to price, quantity, revision, and method changes', async () => {
   const service = new CheckoutService(
     {} as unknown as Model<ProductDocument>,
-    {} as unknown as Model<UserDocument>,
+    {} as unknown as Model<User>,
     quoteOnlyNotificationIntegration,
   );
 

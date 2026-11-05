@@ -8,6 +8,7 @@ use App\DTOs\InspectionPayload;
 use App\Exceptions\ApiSessionExpired;
 use App\Exceptions\BackofficeUnavailable;
 use App\Exceptions\InspectionRecordNotFound;
+use App\Exceptions\ProducerApiFailure;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -35,6 +36,35 @@ final class NestInspectionService
     public function user(array $credentials, string $id): array
     {
         return InspectionPayload::user($this->object($this->get($credentials, 'admin/users/'.$id, [], true)), true);
+    }
+
+    /** @param array{revision: int, reason?: string} $input @return array<string, mixed> */
+    public function changeBuyerStanding(array $credentials, string $id, string $action, array $input): array
+    {
+        $token = $credentials['access_token'] ?? null;
+        if (! is_string($token) || $token === '' || strlen($token) > 4096) {
+            throw new ApiSessionExpired;
+        }
+        $response = $this->request($token)->post($this->url('admin/buyers/'.$id.'/'.$action), $input);
+        if ($response->status() === 401 || $response->status() === 403) {
+            throw new ApiSessionExpired;
+        }
+        if (! $response->successful()) {
+            $body = $response->json();
+            $message = is_array($body) && is_string($body['message'] ?? null)
+                ? trim(preg_replace('/[\x00-\x1F\x7F]/u', ' ', $body['message']) ?? '')
+                : '';
+            if (in_array($response->status(), [400, 404, 409], true) && $message !== '' && strlen($message) <= 500) {
+                throw new ProducerApiFailure($response->status(), $message);
+            }
+            throw new BackofficeUnavailable;
+        }
+        $payload = $response->json();
+        if (! is_array($payload)) {
+            throw new BackofficeUnavailable;
+        }
+
+        return InspectionPayload::buyerStanding($payload);
     }
 
     public function order(array $credentials, string $id): array

@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\ApiSessionExpired;
 use App\Exceptions\BackofficeUnavailable;
 use App\Exceptions\InspectionRecordNotFound;
+use App\Exceptions\ProducerApiFailure;
 use App\Services\NestAuthService;
 use App\Services\NestInspectionService;
 use Illuminate\Http\Client\ConnectionException;
@@ -60,7 +61,12 @@ final class AdminInspectionController
                 throw new BackofficeUnavailable;
             }
 
-            return view('inspection.user', ['user' => $user]);
+            $draft = $request->session()->get('buyer_decision_draft');
+            if (! is_array($draft) || ($draft['id'] ?? null) !== $id) {
+                $draft = null;
+            }
+
+            return view('inspection.user', ['user' => $user, 'buyerDecisionDraft' => $draft]);
         } catch (ApiSessionExpired|UnexpectedValueException) {
             return $this->expired($request);
         } catch (InspectionRecordNotFound) {
@@ -68,6 +74,57 @@ final class AdminInspectionController
         } catch (BackofficeUnavailable|ConnectionException) {
             return $this->unavailable('inspection.user', ['id' => $id]);
         }
+    }
+
+    public function buyerStanding(Request $request, string $id, string $action): RedirectResponse|HttpResponse
+    {
+        if (! in_array($action, ['suspend', 'reinstate'], true)) {
+            abort(404);
+        }
+        $input = Validator::make($request->all(), [
+            'revision' => ['required', 'integer', 'min:0'],
+            'reason' => [$action === 'suspend' ? 'required' : 'nullable', 'string', 'min:1', 'max:500'],
+        ])->validate();
+        $input['revision'] = (int) $input['revision'];
+        if ($action === 'suspend') {
+            $input['reason'] = trim($input['reason']);
+        } else {
+            unset($input['reason']);
+        }
+        try {
+            $updated = $this->inspection->changeBuyerStanding($this->credentials($request), $id, $action, $input);
+            if (($updated['id'] ?? null) !== $id) {
+                throw new BackofficeUnavailable;
+            }
+        } catch (ApiSessionExpired|UnexpectedValueException) {
+            return $this->expired($request);
+        } catch (ProducerApiFailure $failure) {
+            return redirect()->route('inspection.user', $id)
+                ->withInput($input)
+                ->with('buyer_standing_error', $failure->getMessage());
+        } catch (BackofficeUnavailable|ConnectionException) {
+            return response()->view('inspection.buyer-standing-unavailable', [
+                'id' => $id,
+                'action' => $action,
+                'reason' => $input['reason'] ?? null,
+            ], 503);
+        }
+
+        $request->session()->forget('buyer_decision_draft');
+
+        return redirect()->route('inspection.user', $id)->with('notice', $action === 'suspend'
+            ? 'Buyer suspended. New purchases and bids are blocked; existing orders and accepted bids continue.'
+            : 'Buyer reinstated. New purchases and bids are available again.');
+    }
+
+    public function discardBuyerDraft(Request $request, string $id): RedirectResponse
+    {
+        $draft = $request->session()->get('buyer_decision_draft');
+        if (is_array($draft) && ($draft['id'] ?? null) === $id) {
+            $request->session()->forget('buyer_decision_draft');
+        }
+
+        return redirect()->route('inspection.user', $id);
     }
 
     public function orders(Request $request): View|RedirectResponse|HttpResponse

@@ -14,6 +14,11 @@ export enum ProducerStatus {
   Suspended = 'suspended',
 }
 
+export enum BuyerStatus {
+  Active = 'active',
+  Suspended = 'suspended',
+}
+
 @Schema({ _id: false })
 export class ProducerApplication {
   @Prop({ required: true, trim: true, minlength: 1, maxlength: 120 })
@@ -91,6 +96,28 @@ export class User {
 
   @Prop({ type: Date, default: null })
   producerDecisionAt!: Date | null;
+
+  @Prop({
+    type: String,
+    enum: Object.values(BuyerStatus),
+    default: BuyerStatus.Active,
+  })
+  buyerStatus!: BuyerStatus;
+
+  @Prop({ type: String, trim: true, maxlength: 500, default: null })
+  buyerSuspensionReason!: string | null;
+
+  @Prop({ type: Number, default: 0, min: 0 })
+  buyerDecisionRevision!: number;
+
+  @Prop({ type: Number, default: 0, min: 0 })
+  buyerEligibilityRevision!: number;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
+  buyerDecisionBy!: Types.ObjectId | null;
+
+  @Prop({ type: Date, default: null })
+  buyerDecisionAt!: Date | null;
 }
 
 export type UserDocument = HydratedDocument<User> & {

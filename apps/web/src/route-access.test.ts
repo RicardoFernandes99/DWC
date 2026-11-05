@@ -9,6 +9,8 @@ const buyer: User = {
   email: 'buyer@example.com',
   role: 'buyer',
   producerStatus: null,
+  buyerStatus: 'active' as const,
+  buyerSuspensionReason: null,
   producerRejectionReason: null,
 };
 const producer: User = {

@@ -133,6 +133,27 @@ export function Shell() {
           </div>
         </nav>
       </header>
+      {query.data?.role === 'buyer' &&
+        query.data.buyerStatus === 'suspended' && (
+          <section
+            className="mx-auto mt-4 max-w-5xl px-6"
+            aria-live="polite"
+            aria-label="Account suspension"
+          >
+            <div className="rounded-lg border border-warning/50 bg-warning/10 px-4 py-3 text-sm">
+              <h2 className="font-semibold">Purchases and bids are paused</h2>
+              <p className="mt-1">
+                You can still manage your account, saved cards, orders, reviews
+                and notifications. Your cart is saved.
+              </p>
+              {query.data.buyerSuspensionReason && (
+                <p className="mt-2 text-muted-foreground">
+                  Reason: {query.data.buyerSuspensionReason}
+                </p>
+              )}
+            </div>
+          </section>
+        )}
       {!changingAuth && access === 'home' ? (
         <Navigate to="/" replace />
       ) : access === 'login' ? (

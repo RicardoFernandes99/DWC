@@ -47,5 +47,15 @@ export function NotificationLink({
         View application
       </Link>
     );
+  if (notification.resource.type === 'buyer_account' && role === 'buyer')
+    return (
+      <Link
+        to="/account"
+        onClick={onNavigate}
+        className="notification-resource-link"
+      >
+        View account
+      </Link>
+    );
   return null;
 }

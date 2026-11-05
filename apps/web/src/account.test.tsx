@@ -22,6 +22,8 @@ const person = {
   email: 'buyer@example.com',
   role: 'buyer' as const,
   producerStatus: null,
+  buyerStatus: 'active' as const,
+  buyerSuspensionReason: null,
   producerRejectionReason: null,
 };
 function showAccount() {

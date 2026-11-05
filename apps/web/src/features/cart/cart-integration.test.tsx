@@ -68,6 +68,8 @@ function renderCart(userRole?: 'buyer' | 'producer' | null) {
         email: `${userRole}@example.com`,
         role: userRole,
         producerStatus: userRole === 'producer' ? ('approved' as const) : null,
+        buyerStatus: 'active' as const,
+        buyerSuspensionReason: null,
         producerRejectionReason: null,
       }
     : null;

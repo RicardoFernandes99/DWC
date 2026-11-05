@@ -879,6 +879,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/buyers/{id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminBuyersController_suspend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/buyers/{id}/reinstate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminBuyersController_reinstate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -907,6 +939,13 @@ export interface components {
             producerStatus: null | "pending" | "approved" | "rejected" | "suspended";
             /** @example null */
             producerRejectionReason: string | null;
+            /**
+             * @example active
+             * @enum {string}
+             */
+            buyerStatus: "active" | "suspended";
+            /** @example null */
+            buyerSuspensionReason: string | null;
         };
         AuthResponseDto: {
             accessToken: string;
@@ -2181,14 +2220,14 @@ export interface components {
         };
         NotificationResourceDto: {
             /** @enum {string} */
-            type: "order" | "producer_application" | "auction" | "product";
+            type: "order" | "producer_application" | "buyer_account" | "auction" | "product";
             /** @example 507f1f77bcf86cd799439011 */
             id: string;
         };
         NotificationResponseDto: {
             id: string;
             /** @enum {string} */
-            eventType: "order_created" | "order_status_changed" | "refund_requested" | "refund_decision" | "producer_application_approved" | "producer_application_rejected" | "producer_suspended" | "producer_reinstated" | "product_hidden" | "product_restored" | "auction_won" | "auction_lost" | "auction_closed" | "auction_payment_method_expired";
+            eventType: "order_created" | "order_status_changed" | "refund_requested" | "refund_decision" | "producer_application_approved" | "producer_application_rejected" | "producer_suspended" | "producer_reinstated" | "buyer_suspended" | "buyer_reinstated" | "product_hidden" | "product_restored" | "auction_won" | "auction_lost" | "auction_closed" | "auction_payment_method_expired";
             title: string;
             message: string;
             resource: components["schemas"]["NotificationResourceDto"];
@@ -2481,6 +2520,8 @@ export interface components {
             role: "buyer" | "producer" | "admin";
             /** @enum {string|null} */
             producerStatus: "pending" | "approved" | "rejected" | "suspended" | null;
+            /** @enum {string|null} */
+            buyerStatus: "active" | "suspended" | null;
             farmName: string | null;
             city: string | null;
             /** Format: date-time */
@@ -2508,6 +2549,8 @@ export interface components {
             role: "buyer" | "producer" | "admin";
             /** @enum {string|null} */
             producerStatus: "pending" | "approved" | "rejected" | "suspended" | null;
+            /** @enum {string|null} */
+            buyerStatus: "active" | "suspended" | null;
             farmName: string | null;
             city: string | null;
             /** Format: date-time */
@@ -2521,6 +2564,11 @@ export interface components {
             producerDecisionAt: string | null;
             /** Format: date-time */
             updatedAt: string | null;
+            buyerSuspensionReason: string | null;
+            buyerDecisionRevision: number;
+            buyerDecisionBy: string | null;
+            /** Format: date-time */
+            buyerDecisionAt: string | null;
         };
         AdminOrderListItemDto: {
             id: string;
@@ -2756,6 +2804,23 @@ export interface components {
             mongodbLatencyMs: number;
             redisLatencyMs: number;
             storageLatencyMs: number;
+        };
+        SuspendBuyerDto: {
+            revision: number;
+            reason: string;
+        };
+        AdminBuyerStandingDto: {
+            id: string;
+            /** @enum {string} */
+            status: "active" | "suspended";
+            revision: number;
+            reason: string | null;
+            decidedBy: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+        };
+        ReinstateBuyerDto: {
+            revision: number;
         };
     };
     responses: never;
@@ -5925,6 +5990,140 @@ export interface operations {
             };
             /** @description Administrator access is required. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminBuyersController_suspend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuspendBuyerDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBuyerStandingDto"];
+                };
+            };
+            /** @description Invalid identifier, revision, or reason. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Buyer not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Buyer standing changed or the decision is stale. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminBuyersController_reinstate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReinstateBuyerDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBuyerStandingDto"];
+                };
+            };
+            /** @description Invalid identifier or revision. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Administrator access is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Buyer not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Buyer standing changed or the decision is stale. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -74,6 +74,8 @@ export function CheckoutPage() {
     queryFn: currentUser,
   });
   const user = userQuery.data;
+  const buyerSuspended =
+    user?.role === 'buyer' && user.buyerStatus === 'suspended';
 
   // Stored / Form Address
   const [fulfilmentMethod, setFulfilmentMethod] =
@@ -569,6 +571,19 @@ export function CheckoutPage() {
           Complete your order with one fulfilment selection and card payment.
         </p>
       </div>
+
+      {buyerSuspended && (
+        <div
+          role="status"
+          className="mb-6 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm"
+        >
+          <p className="font-semibold">Purchases are paused for this account</p>
+          <p className="mt-1">
+            Your cart is saved. You can still manage saved cards and existing
+            orders.
+          </p>
+        </div>
+      )}
 
       {/* Notifications */}
       {priceChangedNotice && (
@@ -1138,6 +1153,7 @@ export function CheckoutPage() {
                     isSubmitting ||
                     quoteQuery.isPending ||
                     !quote ||
+                    buyerSuspended ||
                     hasIssues ||
                     !isAddressComplete
                   }
@@ -1148,6 +1164,8 @@ export function CheckoutPage() {
                       <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                       Processing order...
                     </span>
+                  ) : buyerSuspended ? (
+                    'Purchases paused'
                   ) : hasIssues ? (
                     'Unavailable items in cart'
                   ) : !isAddressComplete && fulfilmentMethod === 'delivery' ? (

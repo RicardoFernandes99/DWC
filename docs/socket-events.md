@@ -103,3 +103,19 @@ retried bids. Viewer counts may change without changing the auction revision.
 `auction.closed` contains only the public winner name and lot amount; it never
 includes buyer, order, or payment identifiers. A missed completion event is
 recovered by reading the finished auction and order through HTTP.
+
+## Buyer standing changes
+
+Administrators change buyer standing through `POST /api/admin/buyers/:id/suspend`
+and `POST /api/admin/buyers/:id/reinstate`; request and response bodies are
+documented in OpenAPI. A transition persists a private inbox notification and
+emits the existing `notification.created` event with its notification ID. The
+browser fetches the notification, refreshes `/api/auth/me`, and updates current
+session controls. No socket is disconnected and no new socket event is added.
+
+Each new checkout and bid acceptance writes the buyer record in its MongoDB
+transaction. Suspension writes that same record, so concurrent transitions and
+new commitments serialize. A prior idempotent retry can return its accepted
+commitment while suspended; a new commitment is refused. Accepted bids, auction
+settlement, paid-order fulfilment and refund requests follow their normal flows.
+Reconnect and focus recovery use the existing inbox and current-session fetch.

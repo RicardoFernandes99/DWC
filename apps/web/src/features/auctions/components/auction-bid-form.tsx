@@ -118,7 +118,10 @@ export function AuctionBidForm({
   const selectedMethod = eligibleMethods.find(
     (method) => method.id === (selectedMethodId || eligibleMethods[0]?.id),
   );
-  const canBid = live?.state === 'active' && Boolean(selectedMethod);
+  const canBid =
+    live?.state === 'active' &&
+    Boolean(selectedMethod) &&
+    user?.buyerStatus !== 'suspended';
 
   useEffect(() => {
     if (pending && user?.id) storePendingBid(user.id, auctionId, pending);
@@ -296,6 +299,17 @@ export function AuctionBidForm({
           {formatMoney(currentMinimum)}
         </strong>
       </p>
+      {user?.buyerStatus === 'suspended' && !pending && (
+        <p
+          role="status"
+          className="mt-3 rounded-md border border-warning/50 bg-warning/10 p-3 text-sm"
+        >
+          New bids are paused for this account.{' '}
+          {user.buyerSuspensionReason
+            ? `Reason: ${user.buyerSuspensionReason}`
+            : 'Your account can still watch the auction.'}
+        </p>
+      )}
       {live?.state === 'finished' && !pending ? (
         <p className="mt-4 text-sm text-muted-foreground">Bidding has ended.</p>
       ) : (

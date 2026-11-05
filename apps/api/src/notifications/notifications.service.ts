@@ -52,6 +52,11 @@ const EVENT_RESOURCE_TYPES: ReadonlyMap<
     NotificationEventType.ProducerReinstated,
     NotificationResourceType.ProducerApplication,
   ],
+  [NotificationEventType.BuyerSuspended, NotificationResourceType.BuyerAccount],
+  [
+    NotificationEventType.BuyerReinstated,
+    NotificationResourceType.BuyerAccount,
+  ],
   [NotificationEventType.ProductHidden, NotificationResourceType.Product],
   [NotificationEventType.ProductRestored, NotificationResourceType.Product],
   [NotificationEventType.AuctionWon, NotificationResourceType.Auction],

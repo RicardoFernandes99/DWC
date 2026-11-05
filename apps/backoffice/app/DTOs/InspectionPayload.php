@@ -14,6 +14,8 @@ final class InspectionPayload
 
     private const PRODUCER_STATES = ['pending', 'approved', 'rejected', 'suspended'];
 
+    private const BUYER_STATES = ['active', 'suspended'];
+
     private const ORDER_STATES = ['pending', 'confirmed', 'shipped', 'delivered', 'ready_for_collection', 'collected', 'cancelled'];
 
     private const FULFILMENT = ['delivery', 'collection'];
@@ -41,6 +43,9 @@ final class InspectionPayload
             'id' => self::id($data, 'id'), 'name' => self::text($data, 'name', 120),
             'email' => self::text($data, 'email', 254), 'role' => self::choice($data, 'role', self::ROLES),
             'producerStatus' => self::optionalChoice($data, 'producerStatus', self::PRODUCER_STATES),
+            'buyerStatus' => ($data['role'] ?? null) === 'buyer'
+                ? self::choice($data, 'buyerStatus', self::BUYER_STATES)
+                : self::optionalChoice($data, 'buyerStatus', self::BUYER_STATES),
             'farmName' => self::optionalText($data, 'farmName', 120),
             'city' => self::optionalText($data, 'city', 120), 'createdAt' => self::date($data, 'createdAt'),
         ];
@@ -66,10 +71,33 @@ final class InspectionPayload
                 'producerDecisionBy' => self::optionalId($data, 'producerDecisionBy'),
                 'producerDecisionAt' => self::date($data, 'producerDecisionAt'),
                 'updatedAt' => self::date($data, 'updatedAt'),
+                'buyerSuspensionReason' => self::optionalText($data, 'buyerSuspensionReason', 500),
+                'buyerDecisionRevision' => self::number($data, 'buyerDecisionRevision', 0),
+                'buyerDecisionBy' => self::optionalId($data, 'buyerDecisionBy'),
+                'buyerDecisionAt' => self::date($data, 'buyerDecisionAt'),
             ];
         }
 
         return $out;
+    }
+
+    /** @return array{id: string, status: string, revision: int, reason: ?string, decidedBy: ?string, decidedAt: ?string} */
+    public static function buyerStanding(array $data): array
+    {
+        $status = self::choice($data, 'status', self::BUYER_STATES);
+        $reason = self::optionalText($data, 'reason', 500);
+        if ($status === 'suspended' && ($reason === null || trim($reason) === '')) {
+            throw new BackofficeUnavailable;
+        }
+
+        return [
+            'id' => self::id($data, 'id'),
+            'status' => $status,
+            'revision' => self::number($data, 'revision', 1),
+            'reason' => $reason,
+            'decidedBy' => self::id($data, 'decidedBy'),
+            'decidedAt' => self::requiredDate($data, 'decidedAt'),
+        ];
     }
 
     /** @return array<string, mixed> */

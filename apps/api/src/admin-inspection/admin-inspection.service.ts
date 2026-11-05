@@ -129,7 +129,7 @@ export class AdminInspectionService {
       this.users
         .find(filter)
         .select(
-          'name email role producerStatus producerApplication.farmName producerApplication.city createdAt',
+          'name email role producerStatus buyerStatus producerApplication.farmName producerApplication.city createdAt',
         )
         .sort({ createdAt: -1, _id: -1 })
         .skip(skip)
@@ -145,6 +145,8 @@ export class AdminInspectionService {
         email: user.email,
         role: user.role,
         producerStatus: user.producerStatus,
+        buyerStatus:
+          user.role === 'buyer' ? (user.buyerStatus ?? 'active') : null,
         farmName: user.producerApplication?.farmName ?? null,
         city: user.producerApplication?.city ?? null,
         createdAt: iso(user.createdAt),
@@ -159,7 +161,7 @@ export class AdminInspectionService {
     const user = await this.users
       .findById(userId)
       .select(
-        'name email role producerStatus producerApplication.farmName producerApplication.description producerApplication.city producerApplication.submittedAt producerRejectionReason producerSuspensionReason producerDecisionRevision producerDecisionBy producerDecisionAt createdAt updatedAt',
+        'name email role producerStatus buyerStatus buyerSuspensionReason buyerDecisionRevision buyerDecisionBy buyerDecisionAt producerApplication.farmName producerApplication.description producerApplication.city producerApplication.submittedAt producerRejectionReason producerSuspensionReason producerDecisionRevision producerDecisionBy producerDecisionAt createdAt updatedAt',
       )
       .lean()
       .exec();
@@ -170,6 +172,8 @@ export class AdminInspectionService {
       email: user.email,
       role: user.role,
       producerStatus: user.producerStatus,
+      buyerStatus:
+        user.role === 'buyer' ? (user.buyerStatus ?? 'active') : null,
       farmName: user.producerApplication?.farmName ?? null,
       city: user.producerApplication?.city ?? null,
       producerApplication: user.producerApplication
@@ -187,6 +191,10 @@ export class AdminInspectionService {
       producerDecisionAt: iso(user.producerDecisionAt),
       createdAt: iso(user.createdAt),
       updatedAt: iso(user.updatedAt),
+      buyerSuspensionReason: user.buyerSuspensionReason ?? null,
+      buyerDecisionRevision: user.buyerDecisionRevision ?? 0,
+      buyerDecisionBy: id(user.buyerDecisionBy),
+      buyerDecisionAt: iso(user.buyerDecisionAt),
     };
   }
 

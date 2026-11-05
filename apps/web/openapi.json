@@ -3697,6 +3697,134 @@
           "Admin inspection"
         ]
       }
+    },
+    "/api/admin/buyers/{id}/suspend": {
+      "post": {
+        "operationId": "AdminBuyersController_suspend",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuspendBuyerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBuyerStandingDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identifier, revision, or reason."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Buyer not found."
+          },
+          "409": {
+            "description": "Buyer standing changed or the decision is stale."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin buyers"
+        ]
+      }
+    },
+    "/api/admin/buyers/{id}/reinstate": {
+      "post": {
+        "operationId": "AdminBuyersController_reinstate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReinstateBuyerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBuyerStandingDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identifier or revision."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Buyer not found."
+          },
+          "409": {
+            "description": "Buyer standing changed or the decision is stale."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin buyers"
+        ]
+      }
     }
   },
   "info": {
@@ -3780,6 +3908,19 @@
             "type": "string",
             "nullable": true,
             "example": null
+          },
+          "buyerStatus": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ],
+            "example": "active"
+          },
+          "buyerSuspensionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null
           }
         },
         "required": [
@@ -3788,7 +3929,9 @@
           "email",
           "role",
           "producerStatus",
-          "producerRejectionReason"
+          "producerRejectionReason",
+          "buyerStatus",
+          "buyerSuspensionReason"
         ]
       },
       "AuthResponseDto": {
@@ -6250,6 +6393,7 @@
             "enum": [
               "order",
               "producer_application",
+              "buyer_account",
               "auction",
               "product"
             ]
@@ -6281,6 +6425,8 @@
               "producer_application_rejected",
               "producer_suspended",
               "producer_reinstated",
+              "buyer_suspended",
+              "buyer_reinstated",
               "product_hidden",
               "product_restored",
               "auction_won",
@@ -7238,6 +7384,14 @@
             ],
             "nullable": true
           },
+          "buyerStatus": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ],
+            "nullable": true
+          },
           "farmName": {
             "type": "string",
             "nullable": true
@@ -7258,6 +7412,7 @@
           "email",
           "role",
           "producerStatus",
+          "buyerStatus",
           "farmName",
           "city",
           "createdAt"
@@ -7354,6 +7509,14 @@
             ],
             "nullable": true
           },
+          "buyerStatus": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ],
+            "nullable": true
+          },
           "farmName": {
             "type": "string",
             "nullable": true
@@ -7401,6 +7564,23 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "buyerSuspensionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "buyerDecisionRevision": {
+            "type": "number",
+            "minimum": 0
+          },
+          "buyerDecisionBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "buyerDecisionAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "required": [
@@ -7409,6 +7589,7 @@
           "email",
           "role",
           "producerStatus",
+          "buyerStatus",
           "farmName",
           "city",
           "createdAt",
@@ -7418,7 +7599,11 @@
           "producerDecisionRevision",
           "producerDecisionBy",
           "producerDecisionAt",
-          "updatedAt"
+          "updatedAt",
+          "buyerSuspensionReason",
+          "buyerDecisionRevision",
+          "buyerDecisionBy",
+          "buyerDecisionAt"
         ]
       },
       "AdminOrderListItemDto": {
@@ -8477,6 +8662,76 @@
           "mongodbLatencyMs",
           "redisLatencyMs",
           "storageLatencyMs"
+        ]
+      },
+      "SuspendBuyerDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "minimum": 0
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "revision",
+          "reason"
+        ]
+      },
+      "AdminBuyerStandingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ]
+          },
+          "revision": {
+            "type": "number",
+            "minimum": 0
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "decidedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "revision",
+          "reason",
+          "decidedBy",
+          "decidedAt"
+        ]
+      },
+      "ReinstateBuyerDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "revision"
         ]
       }
     }

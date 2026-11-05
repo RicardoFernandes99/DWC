@@ -13,7 +13,12 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import type { ClientSession, Connection, Model } from 'mongoose';
 import { Product } from '../products/product.schema.js';
-import { ProducerStatus, User, UserRole } from '../users/user.schema.js';
+import {
+  BuyerStatus,
+  ProducerStatus,
+  User,
+  UserRole,
+} from '../users/user.schema.js';
 import { Auction, AuctionStatus } from './auction.schema.js';
 import { AuctionBid } from './auction.schema.js';
 import type { AuctionBidDocument, AuctionDocument } from './auction.schema.js';
@@ -631,6 +636,22 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
           .findOne({ buyerId, requestId: input.requestId })
           .session(session);
         if (duplicate) return this.duplicateBid(duplicate, input, buyerId);
+
+        const buyerFilter = {
+          _id: buyerId,
+          role: UserRole.Buyer,
+          buyerStatus: { $ne: BuyerStatus.Suspended },
+        };
+        const eligibleBuyer = await this.users.updateOne(
+          buyerFilter,
+          { $inc: { buyerEligibilityRevision: 1 } },
+          { session },
+        );
+        if (eligibleBuyer.matchedCount !== 1) {
+          throw new ForbiddenException(
+            'This account cannot place new bids while suspended.',
+          );
+        }
 
         const method = await this.paymentMethods
           .findOne({

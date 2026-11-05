@@ -23,9 +23,9 @@ import {
 import { PaymentMethodsService } from '../payment-methods/payment-methods.service.js';
 import { Product, type ProductDocument } from '../products/product.schema.js';
 import {
+  BuyerStatus,
   ProducerStatus,
   User,
-  type UserDocument,
   UserRole,
 } from '../users/user.schema.js';
 import {
@@ -60,7 +60,7 @@ export class CheckoutService {
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
     @InjectModel(User.name)
-    private readonly userModel: Model<UserDocument>,
+    private readonly userModel: Model<User>,
     private readonly notificationIntegration: NotificationIntegrationService,
     @InjectModel(Checkout.name)
     private readonly checkoutModel: Model<CheckoutDocument> = undefined as unknown as Model<CheckoutDocument>,
@@ -589,6 +589,23 @@ export class CheckoutService {
           }
           createdCheckoutId = inTxExisting._id;
           return;
+        }
+
+        const buyer = await this.userModel.updateOne(
+          {
+            _id: new Types.ObjectId(buyerId),
+            role: UserRole.Buyer,
+            buyerStatus: { $ne: BuyerStatus.Suspended },
+          },
+          { $inc: { buyerEligibilityRevision: 1 } },
+          { session },
+        );
+        if (buyer.matchedCount !== 1) {
+          throw new ConflictException({
+            statusCode: HttpStatus.CONFLICT,
+            code: 'buyer_suspended',
+            message: 'This account cannot place new orders while suspended.',
+          });
         }
 
         // 8a. Recheck and lock each producer's approved eligibility

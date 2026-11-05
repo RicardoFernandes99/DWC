@@ -33,7 +33,10 @@ function user(value: unknown): value is User {
       value.producerStatus === 'rejected' ||
       value.producerStatus === 'suspended') &&
     (value.producerRejectionReason === null ||
-      typeof value.producerRejectionReason === 'string')
+      typeof value.producerRejectionReason === 'string') &&
+    (value.buyerStatus === 'active' || value.buyerStatus === 'suspended') &&
+    (value.buyerSuspensionReason === null ||
+      typeof value.buyerSuspensionReason === 'string')
   );
 }
 function auth(value: unknown): value is Auth {

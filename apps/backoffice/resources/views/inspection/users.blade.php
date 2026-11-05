@@ -32,6 +32,7 @@
                 <div class="inspection-primary"><a class="inspection-link" href="{{ route('inspection.user', $user['id']) }}">{{ $user['name'] }}</a><span>{{ $user['email'] }}</span></div>
                 <div class="inspection-secondary"><span class="inspection-label">Role</span><span>{{ ucfirst($user['role']) }}</span></div>
                 <div class="inspection-secondary"><span class="inspection-label">Producer status</span><span>{{ $user['producerStatus'] ? ucfirst($user['producerStatus']) : 'Not applicable' }}</span></div>
+                <div class="inspection-secondary"><span class="inspection-label">Buyer standing</span><span>{{ $user['role'] === 'buyer' ? ucfirst($user['buyerStatus'] ?? 'active') : 'Not applicable' }}</span></div>
                 <div class="inspection-secondary"><span class="inspection-label">Farm / city</span><span>{{ collect([$user['farmName'], $user['city']])->filter()->join(' · ') ?: '—' }}</span></div>
                 <div class="inspection-secondary"><span class="inspection-label">Created</span><time datetime="{{ $user['createdAt'] }}">{{ $user['createdAt'] ? \Carbon\Carbon::parse($user['createdAt'])->format('j M Y, H:i') : 'Unknown' }}</time></div>
             </li>

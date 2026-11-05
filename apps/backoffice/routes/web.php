@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminInspectionController;
 use App\Http\Controllers\AdminModerationController;
 use App\Http\Controllers\AdminProducerApplicationsController;
 use App\Http\Controllers\BackofficeAuthController;
+use App\Http\Middleware\PreserveBuyerDecisionDraft;
 use App\Http\Middleware\PreserveModerationDraft;
 use App\Http\Middleware\PreserveProducerDecisionDraft;
 use Illuminate\Support\Facades\Route;
@@ -57,6 +58,16 @@ Route::middleware('current-admin')->group(function (): void {
     Route::get('/users', [AdminInspectionController::class, 'users'])->name('inspection.users')->block(45, 10);
     Route::get('/users/{id}', [AdminInspectionController::class, 'user'])
         ->where('id', '[a-fA-F0-9]{24}')->name('inspection.user')->block(45, 10);
+});
+Route::middleware([PreserveBuyerDecisionDraft::class, 'current-admin'])->group(function (): void {
+    Route::post('/users/{id}/buyer-standing/{action}', [AdminInspectionController::class, 'buyerStanding'])
+        ->where(['id' => '[a-fA-F0-9]{24}', 'action' => 'suspend|reinstate'])
+        ->name('inspection.user.buyer-standing')->block(45, 10);
+    Route::post('/users/{id}/buyer-standing/discard-draft', [AdminInspectionController::class, 'discardBuyerDraft'])
+        ->where('id', '[a-fA-F0-9]{24}')
+        ->name('inspection.user.buyer-standing.discard-draft')->block(45, 10);
+});
+Route::middleware('current-admin')->group(function (): void {
     Route::get('/orders', [AdminInspectionController::class, 'orders'])->name('inspection.orders')->block(45, 10);
     Route::get('/orders/{id}', [AdminInspectionController::class, 'order'])
         ->where('id', '[a-fA-F0-9]{24}')->name('inspection.order')->block(45, 10);

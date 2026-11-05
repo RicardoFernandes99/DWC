@@ -10,6 +10,8 @@ export enum NotificationEventType {
   ProducerApplicationRejected = 'producer_application_rejected',
   ProducerSuspended = 'producer_suspended',
   ProducerReinstated = 'producer_reinstated',
+  BuyerSuspended = 'buyer_suspended',
+  BuyerReinstated = 'buyer_reinstated',
   ProductHidden = 'product_hidden',
   ProductRestored = 'product_restored',
   AuctionWon = 'auction_won',
@@ -21,6 +23,7 @@ export enum NotificationEventType {
 export enum NotificationResourceType {
   Order = 'order',
   ProducerApplication = 'producer_application',
+  BuyerAccount = 'buyer_account',
   Auction = 'auction',
   Product = 'product',
 }
