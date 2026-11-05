@@ -228,6 +228,9 @@ replaced are not requirements.
   Its shell remains empty until later admin tickets add real NestJS-backed tools.
 - Admin tools include producer approval/rejection, user suspension, hiding
   products/reviews, read-only order/auction inspection and service health.
+- Laravel service health checks run when the page loads and only run again when
+  an administrator selects Refresh. The backoffice displays the time its
+  request completed because the API health response has no check timestamp.
 - Suspended producers see: "Your account is suspended until the issue is
   resolved. You cannot create new auctions or register new products."
 - A suspended producer cannot register products, create auctions or receive new

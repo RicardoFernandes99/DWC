@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminHomeController;
+use App\Http\Controllers\AdminInspectionController;
 use App\Http\Controllers\AdminModerationController;
 use App\Http\Controllers\AdminProducerApplicationsController;
 use App\Http\Controllers\BackofficeAuthController;
@@ -51,4 +52,16 @@ Route::middleware([PreserveModerationDraft::class, 'current-admin'])->group(func
     Route::post('/moderation/{kind}/{id}/hide', [AdminModerationController::class, 'hide'])
         ->where(['kind' => 'product|review', 'id' => '[a-fA-F0-9]{24}'])
         ->name('moderation.hide')->block(45, 10);
+});
+Route::middleware('current-admin')->group(function (): void {
+    Route::get('/users', [AdminInspectionController::class, 'users'])->name('inspection.users')->block(45, 10);
+    Route::get('/users/{id}', [AdminInspectionController::class, 'user'])
+        ->where('id', '[a-fA-F0-9]{24}')->name('inspection.user')->block(45, 10);
+    Route::get('/orders', [AdminInspectionController::class, 'orders'])->name('inspection.orders')->block(45, 10);
+    Route::get('/orders/{id}', [AdminInspectionController::class, 'order'])
+        ->where('id', '[a-fA-F0-9]{24}')->name('inspection.order')->block(45, 10);
+    Route::get('/auctions', [AdminInspectionController::class, 'auctions'])->name('inspection.auctions')->block(45, 10);
+    Route::get('/auctions/{id}', [AdminInspectionController::class, 'auction'])
+        ->where('id', '[a-fA-F0-9]{24}')->name('inspection.auction')->block(45, 10);
+    Route::get('/health', [AdminInspectionController::class, 'health'])->name('inspection.health')->block(45, 10);
 });

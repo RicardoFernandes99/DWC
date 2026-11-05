@@ -64,7 +64,7 @@ reference material; explicit user decisions take precedence over its examples.
 Workspace tooling, the React frontend, NestJS authentication, catalogue,
 checkout/orders, auctions and administrator API features are implemented. The
 Laravel backoffice supports administrative sign-in, producer application
-review and suspension, and product/reported-review moderation. Order, auction,
-user and service-health inspection screens remain future work.
+review and suspension, product/reported-review moderation, read-only user,
+order and auction inspection, and dependency health checks.
 Redis infrastructure is configured and the API manages a required Redis connection
 for readiness. Authentication sessions use hashed refresh credentials, atomic rotation and absolute TTLs.
