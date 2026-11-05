@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\AdminHomeController;
+use App\Http\Controllers\AdminModerationController;
 use App\Http\Controllers\AdminProducerApplicationsController;
 use App\Http\Controllers\BackofficeAuthController;
+use App\Http\Middleware\PreserveModerationDraft;
 use App\Http\Middleware\PreserveProducerDecisionDraft;
 use Illuminate\Support\Facades\Route;
 
@@ -34,4 +36,19 @@ Route::middleware([PreserveProducerDecisionDraft::class, 'current-admin'])->grou
             ->defaults('action', $action)
             ->name('producer-applications.'.$action)->block(45, 10);
     }
+});
+Route::middleware([PreserveModerationDraft::class, 'current-admin'])->group(function (): void {
+    Route::get('/moderation/products', [AdminModerationController::class, 'products'])
+        ->name('moderation.products')->block(45, 10);
+    Route::get('/moderation/products/{id}', [AdminModerationController::class, 'product'])
+        ->where('id', '[a-fA-F0-9]{24}')
+        ->name('moderation.product')->block(45, 10);
+    Route::get('/moderation/reviews', [AdminModerationController::class, 'reviews'])
+        ->name('moderation.reviews')->block(45, 10);
+    Route::get('/moderation/reviews/{id}', [AdminModerationController::class, 'review'])
+        ->where('id', '[a-fA-F0-9]{24}')
+        ->name('moderation.review')->block(45, 10);
+    Route::post('/moderation/{kind}/{id}/hide', [AdminModerationController::class, 'hide'])
+        ->where(['kind' => 'product|review', 'id' => '[a-fA-F0-9]{24}'])
+        ->name('moderation.hide')->block(45, 10);
 });

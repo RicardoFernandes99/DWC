@@ -24,9 +24,13 @@
 
     <section class="empty-state" aria-labelledby="empty-title">
         <div>
-            <h2 id="empty-title">Producer applications</h2>
-            <p>Review submitted farm details, decide who can sell, and manage producer account standing.</p>
-            <a class="primary-button home-action" href="{{ route('producer-applications.index') }}">Review applications</a>
+            <h2 id="empty-title">Marketplace review</h2>
+            <p>Review producer applications, reported reviews and product listings.</p>
+            <nav class="home-tools" aria-label="Administration tools">
+                <a class="primary-button home-action" href="{{ route('producer-applications.index') }}">Producer applications</a>
+                <a class="quiet-button home-action" href="{{ route('moderation.reviews') }}">Reported reviews</a>
+                <a class="quiet-button home-action" href="{{ route('moderation.products') }}">Products</a>
+            </nav>
         </div>
     </section>
 </main>

@@ -73,3 +73,35 @@ producer's status page for recovery.
 
 The login photo is the existing local Orchard landscape asset from the web app.
 Fraunces is copied with its SIL Open Font License notice in `public/fonts`.
+
+## Product and review moderation
+
+Administrators can open product moderation and reported reviews from the home
+screen. Both lists read 20 rows at a time from NestJS and retain the moderation
+state filter in the page URL. Product state is labelled **Not hidden** or
+**Hidden** separately from the producer's publication choice and archive state.
+The list does not infer public availability from those fields because producer
+approval is a separate condition.
+
+Product and review detail pages show the current revision and the API's current
+moderation record. Review details include report categories, notes, timestamps
+and reporter names inside the administrator-only backoffice. Review comments
+and report text render as escaped plain text. There are no public links to
+reporter identities.
+
+Hiding requires a 1–500 character reason and an explicit confirmation step. The
+NestJS moderation API records the decision. Hiding a product leaves its producer
+publication choice, stock, auction records and existing order snapshots intact.
+It removes the product from public product views and checkout. Hiding a review
+removes it from public review lists and rating totals while preserving its order
+record and report context. The Laravel UI does not delete content or offer a
+restore action.
+
+Laravel sends each hide request once with the displayed revision. A stale or
+already-hidden conflict redirects to the detail page, reloads current API state
+and keeps the reason draft scoped to that content item. The administrator must
+review the new state before taking another action. API 401/403 clears the
+session and returns to sign-in. A malformed response or timeout after a mutation
+shows an unknown outcome with a state-refresh link; an identity-check 503 before
+the controller says the mutation was not sent. Neither failure retries the hide
+request. List/detail API failures show a sanitized retry page.
