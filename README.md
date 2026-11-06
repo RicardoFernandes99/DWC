@@ -163,6 +163,32 @@ Authenticated administrators can inspect and decide submitted producer applicati
 - `POST /api/admin/producers/:id/suspend` — suspends an approved producer matching `{ revision, reason }` (reason 1-500 chars, shown to the producer). Notifies the producer.
 - `POST /api/admin/producers/:id/reinstate` — returns a suspended producer to approved matching `{ revision }` and clears the reason. Notifies the producer. Other statuses answer `409`.
 
+## Local demo fixtures
+
+With local MongoDB running, stop the API and other processes that write marketplace data. Then run:
+
+```powershell
+$env:FIXTURE_MAINTENANCE_ACK = 'stopped'
+pnpm --filter @dwc/api fixtures --create
+Remove-Item Env:FIXTURE_MAINTENANCE_ACK
+```
+
+The command builds the API first, then inserts a deterministic set of buyers, producer states, products, catalogue orders, refund cases, reviews, and auctions in one MongoDB transaction. This narrow fixture-only setup writes historical records directly through the API's Mongoose schemas, so it does not replay registration, checkout, refund, review, approval, or bidding workflows. It does not change production services, API contracts, or authentication; sign-in still uses normal password verification and role checks. It uses generated demo passwords stored in the ignored local file `demos/ticket-044-review/credentials.local.json`. The command never prints passwords or password hashes. Card details are dummy metadata ending in `4242`; no payment is sent. Product images are omitted, so fixture setup creates no S3 objects. It does not create Redis sessions.
+
+Product stock balances against the fixture history. Vegetables start at 20 units: 14 available, 1 reserved for the upcoming auction, 3 sold in catalogue orders, and 2 sold in the finished auction. Eggs start at 5 boxes: 2 available, 1 reserved for the active auction, and 2 sold in catalogue orders. Jam has 10 jars available after an accepted refund restores 2 jars.
+
+The command targets only a local MongoDB host and refuses to run while an API answers on `API_PORT` (default `3000`). The maintenance acknowledgement also applies to other writers, including additional API processes. A second `--create` checks that all manifest-owned records still exist and makes no changes. It never repairs partial data or resets demo interactions. Checkout request hashes in these historical records are fixture placeholders, not live checkout idempotency keys. If a fixture record is missing or the local credentials file is lost, run cleanup, then create again. Cleanup tolerates missing manifest-owned records but still refuses foreign references.
+
+Remove the fixture namespace after stopping writers with:
+
+```powershell
+$env:FIXTURE_MAINTENANCE_ACK = 'stopped'
+pnpm --filter @dwc/api fixtures --cleanup
+Remove-Item Env:FIXTURE_MAINTENANCE_ACK
+```
+
+Cleanup checks incoming and outgoing references before deleting manifest-owned records in a transaction. If another record refers to a fixture record, cleanup stops and preserves both the records and local credentials. Resolve that reference yourself, then retry. It deletes only listed fixture IDs and removes only the fixture credentials file. Do not edit the ownership manifest or run create/cleanup while any other data writer is active.
+
 ## Public catalogue
 
 Catalogue browsing does not require authentication. `GET /api/products` accepts

@@ -10,6 +10,7 @@
     "test": "pnpm build && tsc -p tsconfig.test.json --noEmit && node --test test/*.test.ts",
     "admin:bootstrap": "node --env-file=../../.env scripts/admin-bootstrap.ts",
     "storage:init": "node --env-file=../../.env scripts/storage-init.ts",
+    "fixtures": "node --env-file=../../.env scripts/fixtures.ts",
     "smoke": "node --env-file=../../.env scripts/smoke.ts"
   },
   "dependencies": {
