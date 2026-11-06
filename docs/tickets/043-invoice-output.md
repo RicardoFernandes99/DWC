@@ -1,9 +1,9 @@
 # 043: Generate agreed invoice output from purchase snapshots
 
 - Macro: M04
-- Status: In progress
+- Status: In review
 - Depends on: 017, 020, 028
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/57
 - Branch / parent: `codex/age-043-purchase-receipts` / `codex/age-042-buyer-suspension` (PR 56)
 - Blockers: None. The user confirmed the receipt policy.
 
@@ -75,4 +75,8 @@ corrected and rechecked on the saved real-page export after the runtime stopped
 between chat turns. Before screenshots reuse ticket 041 views with their
 provenance recorded; fixture content differs from the new after screenshots.
 
-Publication and final revision metadata are pending.
+Published through native `gh stack` on stack 34, targeting PR 56. Reviewed
+implementation revision: `d032fa24054949ebbbf3410663b6a169b5470b2a`.
+Both CI verify jobs passed on that revision: push 1m41s and pull request 1m44s.
+The following metadata-only update does not change the reviewed implementation.
+Merging remains the user's decision.
