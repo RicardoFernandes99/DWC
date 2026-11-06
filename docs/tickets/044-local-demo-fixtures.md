@@ -1,9 +1,9 @@
 # 044: Create repeatable non-destructive marketplace demo fixtures
 
 - Macro: M01-M08 integration
-- Status: In progress
+- Status: In review
 - Depends on: 020, 028, 031, 035, 036
-- PR: Not opened
+- PR: https://github.com/RicardoFernandes99/DWC/pull/58
 - Branch / parent: `codex/age-044-local-demo-fixtures` / PR 57 (`36fb266a2e31c48118ed6de517129e84c07e90f1`)
 - Blockers: None
 
@@ -54,6 +54,9 @@ Run the fixture command twice on local data, inspect a few coherent records and 
 Frontier APPROVED on 2026-11-06 after one correction round. Executor:
 `gpt-6-luna` at High, unchanged throughout. Token/cost measurements were not
 available. Parent verified live at `36fb266a2e31c48118ed6de517129e84c07e90f1`.
+Reviewed implementation: `167c58945b8f99b79f6a7f7a02b3b34687e7f1c8`.
+Published ready for review through native `gh stack`, stack 34, targeting PR 57.
+No merge was performed.
 
 The explicit fixture command checks the local target and stopped API before
 building. It inserts 35 schema-validated historical records plus a deterministic
