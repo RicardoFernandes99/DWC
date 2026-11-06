@@ -1930,6 +1930,56 @@
         ]
       }
     },
+    "/api/orders/{orderId}/receipt.pdf": {
+      "get": {
+        "operationId": "OrdersController_downloadReceipt",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Unique 24-character hexadecimal MongoDB ObjectId of the order.",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A bounded PDF purchase receipt for this order.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid order ID format."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Role does not allow receipt access."
+          },
+          "404": {
+            "description": "Order not found or does not belong to the authenticated user."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
     "/api/orders/{orderId}/status": {
       "patch": {
         "operationId": "OrdersController_advanceOrderStatus",
@@ -3476,6 +3526,58 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AdminOrderDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed order ID."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Order not found."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin inspection"
+        ]
+      }
+    },
+    "/api/admin/orders/{id}/receipt.pdf": {
+      "get": {
+        "operationId": "AdminInspectionController_downloadOrderReceipt",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A bounded PDF purchase receipt for this order.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }

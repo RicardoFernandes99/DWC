@@ -83,6 +83,14 @@ checks the Redis-backed session, an HTTP admin health request may itself return
 503 during a Redis outage; the health service can still report Redis as down when
 called in-process.
 
+Purchase receipts are bounded PDF attachments. Buyer and producer routes
+authorize against the order's buyer/producer IDs; administrators use a separate
+admin route. Rendering reads the order and its unique refund allocation in a
+MongoDB transaction and uses the order's immutable purchase values. New checkout
+and auction orders snapshot buyer and farm names in their transactions. Older
+orders use account IDs and do not look up current names. The API embeds the
+Fraunces font, distributed under the SIL Open Font License.
+
 ## Realtime transport
 
 Socket.IO runs on the API's existing HTTP server and configured `WEB_ORIGIN`.

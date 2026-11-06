@@ -174,3 +174,15 @@ one producer use `GET /api/producers/:id/products`. Public results include only
 published, unarchived, unmoderated products belonging to currently approved
 producers with a producer application. Responses expose allowlisted profile and
 product fields; stored product images receive short-lived signed URLs.
+
+## Purchase receipts
+
+`GET /api/orders/:orderId/receipt.pdf` downloads a PDF receipt for a catalogue
+order or auction win. The buyer or that order's producer must sign in. Admins
+use the separate `GET /api/admin/orders/:id/receipt.pdf` endpoint. Both routes
+return private, non-cacheable attachments; there are no public links. New
+purchases snapshot the buyer name and producer farm name. Older orders show
+stable account references and state that historical names were not recorded.
+Receipts preserve original order amounts and show any order-specific refund,
+cancellation date and remaining paid amount. The document is a purchase receipt,
+not a tax invoice.

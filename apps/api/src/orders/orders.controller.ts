@@ -18,6 +18,7 @@ import {
   ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
+  ApiProduces,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -36,6 +37,7 @@ import { OrdersService } from './orders.service.js';
 
 interface HeaderResponse {
   setHeader(name: string, value: string): void;
+  send(body: Buffer): void;
 }
 
 @ApiTags('Orders')
@@ -93,6 +95,40 @@ export class OrdersController {
   ): Promise<OrderResponseDto> {
     response.setHeader('Cache-Control', 'no-store');
     return this.ordersService.getOrderById(user, orderId);
+  }
+
+  @Get(':orderId/receipt.pdf')
+  @ApiProduces('application/pdf')
+  @ApiOkResponse({
+    description: 'A bounded PDF purchase receipt for this order.',
+    content: {
+      'application/pdf': { schema: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Invalid order ID format.' })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid, expired or revoked access token.',
+  })
+  @ApiForbiddenResponse({ description: 'Role does not allow receipt access.' })
+  @ApiNotFoundResponse({
+    description:
+      'Order not found or does not belong to the authenticated user.',
+  })
+  async downloadReceipt(
+    @CurrentUser() user: UserResponseDto,
+    @Param() { orderId }: OrderIdParamDto,
+    @Res() response: HeaderResponse,
+  ): Promise<void> {
+    response.setHeader('Cache-Control', 'private, no-store');
+    response.setHeader('X-Content-Type-Options', 'nosniff');
+    const pdf = await this.ordersService.purchaseReceipt(user, orderId);
+    response.setHeader('Content-Type', 'application/pdf');
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename="purchase-receipt-${orderId}.pdf"`,
+    );
+    response.setHeader('Content-Length', String(pdf.byteLength));
+    response.send(pdf);
   }
 
   @Patch(':orderId/status')

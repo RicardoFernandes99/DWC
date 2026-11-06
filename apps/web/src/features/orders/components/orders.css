@@ -522,6 +522,26 @@ body:has(.orders-screen) .site-header {
 .order-receipt dl {
   margin-top: 24px;
 }
+.order-receipt-download {
+  display: grid;
+  gap: 8px;
+}
+.order-receipt-download-status,
+.order-receipt-download-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.order-receipt-download-error {
+  color: color-mix(in oklch, var(--destructive) 85%, var(--foreground));
+}
+.order-receipt-download-error svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
 .order-receipt dl > div {
   display: flex;
   justify-content: space-between;

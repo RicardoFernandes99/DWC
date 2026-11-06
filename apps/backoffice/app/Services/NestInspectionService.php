@@ -72,6 +72,29 @@ final class NestInspectionService
         return InspectionPayload::order($this->object($this->get($credentials, 'admin/orders/'.$id, [], true)), true);
     }
 
+    public function orderReceipt(array $credentials, string $id): string
+    {
+        $token = $credentials['access_token'] ?? null;
+        if (! is_string($token) || $token === '' || strlen($token) > 4096) {
+            throw new ApiSessionExpired;
+        }
+        $response = $this->request($token)->get($this->url('admin/orders/'.$id.'/receipt.pdf'));
+        if ($response->status() === 401 || $response->status() === 403) {
+            throw new ApiSessionExpired;
+        }
+        if ($response->status() === 404) {
+            throw new InspectionRecordNotFound;
+        }
+        $pdf = $response->body();
+        if (! $response->successful() || $pdf === '' || strlen($pdf) > 1_500_000
+            || ! str_starts_with($pdf, '%PDF-')
+            || ! str_contains(strtolower($response->header('Content-Type')), 'application/pdf')) {
+            throw new BackofficeUnavailable;
+        }
+
+        return $pdf;
+    }
+
     public function auction(array $credentials, string $id, array $query): array
     {
         $payload = $this->object($this->get($credentials, 'admin/auctions/'.$id, $query, true));

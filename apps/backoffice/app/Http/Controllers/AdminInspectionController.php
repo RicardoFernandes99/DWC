@@ -163,6 +163,26 @@ final class AdminInspectionController
         }
     }
 
+    public function orderReceipt(Request $request, string $id): HttpResponse|RedirectResponse
+    {
+        try {
+            $pdf = $this->inspection->orderReceipt($this->credentials($request), $id);
+
+            return response($pdf, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="purchase-receipt-'.$id.'.pdf"',
+                'Cache-Control' => 'private, no-store',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        } catch (ApiSessionExpired|UnexpectedValueException) {
+            return $this->expired($request);
+        } catch (InspectionRecordNotFound) {
+            abort(404);
+        } catch (BackofficeUnavailable|ConnectionException) {
+            return $this->unavailable('inspection.order', ['id' => $id]);
+        }
+    }
+
     public function auctions(Request $request): View|RedirectResponse|HttpResponse
     {
         $input = $this->query($request, ['status' => self::AUCTION_STATES, 'producerId' => null]);

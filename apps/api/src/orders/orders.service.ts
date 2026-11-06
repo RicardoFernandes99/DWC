@@ -36,6 +36,8 @@ import {
 } from './order.schema.js';
 import { Product } from '../products/product.schema.js';
 import { RefundAllocation } from './refund-allocation.schema.js';
+import { renderPurchaseReceipt } from './purchase-receipt-pdf.js';
+import type { PurchaseReceiptData } from './purchase-receipt-pdf.js';
 import { NotificationIntegrationService } from '../notifications/notification-integration.service.js';
 import {
   NotificationEventType,
@@ -79,6 +81,80 @@ export class OrdersService {
    */
   async canConfirmOrder(order: OrderDocument): Promise<boolean> {
     return order.refundRequest?.status !== RefundRequestStatus.Open;
+  }
+
+  async purchaseReceipt(
+    user: UserResponseDto,
+    orderId: string,
+  ): Promise<Buffer> {
+    if (
+      ![UserRole.Buyer, UserRole.Producer, UserRole.Admin].includes(user.role)
+    ) {
+      throw new ForbiddenException(
+        'This account cannot download purchase receipts.',
+      );
+    }
+    const orderFilter =
+      user.role === UserRole.Admin
+        ? { _id: new Types.ObjectId(orderId) }
+        : user.role === UserRole.Buyer
+          ? {
+              _id: new Types.ObjectId(orderId),
+              buyerId: new Types.ObjectId(user.id),
+            }
+          : {
+              _id: new Types.ObjectId(orderId),
+              producerId: new Types.ObjectId(user.id),
+            };
+    const session = await this.connection.startSession();
+    let receipt: PurchaseReceiptData | undefined;
+    try {
+      await session.withTransaction(async () => {
+        const order = await this.orderModel
+          .findOne(orderFilter)
+          .session(session)
+          .exec();
+        if (!order) throw new NotFoundException('Order not found.');
+        const allocation = await this.refundAllocationModel
+          .findOne({ orderId: order._id, paymentId: order.paymentId })
+          .session(session)
+          .exec();
+        const cancelledAt =
+          order.statusHistory.find(
+            (entry) => entry.status === OrderStatus.Cancelled,
+          )?.timestamp ?? null;
+        receipt = {
+          orderId: order._id.toString(),
+          checkoutId: order.checkoutId?.toString() ?? null,
+          auctionId: order.auctionId?.toString() ?? null,
+          buyerId: order.buyerId.toString(),
+          buyerNameSnapshot: order.buyerNameSnapshot ?? null,
+          producerId: order.producerId.toString(),
+          producerNameSnapshot: order.producerNameSnapshot ?? null,
+          createdAt: order.createdAt,
+          cancelledAt,
+          items: order.items.map((item) => ({
+            productName: item.productName,
+            productUnit: item.productUnit,
+            quantity: item.quantity,
+            unitPriceCents: item.unitPriceCents,
+            lineTotalCents: item.lineTotalCents,
+          })),
+          fulfilmentMethod: order.fulfilmentMethod,
+          subtotalCents: order.subtotalCents,
+          deliveryFeeCents: order.deliveryFeeCents,
+          totalCents: order.totalCents,
+          origin: order.origin,
+          status: order.status,
+          refundedCents: allocation?.amountCents ?? 0,
+          refundedAt: allocation?.refundedAt ?? null,
+        };
+      });
+    } finally {
+      await session.endSession();
+    }
+    if (!receipt) throw new NotFoundException('Order not found.');
+    return renderPurchaseReceipt(receipt);
   }
 
   async requestRefund(

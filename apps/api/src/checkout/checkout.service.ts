@@ -677,8 +677,19 @@ export class CheckoutService {
         await payment.save({ session });
 
         // 8d. Create Pending order per producer
+        const receiptBuyer = await this.userModel
+          .findById(new Types.ObjectId(buyerId))
+          .session(session)
+          .select({ name: 1 })
+          .exec();
+
         for (const [groupIndex, group] of liveQuote.groups.entries()) {
           const orderId = orderIds[groupIndex];
+          const receiptProducer = await this.userModel
+            .findById(new Types.ObjectId(group.producerId))
+            .session(session)
+            .select({ 'producerApplication.farmName': 1 })
+            .exec();
 
           const itemsSnapshot: OrderLineSnapshot[] = group.items.map((it) => ({
             productId: new Types.ObjectId(it.productId),
@@ -701,7 +712,10 @@ export class CheckoutService {
             _id: orderId,
             checkoutId,
             buyerId: new Types.ObjectId(buyerId),
+            buyerNameSnapshot: receiptBuyer?.name ?? null,
             producerId: new Types.ObjectId(group.producerId),
+            producerNameSnapshot:
+              receiptProducer?.producerApplication?.farmName ?? null,
             paymentId,
             items: itemsSnapshot,
             fulfilmentMethod: liveQuote.fulfilmentMethod,

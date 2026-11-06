@@ -1040,6 +1040,16 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
           ],
           { session },
         );
+        const receiptBuyer = await this.users
+          .findById(winnerId)
+          .session(session)
+          .select({ name: 1 })
+          .exec();
+        const receiptProducer = await this.users
+          .findById(auction.producerId)
+          .session(session)
+          .select({ 'producerApplication.farmName': 1 })
+          .exec();
         const lotLabel = `lot of ${auction.quantity} ${auction.quantity === 1 ? auction.productSnapshot.unit : `${auction.productSnapshot.unit}s`}`;
         const order = await this.orders.create(
           [
@@ -1047,7 +1057,10 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
               checkoutId: null,
               auctionId: auction._id,
               buyerId: winnerId,
+              buyerNameSnapshot: receiptBuyer?.name ?? null,
               producerId: auction.producerId,
+              producerNameSnapshot:
+                receiptProducer?.producerApplication?.farmName ?? null,
               paymentId: payment[0]._id,
               items: [
                 {

@@ -9,6 +9,7 @@ import {
 import { AuthModule } from '../auth/auth.module.js';
 import { Payment, PaymentSchema } from '../checkout/payment.schema.js';
 import { Order, OrderSchema } from '../orders/order.schema.js';
+import { OrdersModule } from '../orders/orders.module.js';
 import {
   RefundAllocation,
   RefundAllocationSchema,
@@ -22,6 +23,7 @@ import { AdminInspectionService } from './admin-inspection.service.js';
 @Module({
   imports: [
     AuthModule,
+    OrdersModule,
     RedisModule,
     StorageModule,
     MongooseModule.forFeature([

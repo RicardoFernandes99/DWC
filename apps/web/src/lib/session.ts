@@ -248,6 +248,73 @@ export async function authenticatedRequest<T = unknown>(
     }
   }
 }
+
+/** Makes one authenticated binary request, refreshing and retrying at most once. */
+export async function authenticatedDownload(path: string): Promise<Blob> {
+  const current = generation;
+  const used = token;
+  if (!used) throw new ApiError(401, 'Please sign in.');
+  const send = async (accessToken: string) => {
+    try {
+      return await fetch(`/api/${path}`, {
+        credentials: 'include',
+        signal: AbortSignal.timeout(15000),
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch {
+      throw new ApiError(0, 'Could not connect. Please try again.');
+    }
+  };
+  const responseError = async (response: Response): Promise<ApiError> => {
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      // The API may return a plain error response.
+    }
+    const message =
+      record(payload) && typeof payload.message === 'string'
+        ? payload.message
+        : response.status === 503
+          ? 'Service temporarily unavailable. Please try again.'
+          : 'The receipt could not be downloaded. Please try again.';
+    return new ApiError(response.status, message, payload);
+  };
+  const ensureCurrent = () => {
+    if (generation !== current) throw new ApiError(401, 'Session changed.');
+  };
+  let response = await send(used);
+  if (response.status === 401 && generation === current) {
+    if (token === used) await refresh();
+    if (generation !== current || !token)
+      throw new ApiError(401, 'Please sign in.');
+    const retryToken = token;
+    response = await send(retryToken);
+    if (
+      response.status === 401 &&
+      generation === current &&
+      token === retryToken
+    ) {
+      token = undefined;
+      publishAccessToken(undefined);
+    }
+  }
+  ensureCurrent();
+  if (!response.ok) throw await responseError(response);
+  if (
+    !response.headers
+      .get('Content-Type')
+      ?.toLowerCase()
+      .includes('application/pdf')
+  ) {
+    throw new ApiError(0, 'The server returned an invalid receipt.');
+  }
+  const blob = await response.blob();
+  ensureCurrent();
+  if (blob.size === 0 || blob.size > 1_500_000)
+    throw new ApiError(0, 'The receipt size is outside the supported range.');
+  return blob;
+}
 export async function logout(): Promise<void> {
   const inFlight = pending;
   signedOut = true;

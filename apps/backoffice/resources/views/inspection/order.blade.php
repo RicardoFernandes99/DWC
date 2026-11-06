@@ -11,6 +11,7 @@
     <p class="eyebrow">Administration / Inspection / Orders</p>
     <a class="back-link" href="{{ route('inspection.orders') }}">Back to orders</a>
     <div class="inspection-heading"><div><h1>Order {{ substr($order['id'], -8) }}</h1><p class="page-intro">{{ ucfirst($order['origin']) }} · {{ ucfirst($order['fulfilmentMethod']) }} fulfilment</p></div><span class="status-pill status-{{ $order['status'] }}">{{ ucwords(str_replace('_', ' ', $order['status'])) }}</span></div>
+    <p><a class="primary-button" href="{{ route('inspection.order.receipt', $order['id']) }}">Download purchase receipt</a></p>
     @include('inspection.nav')
     <section class="inspection-section"><h2>Order summary</h2>
         <dl class="inspection-facts">

@@ -5,6 +5,7 @@ import { formatLabel, formatMoney, formatUnit } from '@/lib/format';
 import type { components } from '@/lib/api-schema';
 import { OrderReview } from '@/features/reviews/components/order-review';
 import { OrderTimeline, RefundSummary } from './order-presentation';
+import { OrderReceiptDownload } from './order-receipt-download';
 import { orderDateLabel, orderStatusText } from './order-format';
 import {
   ProducerOrderActions,
@@ -213,6 +214,7 @@ export function OrderDetail({
             </div>
           )}
         </section>
+        <OrderReceiptDownload orderId={order.id} />
         <section
           className="order-fulfilment"
           aria-labelledby="order-fulfilment-title"

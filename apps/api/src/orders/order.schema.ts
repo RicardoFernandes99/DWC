@@ -113,8 +113,14 @@ export class Order {
   @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'User' })
   buyerId!: Types.ObjectId;
 
+  @Prop({ type: String, trim: true, maxlength: 100, default: null })
+  buyerNameSnapshot!: string | null;
+
   @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'User' })
   producerId!: Types.ObjectId;
+
+  @Prop({ type: String, trim: true, maxlength: 120, default: null })
+  producerNameSnapshot!: string | null;
 
   @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'Payment' })
   paymentId!: Types.ObjectId;

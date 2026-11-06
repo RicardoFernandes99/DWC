@@ -77,8 +77,27 @@ replaced are not requirements.
   a "simulated payment" label or require a separate "Simulate payment" action.
 - Full card numbers and CVVs are never stored or logged. Saved payment methods
   retain a generated payment-method ID, last four digits and expiry only.
-- Invoice generation is intended, but its format, contents and whether it is a
-  downloadable PDF remain TBD. No invoice implementation is implied by this doc.
+- Purchase receipts follow the confirmed ticket 043 policy below.
+
+### Purchase receipt policy (ticket 043)
+
+- Generate a downloadable PDF purchase receipt per producer order, including
+  automatic auction collection orders. It does not claim tax-invoice status.
+- Keep original purchase amounts and add the current cancellation date,
+  order-specific refunded amount and remaining paid amount. Do not attribute a
+  checkout-wide payment refund to each order or replace original purchase totals.
+- Snapshot the buyer's name and producer's farm name when future purchases
+  complete. Older orders use stable account references and explicitly state that
+  historical names were not recorded. Never substitute current profile names.
+- The owning buyer, that order's producer and administrators may download through
+  authenticated, server-authorized access. There are no public sharing links.
+- Include a stable receipt number derived from the order ID, purchase date,
+  buyer/producer names or legacy references, order and checkout/auction references,
+  item names, units, quantities, unit prices and line totals, subtotal, delivery
+  fee, total in EUR, collection/delivery method and the refund summary above.
+- Auction receipts show the winning whole-lot price once, without multiplying it
+  by the lot quantity again.
+- Exclude email, addresses, card details, tax fields and watermarks.
 
 ## Collection and delivery fees
 
@@ -315,5 +334,4 @@ replaced are not requirements.
 
 Resolve these with the affected tickets, without blocking unrelated work:
 
-- Invoice format, required information and PDF download.
 - Account recovery scope. Session implementation details are drafted in ticket 003.
