@@ -195,17 +195,6 @@ export function FarmHero({
               </a>
             )}
           </div>
-          <p className="-mt-2 text-[11px] text-muted-foreground">
-            Map data ©{' '}
-            <a
-              href="https://www.openstreetmap.org/copyright"
-              target="_blank"
-              rel="noreferrer"
-              className="underline"
-            >
-              OpenStreetMap contributors
-            </a>
-          </p>
         </div>
       </section>
     </div>
