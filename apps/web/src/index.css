@@ -150,10 +150,11 @@
   border-bottom: 1px solid var(--border);
 }
 .site-nav {
-  max-width: 1600px;
+  /* Same container as page content: max-w-[1440px] px-4 md:px-8 xl:px-12. */
+  max-width: 1440px;
   margin: auto;
   min-height: 88px;
-  padding: 18px 4%;
+  padding: 18px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -496,7 +497,7 @@
 @media (max-width: 479px) {
   .site-nav {
     min-height: 76px;
-    padding: 16px 20px;
+    padding: 16px;
   }
   .brand-link {
     font-size: 14px;
@@ -544,5 +545,16 @@
   .drawer-panel,
   .drawer-overlay {
     animation: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .site-nav {
+    padding-inline: 32px;
+  }
+}
+@media (min-width: 1280px) {
+  .site-nav {
+    padding-inline: 48px;
   }
 }

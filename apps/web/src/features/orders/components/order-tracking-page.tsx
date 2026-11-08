@@ -32,6 +32,8 @@ import { OrderRow } from './order-presentation';
 import { orderSteps } from './order-format';
 import { OrderDetail } from './order-detail';
 import './orders.css';
+import { EmptyState } from '@/components/shared/empty-state';
+import { ReceiptText } from 'lucide-react';
 type Audience = 'buyer' | 'producer';
 type Order = components['schemas']['OrderResponseDto'];
 type OrderList = components['schemas']['OrderListResponseDto'];
@@ -337,19 +339,22 @@ function OrderTrackingContent({
             <span>Most recent first</span>
           </div>
           {orders.data.items.length === 0 ? (
-            <div className="orders-empty">
-              <h2>Your next good thing starts here.</h2>
-              <p>
-                {audience === 'buyer'
+            <EmptyState
+              icon={<ReceiptText />}
+              title="No orders yet"
+              description={
+                audience === 'buyer'
                   ? 'Orders from local producers will appear here after checkout.'
-                  : 'Your customer orders will appear here, ready to prepare and fulfil.'}
-              </p>
-              {audience === 'buyer' && (
-                <Button asChild variant="outline">
-                  <Link to="/">Explore the market</Link>
-                </Button>
-              )}
-            </div>
+                  : 'Your customer orders will appear here, ready to prepare and fulfil.'
+              }
+              action={
+                audience === 'buyer' ? (
+                  <Button asChild variant="outline">
+                    <Link to="/">Explore the market</Link>
+                  </Button>
+                ) : undefined
+              }
+            />
           ) : (
             <>
               <div className="orders-column-labels" aria-hidden="true">

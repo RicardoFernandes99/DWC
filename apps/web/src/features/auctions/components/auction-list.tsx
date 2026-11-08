@@ -81,7 +81,13 @@ export function AuctionList({ producerId }: { producerId?: string }) {
         })}
       </div>
 
-      <div className="rounded-xl border bg-card/60 p-3 md:p-5">
+      <div
+        className={cn(
+          query.data?.items.length === 0
+            ? ''
+            : 'rounded-xl border bg-card/60 p-3 md:p-5',
+        )}
+      >
         {query.isPending && (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
             {Array.from({ length: 8 }, (_, index) => (

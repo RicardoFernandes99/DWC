@@ -19,6 +19,8 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/shared/form-field';
+import { EmptyState } from '@/components/shared/empty-state';
+import { PackagePlus } from 'lucide-react';
 
 type Product = components['schemas']['ProducerProductResponseDto'];
 type ProductListResponse =
@@ -615,13 +617,13 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
         </p>
       )}
       {query.data.items.length === 0 ? (
-        <Card className="mt-5 p-6">
-          <h3 className="font-semibold">Your first product starts here</h3>
-          <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-muted-foreground">
-            Add a product with its price, unit, stock, season, and a clear
-            description. You can attach an image while creating it.
-          </p>
-        </Card>
+        <EmptyState
+          className="mt-5"
+          headingLevel="h3"
+          icon={<PackagePlus />}
+          title="Your first product starts here"
+          description="Add a product with its price, unit, stock, season and a clear description. You can attach an image while creating it."
+        />
       ) : (
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
           {query.data.items.map((product) => (

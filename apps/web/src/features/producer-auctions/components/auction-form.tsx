@@ -20,6 +20,8 @@ import {
   type Auction,
 } from './auction-data';
 import { useAuctionBeforeStart } from './use-auction-before-start';
+import { EmptyState } from '@/components/shared/empty-state';
+import { PackagePlus } from 'lucide-react';
 
 type CreateAuction = components['schemas']['CreateAuctionDto'];
 type UpdateAuction = components['schemas']['UpdateAuctionDto'];
@@ -389,15 +391,17 @@ export function AuctionForm({
       {(productsQuery.data?.items ?? []).filter(
         (item) => item.published && !item.archivedAt && !item.moderatedAt,
       ).length === 0 && !baseAuction ? (
-        <div className="mt-6 rounded-lg border bg-secondary/50 p-4 text-sm">
-          <p>
-            You need a published product with available stock before you can
-            schedule an auction.
-          </p>
-          <Button asChild variant="outline" className="mt-3">
-            <Link to="/producer/products/new">Add a product</Link>
-          </Button>
-        </div>
+        <EmptyState
+          className="mt-6"
+          icon={<PackagePlus />}
+          title="Add a product first"
+          description="You need a published product with available stock before you can schedule an auction."
+          action={
+            <Button asChild variant="outline">
+              <Link to="/producer/products/new">Add a product</Link>
+            </Button>
+          }
+        />
       ) : (
         <form
           className="mt-6 space-y-5"
