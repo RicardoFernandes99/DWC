@@ -1,11 +1,30 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
-import { ArrowLeft, RefreshCw, Users } from 'lucide-react';
-import { ApiError } from '@/lib/session';
+import type { ReactNode } from 'react';
+import {
+  ArrowLeft,
+  CalendarClock,
+  Clock,
+  Gavel,
+  RefreshCw,
+  Tag,
+  TrendingUp,
+} from 'lucide-react';
+import type { components } from '@/lib/api-schema';
+import {
+  producerKey,
+  type PublicProducer,
+} from '@/features/catalogue/use-listing-search';
+import { ApiError, publicRequest } from '@/lib/session';
 import { sessionOptions } from '@/lib/session-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { formatMoney, formatUnit, PRODUCT_UNITS } from '@/lib/format';
+import {
+  formatLabel,
+  formatMoney,
+  formatUnit,
+  PRODUCT_UNITS,
+} from '@/lib/format';
 import {
   auctionKey,
   auctionLiveKey,
@@ -26,10 +45,11 @@ import {
 import {
   auctionStatusLabel,
   isAuctionLiveStatePayload,
-  localDate,
   minimumBid,
 } from './auction-room-utils';
 import { useAuctionLive } from './use-auction-live';
+
+type CatalogueProduct = components['schemas']['CatalogueProductDto'];
 
 function auctionUnit(value: string) {
   const unit = PRODUCT_UNITS.find((candidate) => candidate === value);
@@ -84,6 +104,26 @@ function AuctionRoom({ auctionId }: { auctionId: string }) {
     refetchOnWindowFocus: true,
   });
   const user = session.data;
+  const productId = auctionQuery.data?.productId;
+  const producerId = auctionQuery.data?.producerId;
+  const productQuery = useQuery({
+    queryKey: ['catalogue', 'product', productId ?? ''],
+    queryFn: () =>
+      publicRequest<CatalogueProduct>(
+        `products/${encodeURIComponent(productId ?? '')}`,
+      ),
+    enabled: Boolean(productId),
+    retry: false,
+  });
+  const producerQuery = useQuery({
+    queryKey: producerKey(producerId ?? ''),
+    queryFn: () =>
+      publicRequest<PublicProducer>(
+        `producers/${encodeURIComponent(producerId ?? '')}`,
+      ),
+    enabled: Boolean(producerId),
+    retry: false,
+  });
   const liveRoom = useAuctionLive(auctionId, user?.id, liveQuery.data);
   const resultQuery = useQuery({
     queryKey: auctionResultKey(auctionId, user?.id ?? ''),
@@ -112,9 +152,6 @@ function AuctionRoom({ auctionId }: { auctionId: string }) {
   if (!auction) return null;
 
   const currentState = liveRoom.live?.state;
-  const displayedBid = currentState
-    ? currentState.currentBidCents
-    : auction.currentBidCents;
   const nextMinimum = minimumBid(currentState);
   const currentStatus = currentState?.state ?? auction.state;
   const upcoming = currentStatus === 'upcoming';
@@ -122,9 +159,16 @@ function AuctionRoom({ auctionId }: { auctionId: string }) {
     ? auction.startsAt
     : (currentState?.endsAt ?? auction.endsAt);
   const result = resultQuery.data;
+  const statusLabel =
+    currentState?.state === 'finished' && auction.status !== 'finished'
+      ? 'Ended · settling'
+      : currentStatus === 'active'
+        ? 'Live now'
+        : auctionStatusLabel(auction);
+  const endsAt = currentState?.endsAt ?? auction.endsAt;
   return (
     <main
-      className="mx-auto max-w-6xl space-y-6 px-4 py-7 md:px-8 md:py-10"
+      className="mx-auto max-w-7xl space-y-5 px-4 py-6 md:px-8 md:py-8"
       data-auction-room
     >
       <Link
@@ -143,62 +187,6 @@ function AuctionRoom({ auctionId }: { auctionId: string }) {
           response.
         </p>
       )}
-      <header className="grid gap-6 border-b pb-6 md:grid-cols-[minmax(0,1fr)_16rem] md:items-end">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-md border bg-secondary px-2 py-1 text-xs font-medium">
-              {currentState?.state === 'finished' &&
-              auction.status !== 'finished'
-                ? 'Auction ended · settlement pending'
-                : currentState?.state === 'active'
-                  ? 'Live now'
-                  : auctionStatusLabel(auction)}
-            </span>
-          </div>
-          <h1 className="mt-3 break-words text-3xl font-semibold leading-tight md:text-4xl">
-            {auction.product.name}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Lot of {auction.quantity} {auctionUnit(auction.product.unit)} · bids
-            are for the whole lot
-          </p>
-          <p className="mt-4 max-w-[70ch] whitespace-pre-line leading-relaxed">
-            {auction.product.description}
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-1">
-          <AuctionCountdown
-            anchor={liveRoom.live}
-            deadline={deadline}
-            label={upcoming ? 'Starts in' : 'Time remaining'}
-          />
-          <div className="rounded-lg border bg-card p-4" data-auction-viewers>
-            <p className="text-sm text-muted-foreground">Viewers</p>
-            <p className="mt-1 inline-flex items-center gap-2 text-2xl font-semibold tabular-nums">
-              <Users aria-hidden="true" className="size-5 text-primary" />
-              {liveRoom.viewerCount === null ? (
-                <span aria-label="Viewer count unavailable while offline">
-                  —
-                </span>
-              ) : (
-                liveRoom.viewerCount
-              )}
-            </p>
-            {liveRoom.viewerCount === null && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Unavailable while offline
-              </p>
-            )}
-          </div>
-        </div>
-      </header>
-      <p
-        role="status"
-        className="text-xs text-muted-foreground"
-        aria-live="polite"
-      >
-        {liveRoom.connectionMessage}
-      </p>
       {liveQuery.isError && (
         <div
           className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-sm"
@@ -217,8 +205,85 @@ function AuctionRoom({ auctionId }: { auctionId: string }) {
           </Button>
         </div>
       )}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[auto_1fr]">
-        <aside className="space-y-4 xl:col-start-2 xl:row-span-2 xl:row-start-1">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-[auto_1fr] lg:gap-5">
+        <section className="relative min-w-0 overflow-hidden rounded-xl bg-primary lg:col-start-1 lg:row-start-1">
+          <div className="aspect-[4/3] md:aspect-[16/9]">
+            {productQuery.data?.imageUrl ? (
+              <img
+                src={productQuery.data.imageUrl}
+                alt={auction.product.name}
+                className="size-full object-cover"
+              />
+            ) : (
+              <div className="grid size-full place-items-center bg-gradient-to-br from-primary to-primary/70 text-primary-foreground/40">
+                <Gavel aria-hidden="true" className="size-16" />
+              </div>
+            )}
+          </div>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20" />
+          <div className="absolute inset-x-0 top-0 flex flex-wrap gap-2 p-3 md:p-4">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${currentStatus === 'active' ? 'bg-destructive text-white' : 'bg-white/90 text-foreground'}`}
+            >
+              {currentStatus === 'active' && (
+                <span
+                  aria-hidden="true"
+                  className="size-1.5 rounded-full bg-white"
+                />
+              )}
+              {statusLabel}
+            </span>
+            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-foreground">
+              {formatLabel(auction.product.productionMethod)}
+            </span>
+            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-foreground">
+              {formatLabel(auction.product.category)}
+            </span>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-3 p-4 text-white md:p-6">
+            <div className="min-w-0">
+              {producerQuery.data && (
+                <p className="text-xs font-medium tracking-wide text-white/80 uppercase">
+                  {producerQuery.data.farmName} · {producerQuery.data.city}
+                </p>
+              )}
+              <h1 className="mt-1 text-3xl leading-tight font-semibold break-words text-white md:text-4xl">
+                {auction.product.name}
+              </h1>
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-medium tracking-wide text-white/80 uppercase">
+                Lot size
+              </p>
+              <p className="text-2xl font-semibold tabular-nums">
+                {auction.quantity}{' '}
+                <span className="text-sm font-normal">
+                  {auctionUnit(auction.product.unit)}
+                </span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <aside className="space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <AuctionCountdown
+            anchor={liveRoom.live}
+            deadline={deadline}
+            label={
+              upcoming
+                ? 'Starts in'
+                : currentStatus === 'active'
+                  ? 'Bidding closes in'
+                  : 'Auction closed'
+            }
+            startsAt={auction.startsAt}
+            endsAt={endsAt}
+            viewerCount={liveRoom.viewerCount}
+            live={currentStatus === 'active'}
+          />
+          <p role="status" className="sr-only" aria-live="polite">
+            {liveRoom.connectionMessage}
+          </p>
           {session.isPending ? (
             <Card className="p-4 text-sm text-muted-foreground" role="status">
               Restoring your session…
@@ -279,68 +344,115 @@ function AuctionRoom({ auctionId }: { auctionId: string }) {
               </p>
             </Card>
           )}
-          {liveRoom.connected && currentState && (
-            <p className="text-xs text-muted-foreground">
-              State revision {currentState.revision} · minimum next bid{' '}
-              {formatMoney(nextMinimum)}
-            </p>
-          )}
+          <AuctionHistory auctionId={auctionId} />
         </aside>
-        <Card className="min-w-0 p-4 md:p-5 xl:col-start-1 xl:row-start-1">
-          <dl className="grid gap-4 text-sm sm:grid-cols-2 xl:grid-cols-3">
-            <div>
-              <dt className="text-muted-foreground">Starting price</dt>
-              <dd className="mt-1 font-medium tabular-nums">
-                {formatMoney(auction.startingPriceCents)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Minimum increment</dt>
-              <dd className="mt-1 font-medium tabular-nums">
-                {formatMoney(auction.minimumIncrementCents)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Current high bid</dt>
-              <dd className="mt-1 font-medium tabular-nums">
-                {displayedBid === null
-                  ? 'No bids yet'
-                  : formatMoney(displayedBid)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Scheduled start</dt>
-              <dd className="mt-1 font-medium">
-                <time dateTime={auction.startsAt}>
-                  {localDate(auction.startsAt)}
-                </time>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Scheduled end</dt>
-              <dd className="mt-1 font-medium">
-                <time dateTime={currentState?.endsAt ?? auction.endsAt}>
-                  {localDate(currentState?.endsAt ?? auction.endsAt)}
-                </time>
-              </dd>
-            </div>
-            {currentState?.currentBidderName && (
-              <div>
-                <dt className="text-muted-foreground">Current leader</dt>
-                <dd className="mt-1 font-medium">
-                  {currentState.currentBidderName}
-                </dd>
+        <div className="min-w-0 space-y-4 lg:col-start-1 lg:row-start-2">
+          <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <StatTile
+              icon={<Tag aria-hidden="true" />}
+              label="Starting price"
+              value={formatMoney(auction.startingPriceCents)}
+              hint="Whole lot"
+            />
+            <StatTile
+              icon={<TrendingUp aria-hidden="true" />}
+              label="Min increment"
+              value={formatMoney(auction.minimumIncrementCents)}
+              hint={`Next bid ${formatMoney(nextMinimum || auction.startingPriceCents)}`}
+            />
+            <StatTile
+              icon={<CalendarClock aria-hidden="true" />}
+              label="Starts"
+              value={shortTime(auction.startsAt)}
+              hint={shortDay(auction.startsAt)}
+            />
+            <StatTile
+              icon={<Clock aria-hidden="true" />}
+              label="Ends"
+              value={shortTime(endsAt)}
+              hint={shortDay(endsAt)}
+            />
+          </dl>
+
+          <section className="rounded-xl border bg-card p-4 md:p-5">
+            {producerQuery.data && (
+              <div className="mb-4 flex items-center gap-3 border-b pb-4">
+                <span
+                  aria-hidden="true"
+                  className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary"
+                >
+                  {producerQuery.data.farmName
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((part) => part[0])
+                    .join('')}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">{producerQuery.data.farmName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {producerQuery.data.city}
+                  </p>
+                </div>
+                <Button asChild size="sm" variant="outline">
+                  <Link
+                    to="/farm/$producerId"
+                    params={{ producerId: auction.producerId }}
+                  >
+                    Visit farm
+                  </Link>
+                </Button>
               </div>
             )}
-          </dl>
-        </Card>
-        <AuctionHistory
-          auctionId={auctionId}
-          className="xl:col-start-1 xl:row-start-2"
-        />
+            <h2 className="font-sans text-sm font-semibold">About this lot</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Lot of {auction.quantity} {auctionUnit(auction.product.unit)} ·
+              bids are for the whole lot
+            </p>
+            <p className="mt-3 max-w-[70ch] leading-relaxed whitespace-pre-line">
+              {auction.product.description}
+            </p>
+          </section>
+        </div>
       </div>
     </main>
   );
+}
+
+function StatTile({
+  icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-3 md:p-4">
+      <dt className="flex items-center justify-between text-xs font-medium tracking-wide text-muted-foreground uppercase [&_svg]:size-4 [&_svg]:text-primary">
+        {label} {icon}
+      </dt>
+      <dd className="mt-1.5 text-xl font-semibold tabular-nums">{value}</dd>
+      <dd className="text-xs text-muted-foreground">{hint}</dd>
+    </div>
+  );
+}
+
+function shortTime(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
+
+function shortDay(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).format(new Date(value));
 }
 
 export function AuctionRoomRoute() {

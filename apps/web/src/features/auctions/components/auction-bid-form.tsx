@@ -9,11 +9,10 @@ import type {
 } from '@dwc/realtime-contracts';
 import { Link } from '@tanstack/react-router';
 import type { Socket } from 'socket.io-client';
-import { CreditCard } from 'lucide-react';
+import { CreditCard, Gavel, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { FormField } from '@/components/shared/form-field';
 import { formatMoney } from '@/lib/format';
 import { getAccessToken, refresh, type User } from '@/lib/session';
 import {
@@ -290,110 +289,210 @@ export function AuctionBidForm({
       .finally(() => setSubmitting(false));
   };
 
+  const increment = live?.minimumIncrementCents ?? 0;
+  const quickPicks = increment
+    ? [
+        currentMinimum,
+        currentMinimum + increment * 2,
+        currentMinimum + increment * 5,
+      ]
+    : [];
+  const typedCents = Math.round(Number(amount) * 100);
+  const submitCents = pending
+    ? pending.amountCents
+    : Number.isSafeInteger(typedCents) && typedCents > 0
+      ? typedCents
+      : null;
+
   return (
-    <Card className="p-4 md:p-5">
-      <h2 className="text-lg font-semibold">Place a bid</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Minimum bid for the whole lot:{' '}
-        <strong className="text-foreground tabular-nums">
-          {formatMoney(currentMinimum)}
-        </strong>
-      </p>
-      {user?.buyerStatus === 'suspended' && !pending && (
-        <p
-          role="status"
-          className="mt-3 rounded-md border border-warning/50 bg-warning/10 p-3 text-sm"
-        >
-          New bids are paused for this account.{' '}
-          {user.buyerSuspensionReason
-            ? `Reason: ${user.buyerSuspensionReason}`
-            : 'Your account can still watch the auction.'}
-        </p>
-      )}
-      {live?.state === 'finished' && !pending ? (
-        <p className="mt-4 text-sm text-muted-foreground">Bidding has ended.</p>
-      ) : (
-        <form
-          className="mt-4 space-y-4"
-          onSubmit={submit}
-          data-auction-bid-form
-        >
-          <FormField id="auction-bid-amount" label="Your bid for the whole lot">
-            <Input
-              id="auction-bid-amount"
-              type="number"
-              inputMode="decimal"
-              min={currentMinimum / 100}
-              step="0.01"
-              required
-              value={pending ? (pending.amountCents / 100).toFixed(2) : amount}
-              disabled={Boolean(pending) || submitting || !canBid}
-              onChange={(event) => setAmount(event.target.value)}
-              aria-describedby="auction-bid-help"
-            />
-          </FormField>
-          <p id="auction-bid-help" className="text-xs text-muted-foreground">
-            The first bid may match the starting price. Later bids must meet the
-            displayed increment.
-          </p>
+    <Card className="gap-0 overflow-hidden p-0">
+      <div className="border-b bg-secondary/40 p-4 md:p-5">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <label
-              htmlFor="auction-payment-method"
-              className="text-sm font-medium"
-            >
-              Saved payment method
-            </label>
-            <select
-              id="auction-payment-method"
-              value={pending?.paymentMethodId ?? selectedMethod?.id ?? ''}
-              disabled={Boolean(pending) || submitting}
-              onChange={(event) => setSelectedMethodId(event.target.value)}
-              className="mt-1 block h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {pending &&
-                !eligibleMethods.some(
-                  (method) => method.id === pending.paymentMethodId,
-                ) && (
-                  <option value={pending.paymentMethodId}>
-                    Original card unavailable · retry the same request
-                  </option>
-                )}
-              {eligibleMethods.map((method: PaymentMethod) => (
-                <option key={method.id} value={method.id}>
-                  Card ending {method.last4} · expires{' '}
-                  {String(method.expiryMonth).padStart(2, '0')}/
-                  {method.expiryYear}
-                </option>
-              ))}
-            </select>
+            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              {live?.currentBidCents === null
+                ? 'Starting price'
+                : 'Current high bid'}
+            </p>
+            <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">
+              {formatMoney(
+                live?.currentBidCents ?? live?.startingPriceCents ?? 0,
+              )}
+            </p>
           </div>
-          <Button
-            type="submit"
-            disabled={submitting || (!canBid && !pending)}
-            className="w-full sm:w-auto"
+          {live?.currentBidderName && (
+            <div className="text-right">
+              <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                Top bidder
+              </p>
+              <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 text-sm font-medium">
+                <span
+                  aria-hidden="true"
+                  className="size-1.5 rounded-full bg-primary"
+                />
+                {live.currentBidderName}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="p-4 md:p-5">
+        {user?.buyerStatus === 'suspended' && !pending && (
+          <p
+            role="status"
+            className="mb-4 rounded-md border border-warning/50 bg-warning/10 p-3 text-sm"
           >
-            {submitting
-              ? 'Waiting for server…'
-              : pending
-                ? 'Retry same bid'
-                : 'Submit bid'}
-          </Button>
-          {pending && !submitting && (
-            <p className="text-sm text-muted-foreground" role="status">
-              The previous response was not received. Retrying uses the same
-              request ID and amount.
-            </p>
-          )}
-          {error && (
-            <p
-              role={error.startsWith('Bid accepted') ? 'status' : 'alert'}
-              className={`text-sm ${error.startsWith('Bid accepted') ? 'text-primary' : 'text-destructive'}`}
+            New bids are paused for this account.{' '}
+            {user.buyerSuspensionReason
+              ? `Reason: ${user.buyerSuspensionReason}`
+              : 'Your account can still watch the auction.'}
+          </p>
+        )}
+        {live?.state === 'finished' && !pending ? (
+          <p className="text-sm text-muted-foreground">Bidding has ended.</p>
+        ) : (
+          <form className="space-y-4" onSubmit={submit} data-auction-bid-form>
+            {quickPicks.length > 0 && (
+              <fieldset disabled={Boolean(pending) || submitting || !canBid}>
+                <div className="mb-2 flex items-baseline justify-between text-xs text-muted-foreground">
+                  <legend className="font-semibold tracking-wider uppercase">
+                    Quick bid
+                  </legend>
+                  <span className="tabular-nums">
+                    Min increment {formatMoney(increment)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {quickPicks.map((cents, index) => {
+                    const selected = submitCents === cents && !pending;
+                    return (
+                      <button
+                        key={cents}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => setAmount((cents / 100).toFixed(2))}
+                        className={`rounded-lg border px-2 py-2.5 text-center transition-colors hover:border-primary/50 hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${selected ? 'border-primary bg-secondary' : 'bg-background'}`}
+                      >
+                        <span className="block text-sm font-semibold tabular-nums">
+                          {index === 0
+                            ? 'Min'
+                            : `+${formatMoney(cents - currentMinimum)}`}
+                        </span>
+                        <span className="block text-xs text-muted-foreground tabular-nums">
+                          {formatMoney(cents)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            )}
+            <div>
+              <label
+                htmlFor="auction-bid-amount"
+                className="text-sm font-medium"
+              >
+                Your bid for the whole lot
+              </label>
+              <div className="relative mt-1">
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+                >
+                  €
+                </span>
+                <Input
+                  id="auction-bid-amount"
+                  type="number"
+                  inputMode="decimal"
+                  min={currentMinimum / 100}
+                  step="0.01"
+                  required
+                  placeholder={(currentMinimum / 100).toFixed(2)}
+                  value={
+                    pending ? (pending.amountCents / 100).toFixed(2) : amount
+                  }
+                  disabled={Boolean(pending) || submitting || !canBid}
+                  onChange={(event) => setAmount(event.target.value)}
+                  aria-describedby="auction-bid-help"
+                  className="h-12 pl-7 text-lg font-semibold tabular-nums"
+                />
+              </div>
+              <p
+                id="auction-bid-help"
+                className="mt-1 text-xs text-muted-foreground"
+              >
+                At least {formatMoney(currentMinimum)}. The first bid may match
+                the starting price.
+              </p>
+            </div>
+            <div>
+              <label
+                htmlFor="auction-payment-method"
+                className="text-sm font-medium"
+              >
+                Pay with
+              </label>
+              <select
+                id="auction-payment-method"
+                value={pending?.paymentMethodId ?? selectedMethod?.id ?? ''}
+                disabled={Boolean(pending) || submitting}
+                onChange={(event) => setSelectedMethodId(event.target.value)}
+                className="mt-1 block h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                {pending &&
+                  !eligibleMethods.some(
+                    (method) => method.id === pending.paymentMethodId,
+                  ) && (
+                    <option value={pending.paymentMethodId}>
+                      Original card unavailable · retry the same request
+                    </option>
+                  )}
+                {eligibleMethods.map((method: PaymentMethod) => (
+                  <option key={method.id} value={method.id}>
+                    Card ending {method.last4} · expires{' '}
+                    {String(method.expiryMonth).padStart(2, '0')}/
+                    {method.expiryYear}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={submitting || (!canBid && !pending)}
+              className="h-12 w-full text-base"
             >
-              {error}
+              <Gavel aria-hidden="true" />
+              {submitting
+                ? 'Waiting for server…'
+                : pending
+                  ? 'Retry same bid'
+                  : submitCents
+                    ? `Place bid ${formatMoney(submitCents)}`
+                    : 'Place bid'}
+            </Button>
+            <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+              <Lock aria-hidden="true" className="size-3.5" /> Your card is only
+              charged if you win.
             </p>
-          )}
-        </form>
-      )}
+            {pending && !submitting && (
+              <p className="text-sm text-muted-foreground" role="status">
+                The previous response was not received. Retrying uses the same
+                request ID and amount.
+              </p>
+            )}
+            {error && (
+              <p
+                role={error.startsWith('Bid accepted') ? 'status' : 'alert'}
+                className={`text-sm ${error.startsWith('Bid accepted') ? 'text-primary' : 'text-destructive'}`}
+              >
+                {error}
+              </p>
+            )}
+          </form>
+        )}
+      </div>
     </Card>
   );
 }
