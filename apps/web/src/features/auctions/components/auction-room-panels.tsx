@@ -272,7 +272,7 @@ export function AuctionHistory({
       {history.data && history.data.items.length > 0 && (
         <>
           <ol
-            className="mt-3 max-h-80 space-y-2 overflow-y-auto overscroll-contain pr-1"
+            className="mt-3 max-h-80 space-y-1 overflow-y-auto overscroll-contain pr-1"
             aria-label="Accepted bids"
             tabIndex={0}
           >
@@ -281,7 +281,7 @@ export function AuctionHistory({
               return (
                 <li
                   key={bid.id}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${leading ? 'bg-secondary' : 'bg-background'}`}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${leading ? 'bg-secondary' : ''}`}
                 >
                   <span
                     aria-hidden="true"

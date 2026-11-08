@@ -423,7 +423,7 @@ function ProductAddToCart({
   };
 
   return (
-    <section className="flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
+    <section className="flex h-full flex-col overflow-hidden rounded-2xl border bg-card">
       <Link
         to="/farm/$producerId"
         params={{ producerId: product.producerId }}
@@ -494,7 +494,7 @@ function ProductAddToCart({
           </span>
         </div>
 
-        <dl className="mt-5 divide-y rounded-lg border text-sm">
+        <dl className="mt-4 divide-y border-y text-sm">
           {[
             {
               icon: <Leaf aria-hidden="true" />,
@@ -521,7 +521,7 @@ function ProductAddToCart({
           ].map((fact) => (
             <div
               key={fact.label}
-              className="flex items-center justify-between gap-3 px-3 py-2.5"
+              className="flex items-center justify-between gap-3 py-2.5"
             >
               <dt className="flex items-center gap-2 text-muted-foreground [&_svg]:size-4 [&_svg]:text-primary">
                 {fact.icon}
@@ -533,7 +533,7 @@ function ProductAddToCart({
         </dl>
       </div>
 
-      <div className="mt-auto space-y-3 p-5">
+      <div className="mt-auto space-y-3 px-5 pt-5 pb-3">
         {!purchasable ? (
           <p className="rounded-lg bg-secondary/50 p-3 text-sm text-muted-foreground">
             Producer and admin accounts can browse but not buy.
@@ -594,16 +594,10 @@ function ProductAddToCart({
         )}
       </div>
 
-      <ul className="grid grid-cols-2 gap-px border-t bg-border text-xs text-muted-foreground">
-        <li className="flex items-center gap-2 bg-secondary/30 px-4 py-3">
-          <Truck aria-hidden="true" className="size-4 shrink-0 text-primary" />
-          Delivery or farm collection
-        </li>
-        <li className="flex items-center gap-2 bg-secondary/30 px-4 py-3">
-          <Sprout aria-hidden="true" className="size-4 shrink-0 text-primary" />
-          Straight from the producer
-        </li>
-      </ul>
+      <p className="flex items-center justify-center gap-1.5 px-5 pb-5 text-xs text-muted-foreground">
+        <Truck aria-hidden="true" className="size-3.5 text-primary" />
+        Delivery or farm collection, straight from the producer
+      </p>
     </section>
   );
 }

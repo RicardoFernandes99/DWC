@@ -347,7 +347,7 @@ function AuctionRoom({ auctionId }: { auctionId: string }) {
           <AuctionHistory auctionId={auctionId} />
         </aside>
         <div className="min-w-0 space-y-4 lg:col-start-1 lg:row-start-2">
-          <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <dl className="grid grid-cols-2 divide-x divide-y rounded-xl border bg-card md:grid-cols-4 md:divide-y-0 [&>div:nth-child(2)]:border-r-0 md:[&>div:nth-child(2)]:border-r">
             <StatTile
               icon={<Tag aria-hidden="true" />}
               label="Starting price"
@@ -430,11 +430,11 @@ function StatTile({
   hint: string;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-3 md:p-4">
-      <dt className="flex items-center justify-between text-xs font-medium tracking-wide text-muted-foreground uppercase [&_svg]:size-4 [&_svg]:text-primary">
-        {label} {icon}
+    <div className="p-3 md:p-4">
+      <dt className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground [&_svg]:size-3.5 [&_svg]:text-primary">
+        {icon} {label}
       </dt>
-      <dd className="mt-1.5 text-xl font-semibold tabular-nums">{value}</dd>
+      <dd className="mt-1 text-lg font-semibold tabular-nums">{value}</dd>
       <dd className="text-xs text-muted-foreground">{hint}</dd>
     </div>
   );
