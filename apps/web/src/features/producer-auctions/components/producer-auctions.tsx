@@ -26,6 +26,7 @@ import {
   type Product,
 } from './auction-data';
 import { useAuctionBeforeStart } from './use-auction-before-start';
+import { EmptyState } from '@/components/shared/empty-state';
 
 type AuctionList = components['schemas']['AuctionListResponseDto'];
 type ProducerStatus = User['producerStatus'];
@@ -181,31 +182,20 @@ function AuctionListView({
         </Card>
       )}
       {query.data && query.data.items.length === 0 && (
-        <Card className="p-5 md:p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <CalendarClock
-                className="mt-0.5 size-5 shrink-0 text-primary"
-                aria-hidden="true"
-              />
-              <div className="min-w-0">
-                <h2 className="font-semibold">No auctions yet</h2>
-                <p className="mt-1 max-w-[60ch] text-sm text-muted-foreground">
-                  A fixed lot reserves its quantity from your product stock
-                  until the auction is cancelled or settled.
-                </p>
-              </div>
-            </div>
-            {canCreate && (
+        <EmptyState
+          icon={<CalendarClock />}
+          title="No auctions yet"
+          description="A fixed lot reserves its quantity from your product stock until the auction is cancelled or settled."
+          action={
+            canCreate ? (
               <Button
-                className="w-full md:w-auto md:shrink-0"
                 onClick={() => void navigate({ to: '/producer/auctions/new' })}
               >
                 <Plus aria-hidden="true" /> Schedule your first lot
               </Button>
-            )}
-          </div>
-        </Card>
+            ) : undefined
+          }
+        />
       )}
       {query.data && query.data.items.length > 0 && (
         <div className="overflow-hidden rounded-xl border bg-card">

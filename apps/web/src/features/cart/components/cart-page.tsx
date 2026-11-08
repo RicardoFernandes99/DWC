@@ -9,6 +9,7 @@ import type { components } from '@/lib/api-schema';
 import { useCart } from '../use-cart';
 import type { StoredCartItem } from '../cart-storage';
 import { ProducerCartSection } from './producer-cart-section';
+import { EmptyState } from '@/components/shared/empty-state';
 
 type CatalogueProduct = components['schemas']['CatalogueProductDto'];
 type ProductList = components['schemas']['CatalogueListDto'];
@@ -135,33 +136,21 @@ export function CartPage() {
 
       {isEmpty ? (
         <div className="space-y-12">
-          <section
-            aria-labelledby="empty-cart-title"
-            className="flex flex-col items-center justify-center rounded-lg border bg-card p-10 text-center shadow-2xs md:p-14"
-          >
-            <div className="grid size-16 place-items-center rounded-full bg-secondary text-primary">
-              <ShoppingBasket
-                aria-hidden="true"
-                className="size-8 stroke-[1.5]"
-              />
-            </div>
-            <h2
-              id="empty-cart-title"
-              className="mt-4 font-editorial text-2xl font-semibold"
-            >
-              Your cart is empty
-            </h2>
-            <p className="mt-2 max-w-md text-sm text-muted-foreground leading-relaxed">
-              Explore freshly harvested fruits, vegetables, dairy, and artisanal
-              goods directly from regional producers.
-            </p>
-            <Button asChild className="mt-6 rounded-md">
-              <Link to="/">
-                Explore the Market{' '}
-                <ArrowRight aria-hidden="true" className="size-4" />
-              </Link>
-            </Button>
-          </section>
+          <EmptyState
+            size="page"
+            titleId="empty-cart-title"
+            icon={<ShoppingBasket />}
+            title="Your cart is empty"
+            description="Explore freshly harvested fruits, vegetables, dairy and artisanal goods directly from regional producers."
+            action={
+              <Button asChild>
+                <Link to="/">
+                  Explore the market{' '}
+                  <ArrowRight aria-hidden="true" className="size-4" />
+                </Link>
+              </Button>
+            }
+          />
 
           {featuredQuery.data?.items && featuredQuery.data.items.length > 0 && (
             <section aria-labelledby="suggested-title" className="space-y-4">

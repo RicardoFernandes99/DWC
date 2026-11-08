@@ -10,6 +10,7 @@ import {
   fetchPublicAuctions,
   type AuctionState,
 } from '../auction-data';
+import { EmptyState } from '@/components/shared/empty-state';
 
 const stateOptions: { value: AuctionState | undefined; label: string }[] = [
   { value: undefined, label: 'All auctions' },
@@ -116,13 +117,11 @@ export function AuctionList({ producerId }: { producerId?: string }) {
         </p>
       )}
       {query.data && query.data.items.length === 0 && (
-        <Card className="p-6 md:p-8">
-          <CalendarClock className="size-6 text-primary" aria-hidden="true" />
-          <h2 className="mt-3 text-lg font-semibold">No auctions here yet</h2>
-          <p className="mt-1 max-w-[55ch] text-sm text-muted-foreground">
-            Try another state or check back when local producers schedule a lot.
-          </p>
-        </Card>
+        <EmptyState
+          icon={<CalendarClock />}
+          title="No auctions here yet"
+          description="Try another state or check back when local producers schedule a lot."
+        />
       )}
       {query.data && query.data.items.length > 0 && (
         <>

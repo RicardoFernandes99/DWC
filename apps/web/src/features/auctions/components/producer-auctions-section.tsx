@@ -12,6 +12,7 @@ import {
   fetchPublicAuctions,
   type AuctionList,
 } from '../auction-data';
+import { EmptyState } from '@/components/shared/empty-state';
 
 function localDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -104,13 +105,16 @@ export function ProducerAuctionsSection({
             </span>
           )}
         </h2>
-        <Link
-          to="/auctions"
-          search={{ page: 1, producerId }}
-          className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary hover:underline underline-offset-4"
-        >
-          All farm auctions <ArrowRight aria-hidden="true" className="size-4" />
-        </Link>
+        {Boolean(query.data?.items.length) && (
+          <Link
+            to="/auctions"
+            search={{ page: 1, producerId }}
+            className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary hover:underline underline-offset-4"
+          >
+            All farm auctions{' '}
+            <ArrowRight aria-hidden="true" className="size-4" />
+          </Link>
+        )}
       </div>
       {query.isPending && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4">
@@ -128,14 +132,18 @@ export function ProducerAuctionsSection({
         </Card>
       )}
       {query.data && query.data.items.length === 0 && (
-        <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-          This farm has no public auctions yet.
-        </p>
+        <EmptyState
+          icon={<Gavel />}
+          title="No auctions yet"
+          description="This farm has not scheduled any auction lots. Check back soon."
+        />
       )}
       {query.data && visible.length === 0 && past.length > 0 && (
-        <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-          No live or upcoming auctions right now.
-        </p>
+        <EmptyState
+          icon={<Clock />}
+          title="No live or upcoming auctions"
+          description="Past lots are still available below."
+        />
       )}
       {visible.length > 0 && (
         <ul

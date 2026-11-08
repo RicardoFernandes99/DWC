@@ -28,6 +28,8 @@ import {
   type PublicProducer,
   type SearchState,
 } from './use-listing-search';
+import { EmptyState } from '@/components/shared/empty-state';
+import { SearchX } from 'lucide-react';
 
 export type { SearchState };
 
@@ -97,15 +99,61 @@ function ListingResults({ scope }: { scope: string }) {
         </Button>
       </section>
     );
-  if (!query.data.items.length)
-    return (
-      <section className="rounded-lg border bg-card p-8 text-center">
-        <h2 className="text-xl">No products match these filters</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Clear a filter or try a different search.
-        </p>
-      </section>
+  if (!query.data.items.length) {
+    const filtered = Boolean(
+      search.q ||
+      search.category ||
+      search.location ||
+      search.season ||
+      search.productionMethod ||
+      search.minPriceCents !== undefined ||
+      search.maxPriceCents !== undefined ||
+      (scope === 'all' && search.producerId),
     );
+    return filtered ? (
+      <EmptyState
+        icon={<SearchX />}
+        title="No products match these filters"
+        description="Try a different search or clear the filters to see everything available."
+        action={
+          <Button
+            variant="outline"
+            onClick={() =>
+              update({
+                q: undefined,
+                category: undefined,
+                producerId: undefined,
+                location: undefined,
+                season: undefined,
+                productionMethod: undefined,
+                minPriceCents: undefined,
+                maxPriceCents: undefined,
+              })
+            }
+          >
+            Clear filters
+          </Button>
+        }
+      />
+    ) : (
+      <EmptyState
+        icon={<Sprout />}
+        title="No products yet"
+        description={
+          scope === 'all'
+            ? 'Local producers have not listed anything yet. Check back soon.'
+            : 'This farm has not listed any products yet. Check back soon.'
+        }
+        action={
+          scope === 'all' ? undefined : (
+            <Button asChild variant="outline">
+              <Link to="/">Browse the market</Link>
+            </Button>
+          )
+        }
+      />
+    );
+  }
   const pages = Math.max(1, Math.ceil(query.data.total / query.data.limit));
   const first = (query.data.page - 1) * query.data.limit + 1;
   const last = first + query.data.items.length - 1;
@@ -147,6 +195,27 @@ function ListingResults({ scope }: { scope: string }) {
   );
 }
 
+/** Filters plus the results panel; shared by the market and farm pages. */
+function ProductListing({
+  scope,
+  title,
+  showFilters = true,
+}: {
+  scope: string;
+  title: string;
+  showFilters?: boolean;
+}) {
+  return (
+    <section className="space-y-5" aria-label={title}>
+      {showFilters && <CatalogueFilters scope={scope} />}
+      <div className="rounded-xl border bg-card/60 p-3 md:p-5">
+        <h2 className="mb-4 text-xl md:text-2xl">{title}</h2>
+        <ListingResults scope={scope} />
+      </div>
+    </section>
+  );
+}
+
 export function CataloguePage() {
   return (
     <main className="pb-12">
@@ -169,12 +238,8 @@ export function CataloguePage() {
           </p>
         </div>
       </section>
-      <div className="mx-auto max-w-[1440px] space-y-6 px-4 pt-5 md:px-8 md:pt-6 xl:px-12">
-        <CatalogueFilters scope="all" />
-        <div className="rounded-xl border bg-card/60 p-3 md:p-5">
-          <h2 className="mb-4 text-xl md:text-2xl">Fresh produce</h2>
-          <ListingResults scope="all" />
-        </div>
+      <div className="mx-auto max-w-[1440px] px-4 pt-5 md:px-8 md:pt-6 xl:px-12">
+        <ProductListing scope="all" title="Fresh produce" />
       </div>
     </main>
   );
@@ -378,6 +443,16 @@ function ProductAddToCart({ product }: { product: Product }) {
 }
 
 export function ProducerPage({ producerId }: { producerId: string }) {
+  // Same unfiltered query as the farm hero; hides filters for a farm with no products.
+  const farmProducts = useQuery({
+    queryKey: ['catalogue', 'farm-hero', producerId],
+    queryFn: () =>
+      publicRequest<ProductList>(
+        `producers/${encodeURIComponent(producerId)}/products?sort=newest&page=1`,
+      ),
+    retry: false,
+  });
+  const farmIsEmpty = farmProducts.data?.total === 0;
   const producerQuery = useQuery({
     queryKey: producerKey(producerId),
     queryFn: () =>
@@ -424,16 +499,13 @@ export function ProducerPage({ producerId }: { producerId: string }) {
       <div className="mt-4">
         <FarmHero producerId={producerId} producer={producer} />
       </div>
-      <section className="mt-12 space-y-5">
-        <div>
-          <h2 className="text-2xl">From this farm</h2>
-          <p className="mt-1 break-words text-sm text-muted-foreground">
-            Available products from {producer.farmName}.
-          </p>
-        </div>
-        <CatalogueFilters scope={producerId} />
-        <ListingResults scope={producerId} />
-      </section>
+      <div className="mt-12">
+        <ProductListing
+          scope={producerId}
+          title="Products"
+          showFilters={!farmIsEmpty}
+        />
+      </div>
       <ProducerAuctionsSection
         producerId={producerId}
         farmName={producer.farmName}

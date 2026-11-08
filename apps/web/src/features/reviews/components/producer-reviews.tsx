@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { producerReviewsOptions, reviewDate } from '../review-queries';
 import { ReportReview } from './report-review';
 import { StarsDisplay } from './review-stars';
+import { EmptyState } from '@/components/shared/empty-state';
+import { MessageSquare } from 'lucide-react';
 
 /** Compact rating line for the producer header; never invents a rating. */
 export function ProducerRatingSummary({ producerId }: { producerId: string }) {
@@ -93,10 +95,11 @@ export function ProducerReviews({ producerId }: { producerId: string }) {
         </div>
       )}
       {data && data.total === 0 && (
-        <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-          No reviews yet. Buyers can review this farm after a delivered or
-          collected order.
-        </p>
+        <EmptyState
+          icon={<MessageSquare />}
+          title="No reviews yet"
+          description="Buyers can review this farm after a delivered or collected order."
+        />
       )}
       {data && data.total > 0 && data.items.length === 0 && (
         <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">

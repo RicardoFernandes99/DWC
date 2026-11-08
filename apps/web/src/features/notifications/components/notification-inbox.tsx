@@ -16,6 +16,7 @@ import {
   type Notification,
 } from '../notifications';
 import './notifications.css';
+import { EmptyState } from '@/components/shared/empty-state';
 
 function displayDate(value: string) {
   const date = new Date(value);
@@ -86,11 +87,11 @@ export function NotificationInbox({ user }: { user: User }) {
           </Button>
         </Card>
       ) : items.length === 0 ? (
-        <Card className="notification-state-card">
-          <Bell aria-hidden="true" />
-          <h2>You’re all caught up</h2>
-          <p>New order and application updates will appear here.</p>
-        </Card>
+        <EmptyState
+          icon={<Bell />}
+          title="You’re all caught up"
+          description="New order and application updates will appear here."
+        />
       ) : (
         <>
           <ol className="notification-list" aria-label="Your notifications">

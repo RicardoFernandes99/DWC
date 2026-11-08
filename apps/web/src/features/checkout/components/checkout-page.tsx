@@ -18,6 +18,7 @@ import { formatMoney } from '@/lib/format';
 import { ApiError, authenticatedRequest, currentUser } from '@/lib/session';
 import type { components } from '@/lib/api-schema';
 import { useCart } from '@/features/cart/use-cart';
+import { EmptyState } from '@/components/shared/empty-state';
 
 type FulfilmentMethod = 'delivery' | 'collection';
 type DeliveryAddress = components['schemas']['DeliveryAddressDto'];
@@ -533,23 +534,19 @@ export function CheckoutPage() {
   // EMPTY CART
   if (items.length === 0) {
     return (
-      <main className="mx-auto max-w-xl px-4 py-16 text-center">
-        <div className="rounded-lg border bg-card p-8 shadow-2xs">
-          <ShoppingBag
-            aria-hidden="true"
-            className="mx-auto size-12 text-muted-foreground"
-          />
-          <h1 className="mt-4 font-editorial text-2xl font-bold">
-            Your cart is empty
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Browse our catalogue of fresh, seasonal produce from local farmers
-            to begin your order.
-          </p>
-          <Button asChild className="mt-6 rounded-md">
-            <Link to="/">Explore catalogue</Link>
-          </Button>
-        </div>
+      <main className="mx-auto max-w-xl px-4 py-16">
+        <EmptyState
+          size="page"
+          headingLevel="h1"
+          icon={<ShoppingBag />}
+          title="Your cart is empty"
+          description="Browse fresh, seasonal produce from local farmers to begin your order."
+          action={
+            <Button asChild>
+              <Link to="/">Explore the market</Link>
+            </Button>
+          }
+        />
       </main>
     );
   }

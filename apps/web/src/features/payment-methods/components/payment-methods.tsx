@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/form-field';
+import { EmptyState } from '@/components/shared/empty-state';
+import { CreditCard } from 'lucide-react';
 
 type PaymentMethod = components['schemas']['PaymentMethodResponseDto'];
 type CreatePaymentMethod = components['schemas']['CreatePaymentMethodDto'];
@@ -284,12 +286,12 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
               </Button>
             </Card>
           ) : methods.data.length === 0 ? (
-            <Card className="p-6">
-              <h3 className="font-semibold">No saved cards yet</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Your saved payment methods will appear here.
-              </p>
-            </Card>
+            <EmptyState
+              headingLevel="h3"
+              icon={<CreditCard />}
+              title="No saved cards yet"
+              description="Add a card to check out faster and to bid in auctions."
+            />
           ) : (
             <div className="space-y-3">
               <h3 className="font-semibold">Saved cards</h3>
