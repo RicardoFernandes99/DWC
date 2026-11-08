@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { Check, Flag, MoreHorizontal } from 'lucide-react';
-import { DropdownMenu } from 'radix-ui';
+import { Check, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiError } from '@/lib/session';
@@ -53,46 +52,31 @@ export function ReportReview({
   });
   const user = session.data;
   if (session.isPending || user?.role === 'admin') return null;
-  const menu = (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button
-          type="button"
-          aria-label="Review options"
-          className="absolute top-3 right-3 grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none data-[state=open]:bg-accent"
-        >
-          <MoreHorizontal aria-hidden="true" className="size-4" />
-        </button>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          align="end"
-          sideOffset={4}
-          className="z-50 min-w-44 rounded-lg border bg-popover p-1 text-sm shadow-md"
-        >
-          {user ? (
-            <DropdownMenu.Item
-              onSelect={() => setOpen(true)}
-              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none data-highlighted:bg-accent"
-            >
-              <Flag aria-hidden="true" className="size-4" /> Report review
-            </DropdownMenu.Item>
-          ) : (
-            <DropdownMenu.Item asChild>
-              <Link
-                to="/login"
-                search={{
-                  returnTo: `${window.location.pathname}${window.location.search}`,
-                }}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none data-highlighted:bg-accent"
-              >
-                <Flag aria-hidden="true" className="size-4" /> Sign in to report
-              </Link>
-            </DropdownMenu.Item>
-          )}
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+  const iconClass =
+    'absolute top-3 right-3 grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
+  const menu = user ? (
+    <button
+      type="button"
+      aria-label="Report review"
+      title="Report review"
+      aria-expanded={open}
+      onClick={() => setOpen((value) => !value)}
+      className={`${iconClass} ${open ? 'bg-accent text-foreground' : ''}`}
+    >
+      <Flag aria-hidden="true" className="size-4" />
+    </button>
+  ) : (
+    <Link
+      to="/login"
+      search={{
+        returnTo: `${window.location.pathname}${window.location.search}`,
+      }}
+      aria-label="Sign in to report this review"
+      title="Sign in to report"
+      className={iconClass}
+    >
+      <Flag aria-hidden="true" className="size-4" />
+    </Link>
   );
   if (mutation.isSuccess)
     return (

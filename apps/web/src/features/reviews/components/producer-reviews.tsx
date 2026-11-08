@@ -60,13 +60,6 @@ export function ProducerReviews({ producerId }: { producerId: string }) {
             </span>
           )}
         </h2>
-        {data && data.summary.ratingCount > 0 && (
-          <p className="text-sm tabular-nums text-muted-foreground">
-            {data.summary.averageRating?.toFixed(1)} average from{' '}
-            {data.summary.ratingCount}{' '}
-            {data.summary.ratingCount === 1 ? 'review' : 'reviews'}
-          </p>
-        )}
       </div>
       {query.isPending && (
         <div
