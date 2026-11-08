@@ -13,6 +13,15 @@ import { AuctionSchema, AuctionBidSchema } from './auctions/auction.schema.js';
 import { ReviewSchema } from './reviews/review.schema.js';
 import { ReviewReportSchema } from './reviews/review-report.schema.js';
 import { RefundAllocationSchema } from './orders/refund-allocation.schema.js';
+import {
+  CORE_PRODUCT_IMAGES,
+  cleanupCatalogue,
+  createCatalogue,
+  deleteFixtureImages,
+  fixtureImage,
+  fixtureImageKey,
+  uploadFixtureImages,
+} from './local-demo-catalogue.js';
 
 const NAMESPACE = 'dwc-local-demo-044-v1';
 const MANIFEST_COLLECTION = '_dwc_fixture_ownership';
@@ -840,6 +849,31 @@ async function assertNoForeignReferences(
   }
 }
 
+/** Gives fixture-owned core products an image when an older install has none. */
+async function attachCoreImages(db: mongoose.mongo.Db): Promise<void> {
+  for (const [key, image] of Object.entries(CORE_PRODUCT_IMAGES)) {
+    const productId = oid(key);
+    const existing = await db
+      .collection('products')
+      .findOne({ _id: productId, image: null }, { projection: { _id: 1 } });
+    if (!existing) continue;
+    const metadata = await fixtureImage(
+      image,
+      approvedProducer,
+      productId,
+      now,
+    );
+    await uploadFixtureImages([{ image, objectKey: metadata.objectKey }]);
+    await db
+      .collection('products')
+      .updateOne(
+        { _id: productId, image: null },
+        { $set: { image: metadata }, $inc: { revision: 1 } },
+      );
+    console.log(`Attached a fixture image to core product ${key}.`);
+  }
+}
+
 async function create(
   connection: mongoose.Connection,
   db: mongoose.mongo.Db,
@@ -870,6 +904,7 @@ async function create(
     console.log(
       `Fixture namespace ${NAMESPACE} already exists and is complete. No records or credentials were changed.`,
     );
+    await attachCoreImages(db);
     return;
   }
 
@@ -1232,6 +1267,19 @@ async function create(
       2,
     ),
   ];
+  for (const row of products) {
+    const key = (
+      Object.keys(CORE_PRODUCT_IMAGES) as (keyof typeof CORE_PRODUCT_IMAGES)[]
+    ).find((name) => oid(name).equals(row._id))!;
+    Object.assign(row, {
+      image: await fixtureImage(
+        CORE_PRODUCT_IMAGES[key],
+        approvedProducer,
+        row._id,
+        now,
+      ),
+    });
+  }
   const auctions = [
     auction(
       oid('auction_upcoming'),
@@ -1437,6 +1485,18 @@ async function create(
     }
   }
 
+  const coreImages = products.map((row) => ({
+    image:
+      CORE_PRODUCT_IMAGES[
+        (
+          Object.keys(
+            CORE_PRODUCT_IMAGES,
+          ) as (keyof typeof CORE_PRODUCT_IMAGES)[]
+        ).find((name) => oid(name).equals(row._id))!
+      ],
+    objectKey: fixtureImageKey(approvedProducer, row._id),
+  }));
+  await uploadFixtureImages(coreImages);
   const session = await connection.startSession();
   try {
     await session.withTransaction(async () => {
@@ -1515,6 +1575,11 @@ async function cleanup(
     if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT'))
       throw error;
   }
+  await deleteFixtureImages(
+    refs(manifest, 'products').map((productId) =>
+      fixtureImageKey(approvedProducer, productId),
+    ),
+  );
   console.log(`Removed only manifest-owned records for ${NAMESPACE}.`);
 }
 
@@ -1537,8 +1602,40 @@ try {
   if (!(hello.localTime instanceof Date))
     fail('MongoDB did not provide server time.');
   now = hello.localTime;
-  if (mode === 'create') await create(connection, db);
-  else await cleanup(connection, db);
+  if (mode === 'create') {
+    await create(connection, db);
+    const stored = await credentials();
+    const models = {
+      users: connection.model('CatalogueUser', UserSchema, 'users'),
+      products: connection.model('CatalogueProduct', ProductSchema, 'products'),
+      paymentmethods: connection.model(
+        'CataloguePaymentMethod',
+        PaymentMethodSchema,
+        'paymentmethods',
+      ),
+      payments: connection.model('CataloguePayment', PaymentSchema, 'payments'),
+      checkouts: connection.model(
+        'CatalogueCheckout',
+        CheckoutSchema,
+        'checkouts',
+      ),
+      orders: connection.model('CatalogueOrder', OrderSchema, 'orders'),
+      auctions: connection.model('CatalogueAuction', AuctionSchema, 'auctions'),
+      auctionbids: connection.model(
+        'CatalogueAuctionBid',
+        AuctionBidSchema,
+        'auctionbids',
+      ),
+      reviews: connection.model('CatalogueReview', ReviewSchema, 'reviews'),
+    } as unknown as Parameters<typeof createCatalogue>[2];
+    await createCatalogue(connection, db, models, {
+      now,
+      passwordHash: await bcrypt.hash(stored.password, BCRYPT_COST),
+    });
+  } else {
+    await cleanupCatalogue(connection, db);
+    await cleanup(connection, db);
+  }
 } catch (error) {
   console.error(
     error instanceof Error ? error.message : 'Fixture command failed.',
