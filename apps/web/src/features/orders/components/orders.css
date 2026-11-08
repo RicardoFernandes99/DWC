@@ -452,11 +452,18 @@ body:has(.orders-screen) .site-header {
   margin-top: 15px;
 }
 .order-items {
-  margin-top: 32px;
+  margin-top: 24px;
+  padding: 18px 20px 4px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 .order-items > .order-section-heading {
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--foreground);
+  border-bottom: 1px solid var(--border);
+}
+.order-items li:last-child {
+  border-bottom: 0;
 }
 .order-items ul {
   list-style: none;
@@ -503,13 +510,17 @@ body:has(.orders-screen) .site-header {
 }
 .order-sidebar {
   min-width: 0;
-}
-.order-receipt {
-  position: relative;
+  align-self: start;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 24px;
+}
+.order-receipt {
+  position: relative;
+}
+.order-sidebar > .order-receipt-download {
+  margin-top: 20px;
 }
 .order-receipt-total {
   font-size: 32px;
@@ -583,7 +594,9 @@ body:has(.orders-screen) .site-header {
   margin-top: 16px;
 }
 .order-fulfilment {
-  padding: 25px 0;
+  margin-top: 24px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
 .order-fulfilment .order-section-heading {
@@ -623,7 +636,8 @@ body:has(.orders-screen) .site-header {
   overflow-wrap: anywhere;
 }
 .order-request-disclosure {
-  border-bottom: 1px solid var(--border);
+  margin-top: 12px;
+  padding-inline: 4px;
 }
 .order-request-disclosure summary {
   cursor: pointer;

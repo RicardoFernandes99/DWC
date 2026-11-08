@@ -92,6 +92,35 @@ export function OrderDetail({
         )}
         {order.refundRequest && <RefundSummary request={order.refundRequest} />}
         {audience === 'buyer' && complete && <OrderReview orderId={order.id} />}
+        <section className="order-items" aria-labelledby="order-items-title">
+          <div className="order-section-heading">
+            <h2 id="order-items-title">What’s in your order</h2>
+            <span className="order-meta">
+              {order.items.length}{' '}
+              {order.items.length === 1 ? 'product' : 'products'}
+            </span>
+          </div>
+          <ul>
+            {order.items.map((line) => (
+              <li key={line.productId}>
+                <span className="order-item-quantity">
+                  {line.quantity}
+                  <span>{formatUnit(line.productUnit)}</span>
+                </span>
+                <div className="order-item-name">
+                  <span>{line.productName}</span>
+                  <span>
+                    {formatMoney(line.unitPriceCents)} /{' '}
+                    {formatUnit(line.productUnit)}
+                  </span>
+                </div>
+                <span className="order-item-total">
+                  {formatMoney(line.lineTotalCents)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
         {canRequest && (
           <details className="order-request-disclosure">
             <summary>
@@ -131,35 +160,6 @@ export function OrderDetail({
             </div>
           </details>
         )}
-        <section className="order-items" aria-labelledby="order-items-title">
-          <div className="order-section-heading">
-            <h2 id="order-items-title">What’s in your order</h2>
-            <span className="order-meta">
-              {order.items.length}{' '}
-              {order.items.length === 1 ? 'product' : 'products'}
-            </span>
-          </div>
-          <ul>
-            {order.items.map((line) => (
-              <li key={line.productId}>
-                <span className="order-item-quantity">
-                  {line.quantity}
-                  <span>{formatUnit(line.productUnit)}</span>
-                </span>
-                <div className="order-item-name">
-                  <span>{line.productName}</span>
-                  <span>
-                    {formatMoney(line.unitPriceCents)} /{' '}
-                    {formatUnit(line.productUnit)}
-                  </span>
-                </div>
-                <span className="order-item-total">
-                  {formatMoney(line.lineTotalCents)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
       </div>
       <aside className="order-sidebar" aria-label="Payment and fulfilment">
         <section
