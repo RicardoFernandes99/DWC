@@ -1,12 +1,7 @@
 import { safeReturn } from './safe-return';
 import { routeAccess } from './route-access';
 import { useState } from 'react';
-import {
-  ArrowRight,
-  Leaf,
-  ShoppingBasket,
-  Sprout,
-} from 'lucide-react';
+import { ArrowRight, Leaf, ShoppingBasket, Sprout } from 'lucide-react';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
