@@ -84,6 +84,33 @@
 }
 
 @layer base {
+  /* Tailwind v4 dropped the pointer cursor on buttons; restore it for every interactive control. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='menuitem']:not([data-disabled]),
+  [role='option']:not([data-disabled]),
+  [role='tab'],
+  [role='checkbox'],
+  [role='switch'],
+  [role='slider'],
+  summary,
+  select:not(:disabled),
+  label[for],
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled),
+  input[type='file']:not(:disabled),
+  input[type='range']:not(:disabled),
+  input[type='submit']:not(:disabled),
+  input[type='button']:not(:disabled),
+  a[href] {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
+
   html {
     scrollbar-gutter: stable;
   }
