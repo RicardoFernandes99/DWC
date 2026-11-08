@@ -254,7 +254,6 @@ export function NotificationRuntime({ user }: { user: User }) {
         activeProps={{ className: 'notification-nav-active' }}
       >
         <Bell aria-hidden="true" className="notification-bell" />
-        <span>Notifications</span>
         {Boolean(unreadCount) && (
           <span className="notification-count" aria-hidden="true">
             {unreadCount > 99 ? '99+' : unreadCount}

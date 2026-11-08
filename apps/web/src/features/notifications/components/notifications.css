@@ -1,13 +1,19 @@
 .notification-nav-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  white-space: nowrap;
+  position: relative;
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 8px;
+}
+
+.notification-nav-link:hover {
+  background: var(--accent);
 }
 
 .notification-bell {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
 }
 
 .notification-nav-active {
@@ -17,15 +23,20 @@
 }
 
 .notification-count {
+  position: absolute;
+  top: 1px;
+  right: 0;
   display: inline-grid;
-  min-width: 20px;
-  height: 20px;
+  min-width: 18px;
+  height: 18px;
   place-items: center;
   border-radius: 999px;
-  background: var(--secondary);
-  color: var(--foreground);
-  padding-inline: 5px;
-  font-size: 11px;
+  border: 2px solid var(--auth-surface);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding-inline: 4px;
+  font-size: 10px;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   font-weight: 650;
 }
@@ -235,11 +246,5 @@
     right: max(10px, env(safe-area-inset-right));
     bottom: max(10px, env(safe-area-inset-bottom));
     width: min(400px, calc(100vw - 20px));
-  }
-}
-
-@media (max-width: 479px) {
-  .notification-nav-link > span:nth-child(2) {
-    display: none;
   }
 }
