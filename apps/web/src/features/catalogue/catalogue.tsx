@@ -11,14 +11,13 @@ import {
   Check,
   Leaf,
   MapPin,
-  Minus,
   Package,
-  Plus,
   ShoppingBasket,
   Sprout,
   Truck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { QuantityStepper } from '@/components/shared/quantity-stepper';
 import type { components } from '@/lib/api-schema';
 import { ProductGrid } from '@/components/shared/product-card';
 import { Button } from '@/components/ui/button';
@@ -542,38 +541,13 @@ function ProductAddToCart({
         ) : (
           <>
             <div className="flex items-stretch gap-2">
-              <div className="flex items-center rounded-lg border bg-background">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-12 w-10 rounded-r-none"
-                  disabled={quantity <= 1 || isOutOfStock}
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  aria-label="Decrease quantity"
-                >
-                  <Minus aria-hidden="true" className="size-4" />
-                </Button>
-                <span
-                  className="min-w-8 text-center font-semibold tabular-nums"
-                  aria-label={`Quantity: ${quantity}`}
-                >
-                  {quantity}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-12 w-10 rounded-l-none"
-                  disabled={quantity >= product.availableStock || isOutOfStock}
-                  onClick={() =>
-                    setQuantity((q) => Math.min(product.availableStock, q + 1))
-                  }
-                  aria-label="Increase quantity"
-                >
-                  <Plus aria-hidden="true" className="size-4" />
-                </Button>
-              </div>
+              <QuantityStepper
+                size="lg"
+                value={quantity}
+                max={product.availableStock}
+                disabled={isOutOfStock}
+                onChange={setQuantity}
+              />
               <Button
                 type="button"
                 size="lg"
