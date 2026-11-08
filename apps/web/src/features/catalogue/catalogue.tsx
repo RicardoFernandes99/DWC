@@ -542,7 +542,6 @@ function ProductAddToCart({
           <>
             <div className="flex items-stretch gap-2">
               <QuantityStepper
-                size="lg"
                 value={quantity}
                 max={product.availableStock}
                 disabled={isOutOfStock}

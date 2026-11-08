@@ -120,7 +120,7 @@ export function CartLineItem({
       <div className="flex items-center justify-between gap-4 sm:justify-end">
         {/* Quantity Controls */}
         <QuantityStepper
-          size="sm"
+          variant="outline"
           label={`Quantity of ${name}`}
           value={item.quantity}
           max={availableStock > 0 ? availableStock : undefined}

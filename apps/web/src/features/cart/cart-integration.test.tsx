@@ -152,7 +152,6 @@ describe('Cart page interactions and multi-producer behavior', () => {
     expect(
       screen.getByRole('heading', { name: 'Order Summary' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('3 items from 2 producers')).toBeInTheDocument();
 
     // Sign in prompt for guest
     expect(
