@@ -457,89 +457,91 @@ export function Account() {
       : undefined;
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 md:px-8 md:py-12">
-      <header className="flex flex-wrap items-center gap-4 border-b pb-6">
-        <span
-          aria-hidden="true"
-          className="grid size-14 shrink-0 place-items-center rounded-full bg-secondary text-lg font-semibold text-primary"
-        >
-          {current.name
-            .split(/\s+/)
-            .filter(Boolean)
-            .slice(0, 2)
-            .map((part) => part[0]!.toUpperCase())
-            .join('')}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm text-muted-foreground">Your account</p>
-          <h1 className="text-2xl leading-tight break-words md:text-3xl">
-            {current.name}
-          </h1>
-          <p className="text-sm break-all text-muted-foreground">
-            {current.email}
-          </p>
-        </div>
-        <div className="flex items-center gap-1">
-          {current.role === 'producer' && (
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/producer/auctions">
-                {current.producerStatus === 'suspended'
-                  ? 'View auctions'
-                  : 'Manage auctions'}
-              </Link>
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={busy}
-            onClick={() => void signOut()}
+      <div className="rounded-2xl border bg-card p-5 md:p-8">
+        <header className="flex flex-wrap items-center gap-4 border-b pb-6">
+          <span
+            aria-hidden="true"
+            className="grid size-14 shrink-0 place-items-center rounded-full bg-secondary text-lg font-semibold text-primary"
           >
-            <LogOut aria-hidden="true" />
-            Sign out
-          </Button>
-        </div>
-      </header>
-      {message && (
-        <p role="alert" className="mt-4 text-destructive">
-          {message}
-        </p>
-      )}
-      {query.isError && (
-        <div role="alert" className="mt-5 rounded-lg border p-4 text-sm">
-          <p>
-            Could not refresh your account. The information shown may be out of
-            date.
-          </p>
-          <Button
-            className="mt-3"
-            variant="outline"
-            disabled={query.isFetching}
-            onClick={() => void query.refetch()}
-          >
-            Retry
-          </Button>
-        </div>
-      )}
-      {current.role === 'producer' && (
-        <>
-          <ProducerOnboarding
-            key={current.id}
-            user={current}
-            requestedSellingPath={requestedSellingPath}
-          />
-          {(current.producerStatus === 'approved' ||
-            current.producerStatus === 'suspended') &&
-            routePath.replace(/\/+$/, '') === '/producer' && (
-              <ProducerDashboard
-                canEdit={current.producerStatus === 'approved'}
-              />
+            {current.name
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((part) => part[0]!.toUpperCase())
+              .join('')}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-muted-foreground">Your account</p>
+            <h1 className="text-2xl leading-tight break-words md:text-3xl">
+              {current.name}
+            </h1>
+            <p className="text-sm break-all text-muted-foreground">
+              {current.email}
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
+            {current.role === 'producer' && (
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/producer/auctions">
+                  {current.producerStatus === 'suspended'
+                    ? 'View auctions'
+                    : 'Manage auctions'}
+                </Link>
+              </Button>
             )}
-          <ProducerProducts status={current.producerStatus} />
-        </>
-      )}
-      {current.role === 'buyer' && (
-        <PaymentMethods key={current.id} buyerId={current.id} />
-      )}
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onClick={() => void signOut()}
+            >
+              <LogOut aria-hidden="true" />
+              Sign out
+            </Button>
+          </div>
+        </header>
+        {message && (
+          <p role="alert" className="mt-4 text-destructive">
+            {message}
+          </p>
+        )}
+        {query.isError && (
+          <div role="alert" className="mt-5 rounded-lg border p-4 text-sm">
+            <p>
+              Could not refresh your account. The information shown may be out
+              of date.
+            </p>
+            <Button
+              className="mt-3"
+              variant="outline"
+              disabled={query.isFetching}
+              onClick={() => void query.refetch()}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+        {current.role === 'producer' && (
+          <>
+            <ProducerOnboarding
+              key={current.id}
+              user={current}
+              requestedSellingPath={requestedSellingPath}
+            />
+            {(current.producerStatus === 'approved' ||
+              current.producerStatus === 'suspended') &&
+              routePath.replace(/\/+$/, '') === '/producer' && (
+                <ProducerDashboard
+                  canEdit={current.producerStatus === 'approved'}
+                />
+              )}
+            <ProducerProducts status={current.producerStatus} />
+          </>
+        )}
+        {current.role === 'buyer' && (
+          <PaymentMethods key={current.id} buyerId={current.id} />
+        )}
+      </div>
     </main>
   );
 }
