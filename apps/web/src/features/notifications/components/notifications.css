@@ -31,7 +31,7 @@
   height: 18px;
   place-items: center;
   border-radius: 999px;
-  border: 2px solid var(--auth-surface);
+  border: 2px solid var(--card);
   background: var(--primary);
   color: var(--primary-foreground);
   padding-inline: 4px;

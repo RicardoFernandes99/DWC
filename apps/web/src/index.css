@@ -146,7 +146,7 @@
 }
 
 .site-header {
-  background: var(--auth-surface);
+  background: var(--card);
   border-bottom: 1px solid var(--border);
 }
 .site-nav {
