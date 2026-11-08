@@ -71,7 +71,7 @@ export function FarmHero({
   return (
     <div className="space-y-4">
       <section className="relative overflow-hidden rounded-2xl bg-primary">
-        <div className="grid h-72 grid-cols-1 gap-1 md:h-[26rem] md:grid-cols-4 md:grid-rows-2">
+        <div className="grid h-56 grid-cols-1 gap-1 md:h-[19.5rem] md:grid-cols-4 md:grid-rows-2">
           {photos.length === 0 ? (
             <div className="grid place-items-center bg-gradient-to-br from-primary to-primary/70 text-primary-foreground/30 md:col-span-4 md:row-span-2">
               <Sprout aria-hidden="true" className="size-20" />
