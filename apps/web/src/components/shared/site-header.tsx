@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import {
   ArrowUpRight,
+  ChevronDown,
   LogIn,
   LogOut,
   Menu,
   ShoppingBasket,
   Sprout,
+  UserRound,
   X,
 } from 'lucide-react';
-import { Dialog } from 'radix-ui';
+import { Dialog, DropdownMenu } from 'radix-ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
@@ -31,7 +33,6 @@ export function SiteHeader({
   cartCount: number;
 }) {
   const ordersPath = user?.role === 'producer' ? '/producer/orders' : '/orders';
-  const accountPath = user?.role === 'producer' ? '/producer' : '/account';
   const showOrders = Boolean(user && user.role !== 'admin');
 
   return (
@@ -91,9 +92,7 @@ export function SiteHeader({
           )}
           {user && <NotificationRuntime key={user.id} user={user} />}
           {user ? (
-            <Link to={accountPath} className="hidden md:inline">
-              My account
-            </Link>
+            <UserMenu user={user} />
           ) : (
             <>
               <Link
@@ -138,16 +137,16 @@ function itemsFor(user: User | null | undefined): DrawerItem[] {
       },
       { label: 'My auctions', to: '/producer/auctions', prefix: true },
       ...marketplace,
+      { label: 'Account', to: '/account' },
     ];
   if (user?.role === 'buyer')
     return [
       ...marketplace,
       { label: 'Cart', to: '/cart' },
       { label: 'Orders', to: '/orders', search: { page: 1 }, prefix: true },
-      { label: 'Account settings', to: '/account' },
+      { label: 'Account', to: '/account' },
     ];
-  if (user)
-    return [...marketplace, { label: 'Account settings', to: '/account' }];
+  if (user) return [...marketplace, { label: 'Account', to: '/account' }];
   return marketplace;
 }
 
@@ -267,11 +266,65 @@ function MobileDrawer({ user }: { user: User | null | undefined }) {
   );
 }
 
-function SignOutButton({ onDone }: { onDone: () => void }) {
+function UserMenu({ user }: { user: User }) {
+  const signOut = useSignOut();
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          className="hidden items-center gap-2 rounded-lg py-1 pr-2 pl-1 text-[13px] font-medium hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:bg-accent md:inline-flex"
+        >
+          <span
+            aria-hidden="true"
+            className="grid size-8 place-items-center rounded-full bg-secondary text-xs font-semibold text-primary"
+          >
+            {initials(user.name)}
+          </span>
+          <span className="max-w-40 truncate">{user.name}</span>
+          <ChevronDown aria-hidden="true" className="size-4 opacity-60" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={6}
+          className="z-50 min-w-52 rounded-lg border bg-popover p-1 text-sm text-popover-foreground shadow-md"
+        >
+          <DropdownMenu.Label className="px-3 pt-2 pb-1.5">
+            <p className="truncate font-semibold">{user.name}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {user.email}
+            </p>
+          </DropdownMenu.Label>
+          <DropdownMenu.Separator className="my-1 h-px bg-border" />
+          <DropdownMenu.Item asChild>
+            <Link
+              to="/account"
+              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none data-highlighted:bg-accent"
+            >
+              <UserRound aria-hidden="true" className="size-4" /> Account
+            </Link>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            disabled={signOut.busy}
+            onSelect={() => void signOut.run()}
+            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none data-disabled:opacity-60 data-highlighted:bg-accent"
+          >
+            <LogOut aria-hidden="true" className="size-4" />
+            {signOut.busy ? 'Signing out…' : 'Sign out'}
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+
+function useSignOut() {
   const client = useQueryClient();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  async function signOut() {
+  async function run() {
     setBusy(true);
     try {
       const signingOut = logout();
@@ -281,21 +334,28 @@ function SignOutButton({ onDone }: { onDone: () => void }) {
         predicate: (query) => query.queryKey[0] !== 'session',
       });
       await signingOut.catch(() => undefined);
-      onDone();
       await navigate({ to: '/' });
     } finally {
       setBusy(false);
     }
   }
+  return { busy, run };
+}
+
+function SignOutButton({ onDone }: { onDone: () => void }) {
+  const signOut = useSignOut();
   return (
     <button
       type="button"
-      disabled={busy}
-      onClick={() => void signOut()}
+      disabled={signOut.busy}
+      onClick={() => {
+        onDone();
+        void signOut.run();
+      }}
       className="flex w-full items-center gap-3 rounded-md px-3 py-3 text-[15px] font-medium hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60"
     >
       <LogOut aria-hidden="true" className="size-5" />
-      {busy ? 'Signing out…' : 'Sign out'}
+      {signOut.busy ? 'Signing out…' : 'Sign out'}
     </button>
   );
 }
