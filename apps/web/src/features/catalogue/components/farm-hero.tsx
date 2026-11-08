@@ -149,8 +149,24 @@ export function FarmHero({
         </Link>
       )}
 
-      <section className="grid gap-5 rounded-xl border bg-card p-4 md:grid-cols-[minmax(0,1fr)_20rem] md:p-5">
-        <div className="flex min-w-0 flex-col gap-4 md:py-1 md:pl-1">
+      <section className="grid overflow-hidden rounded-xl border bg-card md:grid-cols-[1fr_2fr]">
+        <div className="relative min-h-56 border-b bg-secondary md:border-r md:border-b-0">
+          {coordinates ? (
+            <iframe
+              title={`Map showing ${producer.farmName} in ${producer.city}`}
+              src={`https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(
+                `${coordinates.longitude - 0.04},${coordinates.latitude - 0.025},${coordinates.longitude + 0.04},${coordinates.latitude + 0.025}`,
+              )}&layer=mapnik&marker=${coordinates.latitude}%2C${coordinates.longitude}`}
+              loading="lazy"
+              className="absolute inset-0 size-full"
+            />
+          ) : (
+            <div className="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
+              Map location unavailable
+            </div>
+          )}
+        </div>
+        <div className="flex min-w-0 flex-col gap-4 p-5 md:p-6">
           <div>
             <h2 className="font-sans text-xs font-semibold tracking-wider text-muted-foreground uppercase">
               About the farm
@@ -179,23 +195,7 @@ export function FarmHero({
               </a>
             )}
           </div>
-        </div>
-        <div>
-          {coordinates ? (
-            <iframe
-              title={`Map showing ${producer.farmName} in ${producer.city}`}
-              src={`https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(
-                `${coordinates.longitude - 0.03},${coordinates.latitude - 0.02},${coordinates.longitude + 0.03},${coordinates.latitude + 0.02}`,
-              )}&layer=mapnik&marker=${coordinates.latitude}%2C${coordinates.longitude}`}
-              loading="lazy"
-              className="h-44 w-full rounded-lg border bg-secondary"
-            />
-          ) : (
-            <div className="grid h-44 place-items-center rounded-lg bg-secondary text-sm text-muted-foreground">
-              Map location unavailable
-            </div>
-          )}
-          <p className="mt-1.5 text-[11px] text-muted-foreground">
+          <p className="-mt-2 text-[11px] text-muted-foreground">
             Map data ©{' '}
             <a
               href="https://www.openstreetmap.org/copyright"
