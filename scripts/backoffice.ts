@@ -86,10 +86,11 @@ if (mode === 'setup') {
   console.log('Backoffice dependencies and local configuration are ready.');
 } else if (mode === 'dev') {
   await prepareEnvironment();
+  // The app profile starts the containerized API that the backoffice calls.
   run('docker', [
     ...compose,
     '--profile',
-    'backoffice',
+    'app',
     'up',
     '--build',
     'backoffice',

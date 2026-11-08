@@ -6,12 +6,14 @@ import tailwindcss from '@tailwindcss/vite';
 import { loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(
-    mode,
-    fileURLToPath(new URL('../..', import.meta.url)),
+  const env = loadEnv(mode, fileURLToPath(new URL('../..', import.meta.url)), [
     'API_PORT',
-  );
-  const api = `http://127.0.0.1:${env.API_PORT || 3000}`;
+    'API_PROXY_TARGET',
+    'WEB_USE_POLLING',
+  ]);
+  // The Compose stack points the proxy at the api service.
+  const api =
+    env.API_PROXY_TARGET || `http://127.0.0.1:${env.API_PORT || 3000}`;
   return {
     plugins: [
       react(),
@@ -24,6 +26,8 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       strictPort: true,
+      // Windows bind mounts do not deliver file events into containers.
+      watch: env.WEB_USE_POLLING === 'true' ? { usePolling: true } : undefined,
       proxy: {
         '/api': { target: api, ws: true },
         '/socket.io': { target: api, ws: true },

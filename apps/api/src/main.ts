@@ -44,7 +44,11 @@ async function bootstrap() {
   await Promise.all(
     Object.values(database.models).map((model) => model.init()),
   );
-  await app.listen(config.getOrThrow<number>('API_PORT'), '127.0.0.1');
+  // Loopback by default; the Compose stack sets 0.0.0.0 inside its container.
+  await app.listen(
+    config.getOrThrow<number>('API_PORT'),
+    config.get<string>('API_HOST') || '127.0.0.1',
+  );
 }
 
 void bootstrap().catch((error: unknown) => {

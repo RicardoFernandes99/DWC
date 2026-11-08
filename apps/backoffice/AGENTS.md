@@ -26,9 +26,10 @@ Composer are not required.
 ## Local commands
 
 From the repository root, run `pnpm backoffice:setup`, then
-`pnpm backoffice:dev`. The app listens on `http://localhost:8080` and calls the
-host API at `http://host.docker.internal:3000/api`. The API environment must
-allow `BACKOFFICE_ORIGIN=http://localhost:8080`.
+`pnpm backoffice:dev` (or `pnpm stack:up` for the whole stack). The app listens
+on `http://localhost:8080` and calls the containerized API at
+`http://api:3000/api`; Compose sets `NEST_API_URL` and starts the API with it.
+The API environment must allow `BACKOFFICE_ORIGIN=http://localhost:8080`.
 
 Use `pnpm backoffice:format` for Pint and `pnpm backoffice:check` for Pint plus
 Larastan. The app has no local SQL database or migrations.

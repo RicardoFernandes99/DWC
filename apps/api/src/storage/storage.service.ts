@@ -61,7 +61,11 @@ export class StorageService implements OnModuleDestroy {
   constructor(config: ConfigService) {
     this.bucket = config.getOrThrow<string>('S3_BUCKET');
     const endpoint = config.getOrThrow<string>('S3_ENDPOINT');
-    this.endpointUrl = new URL(endpoint);
+    // Signed URLs are opened by browsers, which may reach storage on a different
+    // host than the API does (e.g. `storage:4566` inside Compose).
+    this.endpointUrl = new URL(
+      config.get<string>('S3_PUBLIC_ENDPOINT') || endpoint,
+    );
     this.region = config.getOrThrow<string>('S3_REGION');
     this.accessKeyId = config.getOrThrow<string>('S3_ACCESS_KEY_ID');
     this.secretAccessKey = config.getOrThrow<string>('S3_SECRET_ACCESS_KEY');

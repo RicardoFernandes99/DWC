@@ -36,8 +36,15 @@ export function validateEnvironment(input: Record<string, unknown>) {
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error('API_PORT must be an integer between 1 and 65535.');
   }
-  for (const name of ['S3_ENDPOINT', 'WEB_ORIGIN', 'BACKOFFICE_ORIGIN']) {
+  for (const name of [
+    'S3_ENDPOINT',
+    'S3_PUBLIC_ENDPOINT',
+    'WEB_ORIGIN',
+    'BACKOFFICE_ORIGIN',
+  ]) {
     const value = input[name];
+    if (name === 'S3_PUBLIC_ENDPOINT' && (value === undefined || value === ''))
+      continue;
     if (typeof value !== 'string') {
       throw new Error(`${name} must be a valid HTTP or HTTPS URL.`);
     }

@@ -15,6 +15,26 @@ pnpm infra:up
 pnpm dev
 ```
 
+### Full stack in Docker
+
+To run everything in containers (API, web, backoffice and infrastructure):
+
+```sh
+pnpm setup:local          # once; host Node only for this step
+pnpm backoffice:setup     # once; creates apps/backoffice/.env and vendor/
+pnpm stack:up             # build/start all services and create the S3 bucket
+pnpm stack:logs           # follow api, web and backoffice logs
+pnpm stack:down           # stop everything; named volumes are kept
+```
+
+Web is on http://localhost:5173, the API on 3000 and the backoffice on 8080
+(set `BACKOFFICE_PORT` to publish it elsewhere). Containers reach each other by
+service name, so the backoffice calls `http://api:3000/api` directly. Linux
+`node_modules` live in named volumes, separate from any host install, and source
+changes are picked up by polling. Do not run `pnpm dev` at the same time; both
+publish ports 3000 and 5173. The API listens on `API_HOST` (default
+`127.0.0.1`; the container sets `0.0.0.0`, still published on loopback only).
+
 `setup:local` creates an ignored root `.env` with random local credentials only
 when it does not exist. It never overwrites an existing environment file.
 The API loads this file; Compose uses the same settings.
@@ -73,7 +93,8 @@ docs/             project scope, architecture, agent workflow and research
 The Laravel backoffice lives in `apps/backoffice`. Start it alongside the API
 with `pnpm backoffice:setup` once, then `pnpm backoffice:dev` in a separate
 terminal. It listens on port 8080 and authenticates administrators through the
-API. Root `setup:local` adds `BACKOFFICE_ORIGIN` to an existing `.env` without
+API. `backoffice:dev` also starts the containerized API it calls
+(`http://api:3000/api`), so stop a host `pnpm dev` first, or use `pnpm stack:up`. Root `setup:local` adds `BACKOFFICE_ORIGIN` to an existing `.env` without
 replacing credentials. Run `pnpm backoffice:check` for Pint and Larastan.
 Administrative business screens follow in later tickets.
 
