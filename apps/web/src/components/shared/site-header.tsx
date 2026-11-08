@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import {
   ArrowUpRight,
   LogIn,
@@ -122,54 +122,33 @@ interface DrawerItem {
   prefix?: boolean;
 }
 
-function sectionsFor(user: User | null | undefined) {
+function itemsFor(user: User | null | undefined): DrawerItem[] {
   const marketplace: DrawerItem[] = [
     { label: 'Shop', to: '/' },
     { label: 'Auctions', to: '/auctions', search: { page: 1 }, prefix: true },
   ];
-  if (!user) return [{ title: 'Marketplace', items: marketplace }];
-  if (user.role === 'producer')
+  if (user?.role === 'producer')
     return [
+      { label: 'Dashboard', to: '/producer' },
       {
-        title: 'Selling',
-        items: [
-          { label: 'Dashboard', to: '/producer' },
-          {
-            label: 'Sales',
-            to: '/producer/orders',
-            search: { page: 1 },
-            prefix: true,
-          },
-          { label: 'My auctions', to: '/producer/auctions', prefix: true },
-        ],
+        label: 'Sales',
+        to: '/producer/orders',
+        search: { page: 1 },
+        prefix: true,
       },
-      { title: 'Marketplace', items: marketplace },
-      {
-        title: 'Account',
-        items: [{ label: 'Notifications', to: '/notifications' }],
-      },
+      { label: 'My auctions', to: '/producer/auctions', prefix: true },
+      ...marketplace,
     ];
-  return [
-    { title: 'Marketplace', items: marketplace },
-    {
-      title: 'Account',
-      items: [
-        ...(user.role === 'buyer'
-          ? [
-              { label: 'Cart', to: '/cart' },
-              {
-                label: 'Orders',
-                to: '/orders',
-                search: { page: 1 },
-                prefix: true,
-              },
-            ]
-          : []),
-        { label: 'Notifications', to: '/notifications' },
-        { label: 'Account settings', to: '/account' },
-      ],
-    },
-  ];
+  if (user?.role === 'buyer')
+    return [
+      ...marketplace,
+      { label: 'Cart', to: '/cart' },
+      { label: 'Orders', to: '/orders', search: { page: 1 }, prefix: true },
+      { label: 'Account settings', to: '/account' },
+    ];
+  if (user)
+    return [...marketplace, { label: 'Account settings', to: '/account' }];
+  return marketplace;
 }
 
 function initials(name: string) {
@@ -238,39 +217,30 @@ function MobileDrawer({ user }: { user: User | null | undefined }) {
               >
                 {initials(user.name)}
               </span>
-              <div className="min-w-0">
-                <p className="truncate font-semibold">{user.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {user.role === 'producer' && user.producerStatus
-                    ? `Producer · ${user.producerStatus}`
-                    : user.role}
-                </p>
-              </div>
+              <p className="min-w-0 truncate font-semibold">{user.name}</p>
             </div>
           )}
 
           <nav aria-label="Menu" className="flex-1 overflow-y-auto px-3 pb-3">
-            {sectionsFor(user).map((section) => (
-              <DrawerSection key={section.title} title={section.title}>
-                {section.items.map((item) => (
-                  <li key={item.to}>
-                    <Link
-                      to={item.to}
-                      search={item.search}
-                      onClick={() => setOpen(false)}
-                      aria-current={isActive(item) ? 'page' : undefined}
-                      className={cn(
-                        'flex items-center rounded-md px-3 py-3 text-[15px] font-medium hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                        isActive(item) &&
-                          'bg-secondary font-semibold text-primary',
-                      )}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </DrawerSection>
-            ))}
+            <ul className="mt-2">
+              {itemsFor(user).map((item) => (
+                <li key={item.to}>
+                  <Link
+                    to={item.to}
+                    search={item.search}
+                    onClick={() => setOpen(false)}
+                    aria-current={isActive(item) ? 'page' : undefined}
+                    className={cn(
+                      'flex items-center rounded-md px-3 py-3 text-[15px] font-medium hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                      isActive(item) &&
+                        'bg-secondary font-semibold text-primary',
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </nav>
 
           <div className="border-t px-3 py-3">
@@ -294,23 +264,6 @@ function MobileDrawer({ user }: { user: User | null | undefined }) {
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-  );
-}
-
-function DrawerSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="mt-3">
-      <h2 className="px-3 pb-1 font-sans text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        {title}
-      </h2>
-      <ul>{children}</ul>
-    </section>
   );
 }
 
