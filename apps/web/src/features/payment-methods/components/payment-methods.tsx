@@ -102,10 +102,13 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
   });
 
   return (
-    <section aria-labelledby="payment-methods-title">
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+    <section className="mt-8" aria-labelledby="payment-methods-title">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="payment-methods-title" className="text-2xl font-semibold">
+          <h2
+            id="payment-methods-title"
+            className="font-sans text-lg font-semibold"
+          >
             Payment methods
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -113,16 +116,16 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
           </p>
         </div>
         {!showForm && (
-          <Button variant="outline" onClick={() => setFormOpen(true)}>
+          <Button variant="ghost" size="sm" onClick={() => setFormOpen(true)}>
             <Plus aria-hidden="true" /> Add card
           </Button>
         )}
       </div>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {showForm && (
-          <Card className="p-5 md:p-6">
+          <div className="rounded-lg border p-4 md:p-5">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-lg font-semibold">Add card</h3>
+              <h3 className="font-medium">Add a card</h3>
               {Boolean(methods.data?.length) && (
                 <Button
                   type="button"
@@ -270,7 +273,7 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
                 )}
               </form.Subscribe>
             </form>
-          </Card>
+          </div>
         )}
         <div aria-live="polite" aria-busy={methods.isPending}>
           {methods.isError && methods.data && (
@@ -320,44 +323,31 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
               description="Add a card to check out faster and to bid in auctions."
             />
           ) : (
-            <ul
-              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-              aria-label="Saved cards"
-            >
+            <ul className="divide-y rounded-lg border" aria-label="Saved cards">
               {methods.data.map((method) => (
-                <li key={method.id}>
-                  <div
-                    className={`relative flex aspect-[1.6] flex-col justify-between overflow-hidden rounded-xl p-5 text-primary-foreground shadow-sm ${method.expired ? 'bg-muted-foreground/70' : 'bg-gradient-to-br from-primary to-primary/75'}`}
-                  >
-                    <div
-                      aria-hidden="true"
-                      className="pointer-events-none absolute -top-10 -right-10 size-40 rounded-full bg-white/10"
-                    />
-                    <div className="flex items-center justify-between">
-                      <span
-                        aria-hidden="true"
-                        className="h-7 w-10 rounded-md bg-gradient-to-br from-amber-200 to-amber-400/80"
-                      />
-                      {method.expired && (
-                        <span className="rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-destructive">
-                          Expired
-                        </span>
-                      )}
-                    </div>
-                    <p
-                      className="font-mono text-lg tracking-widest tabular-nums"
-                      aria-label={`Card ending in ${method.last4}`}
-                    >
-                      •••• •••• •••• {method.last4}
-                    </p>
-                    <div className="flex items-end justify-between text-xs">
-                      <span className="opacity-80">Expires</span>
-                      <span className="font-semibold tabular-nums">
-                        {String(method.expiryMonth).padStart(2, '0')}/
-                        {String(method.expiryYear).slice(-2)}
-                      </span>
-                    </div>
-                  </div>
+                <li
+                  key={method.id}
+                  className="flex items-center gap-3 px-4 py-3"
+                >
+                  <CreditCard
+                    aria-hidden="true"
+                    className="size-5 shrink-0 text-muted-foreground"
+                  />
+                  <p className="min-w-0 flex-1 font-medium">
+                    <span className="sr-only">Card ending in </span>
+                    <span aria-hidden="true">•••• </span>
+                    <span className="tabular-nums">{method.last4}</span>
+                  </p>
+                  {method.expired ? (
+                    <span className="text-sm font-medium text-destructive">
+                      Expired
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground tabular-nums">
+                      Expires {String(method.expiryMonth).padStart(2, '0')}/
+                      {String(method.expiryYear).slice(-2)}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

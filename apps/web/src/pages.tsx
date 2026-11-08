@@ -1,17 +1,7 @@
 import { safeReturn } from './safe-return';
 import { routeAccess } from './route-access';
 import { useState } from 'react';
-import {
-  ArrowRight,
-  Bell,
-  Gavel,
-  Leaf,
-  LogOut,
-  Mail,
-  ReceiptText,
-  ShoppingBasket,
-  Sprout,
-} from 'lucide-react';
+import { ArrowRight, Leaf, LogOut, ShoppingBasket, Sprout } from 'lucide-react';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -466,14 +456,11 @@ export function Account() {
       ? pathname
       : undefined;
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 md:px-8 md:py-10">
-      <section
-        aria-labelledby="account-title"
-        className="flex flex-col gap-5 rounded-2xl border bg-card p-5 shadow-xs sm:flex-row sm:items-center md:p-6"
-      >
+    <main className="mx-auto max-w-3xl px-4 py-8 md:px-8 md:py-12">
+      <header className="flex flex-wrap items-center gap-4 border-b pb-6">
         <span
           aria-hidden="true"
-          className="grid size-16 shrink-0 place-items-center rounded-full bg-primary text-xl font-semibold text-primary-foreground md:size-20 md:text-2xl"
+          className="grid size-14 shrink-0 place-items-center rounded-full bg-secondary text-lg font-semibold text-primary"
         >
           {current.name
             .split(/\s+/)
@@ -483,30 +470,18 @@ export function Account() {
             .join('')}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-            Your account
-          </p>
-          <h1
-            id="account-title"
-            className="mt-1 text-3xl leading-tight break-words md:text-4xl"
-          >
+          <p className="text-sm text-muted-foreground">Your account</p>
+          <h1 className="text-2xl leading-tight break-words md:text-3xl">
             {current.name}
           </h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5 break-all">
-              <Mail aria-hidden="true" className="size-4 shrink-0" />
-              {current.email}
-            </span>
-            <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-primary capitalize">
-              {current.role}
-            </span>
-          </div>
+          <p className="text-sm break-all text-muted-foreground">
+            {current.email}
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2 sm:flex-col sm:items-stretch">
+        <div className="flex items-center gap-1">
           {current.role === 'producer' && (
-            <Button asChild variant="outline">
+            <Button asChild variant="ghost" size="sm">
               <Link to="/producer/auctions">
-                <Gavel aria-hidden="true" />
                 {current.producerStatus === 'suspended'
                   ? 'View auctions'
                   : 'Manage auctions'}
@@ -514,7 +489,8 @@ export function Account() {
             </Button>
           )}
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             disabled={busy}
             onClick={() => void signOut()}
           >
@@ -522,60 +498,11 @@ export function Account() {
             Sign out
           </Button>
         </div>
-      </section>
+      </header>
       {message && (
-        <p role="alert" className="text-destructive">
+        <p role="alert" className="mt-4 text-destructive">
           {message}
         </p>
-      )}
-      {current.role === 'buyer' && (
-        <nav
-          aria-label="Account shortcuts"
-          className="grid gap-3 sm:grid-cols-3"
-        >
-          {[
-            {
-              to: '/orders',
-              search: { page: 1 },
-              icon: <ReceiptText aria-hidden="true" />,
-              title: 'Orders',
-              hint: 'Track deliveries and collections',
-            },
-            {
-              to: '/notifications',
-              icon: <Bell aria-hidden="true" />,
-              title: 'Notifications',
-              hint: 'Order and auction updates',
-            },
-            {
-              to: '/cart',
-              icon: <ShoppingBasket aria-hidden="true" />,
-              title: 'Cart',
-              hint: 'Review items before checkout',
-            },
-          ].map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              search={item.search}
-              className="group flex items-center gap-3 rounded-xl border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-secondary/40"
-            >
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary text-primary [&_svg]:size-5">
-                {item.icon}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-semibold">{item.title}</span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {item.hint}
-                </span>
-              </span>
-              <ArrowRight
-                aria-hidden="true"
-                className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary motion-reduce:transition-none"
-              />
-            </Link>
-          ))}
-        </nav>
       )}
       {query.isError && (
         <div role="alert" className="mt-5 rounded-lg border p-4 text-sm">
