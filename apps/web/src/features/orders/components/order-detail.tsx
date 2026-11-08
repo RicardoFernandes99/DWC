@@ -199,7 +199,6 @@ export function OrderDetail({
                   {formatMoney(order.payment.amountCents)}
                 </span>
               )}
-              <span>Payment simulated · EUR</span>
             </div>
           )}
           {order.status === 'cancelled' && (
