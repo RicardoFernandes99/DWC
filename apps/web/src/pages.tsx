@@ -17,8 +17,6 @@ import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/form-field';
 import { PaymentMethods } from '@/features/payment-methods/components/payment-methods';
 import { ProducerOnboarding } from '@/features/producer-onboarding/components/producer-onboarding';
-import { ProducerDashboard } from '@/features/producer-dashboard/components/producer-dashboard';
-import { ProducerProducts } from '@/features/producer-products/components/producer-products';
 import {
   ApiError,
   login,
@@ -388,7 +386,6 @@ export function Account() {
     retry: false,
     staleTime: 0,
   });
-  const routePath = useLocation({ select: (location) => location.pathname });
   const client = useQueryClient();
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
@@ -531,14 +528,6 @@ export function Account() {
               user={current}
               requestedSellingPath={requestedSellingPath}
             />
-            {(current.producerStatus === 'approved' ||
-              current.producerStatus === 'suspended') &&
-              routePath.replace(/\/+$/, '') === '/producer' && (
-                <ProducerDashboard
-                  canEdit={current.producerStatus === 'approved'}
-                />
-              )}
-            <ProducerProducts status={current.producerStatus} />
           </>
         )}
         {current.role === 'buyer' && (

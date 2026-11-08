@@ -1,3 +1,4 @@
+import { ProducerHome } from './features/producer-dashboard/components/producer-home';
 import { safeReturn } from './safe-return';
 import { queryClient, sessionOptions } from './lib/session-query';
 import { routeAccess } from './route-access';
@@ -220,23 +221,23 @@ const producer = createRoute({
   getParentRoute: () => root,
   path: '/producer',
   validateSearch: validateMetricsSearch,
-  component: Account,
+  component: ProducerHome,
 });
 const producerSubroute = createRoute({
   getParentRoute: () => root,
   path: '/producer/$',
   validateSearch: validateMetricsSearch,
-  component: Account,
+  component: ProducerHome,
 });
 const producerProductRoute = createRoute({
   getParentRoute: () => root,
   path: '/producer/products/$productId/edit',
-  component: Account,
+  component: ProducerHome,
 });
 const producerNewProductRoute = createRoute({
   getParentRoute: () => root,
   path: '/producer/products/new',
-  component: Account,
+  component: ProducerHome,
 });
 const producerAuctionsRoute = createRoute({
   getParentRoute: () => root,
