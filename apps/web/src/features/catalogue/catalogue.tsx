@@ -297,9 +297,9 @@ export function ProductPage({ productId }: { productId: string }) {
       >
         <ArrowLeft aria-hidden="true" className="size-4" /> Back to the market
       </Link>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-[auto_1fr] lg:gap-5">
-        <section className="relative min-w-0 overflow-hidden rounded-2xl bg-secondary lg:col-start-1 lg:row-start-1">
-          <div className="aspect-[4/3] md:aspect-[16/10]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-5">
+        <section className="relative min-w-0 overflow-hidden rounded-2xl bg-secondary">
+          <div className="aspect-[4/3] md:aspect-[16/10] lg:aspect-auto lg:h-full lg:min-h-[30rem]">
             {product.imageUrl ? (
               <img
                 src={product.imageUrl}
@@ -348,13 +348,11 @@ export function ProductPage({ productId }: { productId: string }) {
           </div>
         </section>
 
-        <aside className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <div className="lg:sticky lg:top-6">
-            <ProductAddToCart product={product} seasons={seasons} />
-          </div>
+        <aside className="min-w-0">
+          <ProductAddToCart product={product} seasons={seasons} />
         </aside>
 
-        <section className="min-w-0 rounded-xl border bg-card p-5 md:p-6 lg:col-start-1 lg:row-start-2 lg:self-start">
+        <section className="min-w-0 rounded-xl border bg-card p-5 md:p-6 lg:col-span-2">
           <h2 className="font-sans text-xs font-semibold tracking-wider text-muted-foreground uppercase">
             About this product
           </h2>
@@ -426,7 +424,7 @@ function ProductAddToCart({
   };
 
   return (
-    <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+    <section className="flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
       <Link
         to="/farm/$producerId"
         params={{ producerId: product.producerId }}
@@ -536,7 +534,7 @@ function ProductAddToCart({
         </dl>
       </div>
 
-      <div className="space-y-3 p-5">
+      <div className="mt-auto space-y-3 p-5">
         {!purchasable ? (
           <p className="rounded-lg bg-secondary/50 p-3 text-sm text-muted-foreground">
             Producer and admin accounts can browse but not buy.
