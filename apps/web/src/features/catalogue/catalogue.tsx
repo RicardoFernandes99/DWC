@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  MapPin,
   Minus,
   Plus,
   ShoppingBasket,
@@ -19,11 +18,9 @@ import { Button } from '@/components/ui/button';
 import { formatLabel, formatMoney, formatUnit } from '@/lib/format';
 import { ApiError, publicRequest } from '@/lib/session';
 import { useCart } from '@/features/cart/use-cart';
-import {
-  ProducerRatingSummary,
-  ProducerReviews,
-} from '@/features/reviews/components/producer-reviews';
+import { ProducerReviews } from '@/features/reviews/components/producer-reviews';
 import { CatalogueFilters } from './components/catalogue-filters';
+import { FarmHero } from './components/farm-hero';
 import { ProducerAuctionsSection } from '@/features/auctions/components/producer-auctions-section';
 import {
   producerKey,
@@ -380,49 +377,6 @@ function ProductAddToCart({ product }: { product: Product }) {
   );
 }
 
-function MapFrame({ producer }: { producer: PublicProducer }) {
-  const { latitude, longitude } = producer;
-  if (
-    typeof latitude !== 'number' ||
-    typeof longitude !== 'number' ||
-    !Number.isFinite(latitude) ||
-    !Number.isFinite(longitude) ||
-    latitude < -90 ||
-    latitude > 90 ||
-    longitude < -180 ||
-    longitude > 180
-  )
-    return (
-      <p className="rounded-md bg-secondary p-5 text-sm">
-        Map location is unavailable for this producer.
-      </p>
-    );
-  const pad = 0.025;
-  const bbox = `${Math.max(-180, longitude - pad)},${Math.max(-90, latitude - pad)},${Math.min(180, longitude + pad)},${Math.min(90, latitude + pad)}`;
-  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${latitude}%2C${longitude}`;
-  return (
-    <div>
-      <iframe
-        title={`Map showing ${producer.farmName} in ${producer.city}`}
-        src={src}
-        loading="lazy"
-        className="h-64 w-full rounded-md border bg-secondary md:h-80"
-      />
-      <p className="mt-2 text-xs text-muted-foreground">
-        Map data ©{' '}
-        <a
-          className="underline underline-offset-2"
-          href="https://www.openstreetmap.org/copyright"
-          target="_blank"
-          rel="noreferrer"
-        >
-          OpenStreetMap contributors
-        </a>
-      </p>
-    </div>
-  );
-}
-
 export function ProducerPage({ producerId }: { producerId: string }) {
   const producerQuery = useQuery({
     queryKey: producerKey(producerId),
@@ -467,23 +421,10 @@ export function ProducerPage({ producerId }: { producerId: string }) {
       >
         <ArrowLeft aria-hidden="true" className="size-4" /> Back to the market
       </Link>
-      <header className="mt-6 grid gap-7 border-b pb-8 md:grid-cols-[minmax(0,1fr)_minmax(0,.85fr)] md:items-end md:gap-12">
-        <div className="min-w-0">
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin aria-hidden="true" className="size-4" />
-            {producer.city}
-          </p>
-          <h1 className="mt-3 break-words text-4xl leading-tight md:text-5xl">
-            {producer.farmName}
-          </h1>
-          <ProducerRatingSummary producerId={producerId} />
-          <p className="mt-2 max-w-2xl break-words whitespace-pre-line leading-relaxed">
-            {producer.description}
-          </p>
-        </div>
-        <MapFrame producer={producer} />
-      </header>
-      <section className="mt-8 space-y-5">
+      <div className="mt-4">
+        <FarmHero producerId={producerId} producer={producer} />
+      </div>
+      <section className="mt-12 space-y-5">
         <div>
           <h2 className="text-2xl">From this farm</h2>
           <p className="mt-1 break-words text-sm text-muted-foreground">
