@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Search } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Slider } from '@/components/ui/slider';
 import {
   Select,
   SelectContent,
@@ -245,19 +251,13 @@ export function CatalogueFilters({ scope }: { scope: string }) {
           </div>
 
           {/* Price Range */}
-          <PriceInput
-            key={`min-${search.minPriceCents}`}
-            label="Minimum price in EUR"
-            placeholder="Min €"
-            cents={search.minPriceCents}
-            onCommit={(value) => update({ minPriceCents: value })}
-          />
-          <PriceInput
-            key={`max-${search.maxPriceCents}`}
-            label="Maximum price in EUR"
-            placeholder="Max €"
-            cents={search.maxPriceCents}
-            onCommit={(value) => update({ maxPriceCents: value })}
+          <PriceRange
+            key={`${search.minPriceCents}-${search.maxPriceCents}`}
+            minCents={search.minPriceCents}
+            maxCents={search.maxPriceCents}
+            onCommit={(minPriceCents, maxPriceCents) =>
+              update({ minPriceCents, maxPriceCents })
+            }
           />
 
           {/* Sort Dropdown */}
@@ -314,50 +314,80 @@ export function CatalogueFilters({ scope }: { scope: string }) {
   );
 }
 
-function PriceInput({
-  label,
-  placeholder,
-  cents,
+/** Upper slider bound; the top position means "no maximum". */
+const PRICE_CEILING_CENTS = 3000;
+const PRICE_STEP_CENTS = 50;
+
+function PriceRange({
+  minCents,
+  maxCents,
   onCommit,
 }: {
-  label: string;
-  placeholder: string;
-  cents: number | undefined;
-  onCommit: (value: number | undefined) => void;
+  minCents: number | undefined;
+  maxCents: number | undefined;
+  onCommit: (min: number | undefined, max: number | undefined) => void;
 }) {
-  const [draft, setDraft] = useState(
-    cents === undefined ? '' : (cents / 100).toFixed(2),
-  );
-  const [invalid, setInvalid] = useState(false);
-  function commit() {
-    const text = draft.trim();
-    if (!text) return onCommit(undefined);
-    const match = /^(\d{1,6})(?:[.,](\d{1,2}))?$/.exec(text);
-    setInvalid(!match);
-    if (match)
-      onCommit(
-        Number(match[1]) * 100 + Number((match[2] ?? '').padEnd(2, '0')),
-      );
-  }
+  const [range, setRange] = useState([
+    Math.min(minCents ?? 0, PRICE_CEILING_CENTS),
+    Math.min(maxCents ?? PRICE_CEILING_CENTS, PRICE_CEILING_CENTS),
+  ]);
+  const [low, high] = range as [number, number];
+  const euros = (cents: number) =>
+    `€${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
+  const describe = (from: number, to: number) =>
+    from === 0 && to === PRICE_CEILING_CENTS
+      ? 'Any price'
+      : to === PRICE_CEILING_CENTS
+        ? `${euros(from)}+`
+        : `${euros(from)} – ${euros(to)}`;
+  const active = minCents !== undefined || maxCents !== undefined;
   return (
-    <Input
-      type="text"
-      inputMode="decimal"
-      aria-label={label}
-      aria-invalid={invalid}
-      title={invalid ? 'Enter an amount like 4.50' : undefined}
-      placeholder={placeholder}
-      value={draft}
-      onChange={(event) => {
-        setInvalid(false);
-        setDraft(event.target.value);
-      }}
-      onBlur={commit}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter') commit();
-      }}
-      className="h-10 w-24 shrink-0 rounded-lg bg-card px-3 text-sm"
-    />
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Price: ${describe(minCents ?? 0, maxCents ?? PRICE_CEILING_CENTS)}`}
+          className={cn(
+            'flex h-10 w-36 shrink-0 items-center justify-between gap-2 rounded-lg border border-input bg-card px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
+            !active && 'text-foreground',
+          )}
+        >
+          <span className="truncate tabular-nums">
+            {active
+              ? describe(minCents ?? 0, maxCents ?? PRICE_CEILING_CENTS)
+              : 'Any price'}
+          </span>
+          <ChevronDown aria-hidden="true" className="size-4 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72">
+        <div className="mb-4 flex items-baseline justify-between">
+          <p className="text-sm font-medium">Price</p>
+          <p className="text-sm tabular-nums text-muted-foreground">
+            {describe(low, high)}
+          </p>
+        </div>
+        <Slider
+          min={0}
+          max={PRICE_CEILING_CENTS}
+          step={PRICE_STEP_CENTS}
+          minStepsBetweenThumbs={1}
+          value={range}
+          thumbLabels={['Minimum price', 'Maximum price']}
+          onValueChange={setRange}
+          onValueCommit={([from, to]) =>
+            onCommit(
+              from ? from : undefined,
+              to === undefined || to >= PRICE_CEILING_CENTS ? undefined : to,
+            )
+          }
+        />
+        <div className="mt-2 flex justify-between text-xs tabular-nums text-muted-foreground">
+          <span>€0</span>
+          <span>{euros(PRICE_CEILING_CENTS)}+</span>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
