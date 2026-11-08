@@ -1,6 +1,14 @@
+import type { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './app';
+
+vi.mock('@tanstack/react-router', async (original) => ({
+  ...(await original<typeof import('@tanstack/react-router')>()),
+  Link: ({ children }: { children: ReactNode }) => (
+    <a href="/ui-design">{children}</a>
+  ),
+}));
 
 describe('service connection', () => {
   it('checks the API and displays verified readiness', async () => {

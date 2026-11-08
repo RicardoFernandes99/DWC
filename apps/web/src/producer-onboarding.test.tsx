@@ -23,6 +23,18 @@ vi.mock('./lib/session', async (original) => ({
 vi.mock('@tanstack/react-router', async (original) => ({
   ...(await original<typeof import('@tanstack/react-router')>()),
   useNavigate: () => vi.fn(),
+  useLocation: (options?: {
+    select?: (location: { pathname: string }) => unknown;
+  }) => {
+    const location = {
+      pathname: window.location.pathname,
+      search: {},
+      hash: '',
+    };
+    return options?.select ? options.select(location) : location;
+  },
+  useParams: () => ({}),
+  useSearch: () => ({}),
   Link: ({ children }: { children: ReactNode }) => (
     <a href="/login">{children}</a>
   ),
