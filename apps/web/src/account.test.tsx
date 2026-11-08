@@ -61,10 +61,8 @@ describe('account retry states', () => {
     expect(
       await screen.findByText(/information shown may be out of date/),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Your account' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Buyer')).toBeInTheDocument();
+    expect(screen.getByText('Your account')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Buyer' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     await vi.waitFor(() =>
       expect(
