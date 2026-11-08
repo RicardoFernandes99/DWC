@@ -110,6 +110,8 @@ function ListingResults({ scope }: { scope: string }) {
       </section>
     );
   const pages = Math.max(1, Math.ceil(query.data.total / query.data.limit));
+  const first = (query.data.page - 1) * query.data.limit + 1;
+  const last = first + query.data.items.length - 1;
   return (
     <>
       {query.isError && (
@@ -117,19 +119,15 @@ function ListingResults({ scope }: { scope: string }) {
           Could not refresh products. Showing the last results.
         </p>
       )}
-      <div className="mb-4 flex items-center justify-between gap-3 text-sm text-muted-foreground">
-        <p>
-          {query.data.total} {query.data.total === 1 ? 'product' : 'products'}
-        </p>
-        <p>
-          Page {query.data.page} of {pages}
-        </p>
-      </div>
       <ProductGrid items={query.data.items} />
       <nav
         aria-label="Product pages"
-        className="mt-8 flex items-center justify-end gap-3"
+        className="mt-8 flex flex-wrap items-center gap-3"
       >
+        <p className="mr-auto text-sm text-muted-foreground tabular-nums">
+          Showing {first}–{last} of {query.data.total}{' '}
+          {query.data.total === 1 ? 'product' : 'products'}
+        </p>
         <Button
           variant="outline"
           disabled={query.data.page <= 1}
