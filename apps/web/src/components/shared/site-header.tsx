@@ -1,17 +1,27 @@
-import { useState } from 'react';
-import { ArrowUpRight, Menu, ShoppingBasket, Sprout, X } from 'lucide-react';
-import { Link, useLocation } from '@tanstack/react-router';
+import { useState, type ReactNode } from 'react';
+import {
+  ArrowUpRight,
+  LogIn,
+  LogOut,
+  Menu,
+  ShoppingBasket,
+  Sprout,
+  X,
+} from 'lucide-react';
+import { Dialog } from 'radix-ui';
+import { useQueryClient } from '@tanstack/react-query';
+import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
-import type { User } from '@/lib/session';
+import { logout, type User } from '@/lib/session';
+import { cn } from '@/lib/utils';
 import { canPurchase } from '@/route-access';
 import { NotificationRuntime } from '@/features/notifications/components/notification-runtime';
 
 const activeLink = { className: 'text-primary underline underline-offset-4' };
-const menuLink = 'block rounded-md px-2 py-3 hover:bg-accent';
 
 /**
- * Site header. Below 768px the text links collapse into a menu panel;
- * the cart and notifications stay in the bar.
+ * Site header. Below 768px the text links move into a slide-in drawer
+ * opened from the menu button; the cart and notifications stay in the bar.
  */
 export function SiteHeader({
   user,
@@ -20,13 +30,6 @@ export function SiteHeader({
   user: User | null | undefined;
   cartCount: number;
 }) {
-  const location = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPath, setMenuPath] = useState(location.pathname);
-  if (menuPath !== location.pathname) {
-    setMenuPath(location.pathname);
-    setMenuOpen(false);
-  }
   const ordersPath = user?.role === 'producer' ? '/producer/orders' : '/orders';
   const accountPath = user?.role === 'producer' ? '/producer' : '/account';
   const showOrders = Boolean(user && user.role !== 'admin');
@@ -34,14 +37,17 @@ export function SiteHeader({
   return (
     <header className="site-header">
       <nav className="site-nav" aria-label="Main navigation">
-        <Link to="/" className="brand-link">
-          <span className="brand-mark">
-            <Sprout aria-hidden="true" />
-          </span>
-          <span>
-            From Farm <span className="brand-connector">to</span> Table
-          </span>
-        </Link>
+        <div className="flex min-w-0 items-center gap-1">
+          <MobileDrawer user={user} />
+          <Link to="/" className="brand-link">
+            <span className="brand-mark hidden! md:grid!">
+              <Sprout aria-hidden="true" />
+            </span>
+            <span>
+              From Farm <span className="brand-connector">to</span> Table
+            </span>
+          </Link>
+        </div>
         <div className="site-nav-links">
           <Link to="/" className="hidden md:inline">
             Home
@@ -102,68 +108,241 @@ export function SiteHeader({
               </Link>
             </>
           )}
-          <button
-            type="button"
-            className="-mr-2 inline-flex size-10 items-center justify-center rounded-md hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:hidden"
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            {menuOpen ? (
-              <X aria-hidden="true" className="size-5" />
-            ) : (
-              <Menu aria-hidden="true" className="size-5" />
-            )}
-          </button>
         </div>
       </nav>
-      {menuOpen && (
-        <div
-          id="mobile-menu"
-          className="border-t border-border px-4 pb-4 md:hidden"
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') setMenuOpen(false);
-          }}
+    </header>
+  );
+}
+
+interface DrawerItem {
+  label: string;
+  to: string;
+  search?: { page: number };
+  /** Treat sub-paths as active (e.g. order detail under orders). */
+  prefix?: boolean;
+}
+
+function sectionsFor(user: User | null | undefined) {
+  const marketplace: DrawerItem[] = [
+    { label: 'Shop', to: '/' },
+    { label: 'Auctions', to: '/auctions', search: { page: 1 }, prefix: true },
+  ];
+  if (!user) return [{ title: 'Marketplace', items: marketplace }];
+  if (user.role === 'producer')
+    return [
+      {
+        title: 'Selling',
+        items: [
+          { label: 'Dashboard', to: '/producer' },
+          {
+            label: 'Sales',
+            to: '/producer/orders',
+            search: { page: 1 },
+            prefix: true,
+          },
+          { label: 'My auctions', to: '/producer/auctions', prefix: true },
+        ],
+      },
+      { title: 'Marketplace', items: marketplace },
+      {
+        title: 'Account',
+        items: [{ label: 'Notifications', to: '/notifications' }],
+      },
+    ];
+  return [
+    { title: 'Marketplace', items: marketplace },
+    {
+      title: 'Account',
+      items: [
+        ...(user.role === 'buyer'
+          ? [
+              { label: 'Cart', to: '/cart' },
+              {
+                label: 'Orders',
+                to: '/orders',
+                search: { page: 1 },
+                prefix: true,
+              },
+            ]
+          : []),
+        { label: 'Notifications', to: '/notifications' },
+        { label: 'Account settings', to: '/account' },
+      ],
+    },
+  ];
+}
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join('');
+}
+
+function MobileDrawer({ user }: { user: User | null | undefined }) {
+  const location = useLocation();
+  const [open, setOpen] = useState(false);
+  const [openedAt, setOpenedAt] = useState(location.pathname);
+  if (open && openedAt !== location.pathname) {
+    setOpenedAt(location.pathname);
+    setOpen(false);
+  }
+  const isActive = (item: DrawerItem) =>
+    item.prefix
+      ? location.pathname === item.to ||
+        location.pathname.startsWith(`${item.to}/`)
+      : location.pathname === item.to;
+
+  return (
+    <Dialog.Root
+      open={open}
+      onOpenChange={(next) => {
+        setOpenedAt(location.pathname);
+        setOpen(next);
+      }}
+    >
+      <Dialog.Trigger asChild>
+        <button
+          type="button"
+          className="-ml-2 inline-flex size-10 items-center justify-center rounded-md hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:hidden"
+          aria-label="Open menu"
         >
-          <ul className="flex flex-col py-2 text-base">
-            <li>
-              <Link to="/" className={menuLink}>
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link to="/auctions" search={{ page: 1 }} className={menuLink}>
-                Auctions
-              </Link>
-            </li>
-            {showOrders && (
-              <li>
-                <Link to={ordersPath} search={{ page: 1 }} className={menuLink}>
-                  Orders
-                </Link>
-              </li>
-            )}
-            {user && (
-              <li>
-                <Link to={accountPath} className={menuLink}>
-                  My account
-                </Link>
-              </li>
-            )}
-          </ul>
-          {!user && (
-            <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
-              <Button asChild variant="outline">
-                <Link to="/login">Sign in</Link>
-              </Button>
-              <Button asChild>
-                <Link to="/register">Sign up</Link>
-              </Button>
+          <Menu aria-hidden="true" className="size-5" />
+        </button>
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/30 drawer-overlay md:hidden" />
+        <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-[85vw] max-w-80 flex-col bg-background shadow-xl outline-none drawer-panel md:hidden">
+          <div className="flex items-center justify-between px-4 pt-4 pb-3">
+            <Dialog.Title className="text-base font-semibold tracking-tight">
+              From Farm <span className="brand-connector">to</span> Table
+            </Dialog.Title>
+            <Dialog.Close
+              className="-mr-2 inline-flex size-10 items-center justify-center rounded-md hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              aria-label="Close menu"
+            >
+              <X aria-hidden="true" className="size-5" />
+            </Dialog.Close>
+          </div>
+          <Dialog.Description className="sr-only">
+            Site navigation
+          </Dialog.Description>
+
+          {user && (
+            <div className="mx-3 mb-2 flex items-center gap-3 rounded-lg border bg-card p-3">
+              <span
+                aria-hidden="true"
+                className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary"
+              >
+                {initials(user.name)}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate font-semibold">{user.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {user.role === 'producer' && user.producerStatus
+                    ? `Producer · ${user.producerStatus}`
+                    : user.role}
+                </p>
+              </div>
             </div>
           )}
-        </div>
-      )}
-    </header>
+
+          <nav aria-label="Menu" className="flex-1 overflow-y-auto px-3 pb-3">
+            {sectionsFor(user).map((section) => (
+              <DrawerSection key={section.title} title={section.title}>
+                {section.items.map((item) => (
+                  <li key={item.to}>
+                    <Link
+                      to={item.to}
+                      search={item.search}
+                      onClick={() => setOpen(false)}
+                      aria-current={isActive(item) ? 'page' : undefined}
+                      className={cn(
+                        'flex items-center rounded-md px-3 py-3 text-[15px] font-medium hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                        isActive(item) &&
+                          'bg-secondary font-semibold text-primary',
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </DrawerSection>
+            ))}
+          </nav>
+
+          <div className="border-t px-3 py-3">
+            {user ? (
+              <SignOutButton onDone={() => setOpen(false)} />
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <Button asChild variant="outline">
+                  <Link to="/login" onClick={() => setOpen(false)}>
+                    <LogIn aria-hidden="true" /> Sign in
+                  </Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/register" onClick={() => setOpen(false)}>
+                    Sign up
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+function DrawerSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="mt-3">
+      <h2 className="px-3 pb-1 font-sans text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+        {title}
+      </h2>
+      <ul>{children}</ul>
+    </section>
+  );
+}
+
+function SignOutButton({ onDone }: { onDone: () => void }) {
+  const client = useQueryClient();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  async function signOut() {
+    setBusy(true);
+    try {
+      const signingOut = logout();
+      await client.cancelQueries();
+      client.setQueryData(['session'], null);
+      client.removeQueries({
+        predicate: (query) => query.queryKey[0] !== 'session',
+      });
+      await signingOut.catch(() => undefined);
+      onDone();
+      await navigate({ to: '/' });
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => void signOut()}
+      className="flex w-full items-center gap-3 rounded-md px-3 py-3 text-[15px] font-medium hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60"
+    >
+      <LogOut aria-hidden="true" className="size-5" />
+      {busy ? 'Signing out…' : 'Sign out'}
+    </button>
   );
 }
