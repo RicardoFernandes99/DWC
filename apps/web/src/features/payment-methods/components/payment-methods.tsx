@@ -103,23 +103,28 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
 
   return (
     <section className="mt-8" aria-labelledby="payment-methods-title">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
+      <div className="mb-4">
+        <div className="flex items-center justify-between gap-3">
           <h2
             id="payment-methods-title"
             className="font-sans text-lg font-semibold"
           >
             Payment methods
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Save card details for future checkout and bidding.
-          </p>
+          {!showForm && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-mr-2.5"
+              onClick={() => setFormOpen(true)}
+            >
+              <Plus aria-hidden="true" /> Add card
+            </Button>
+          )}
         </div>
-        {!showForm && (
-          <Button variant="ghost" size="sm" onClick={() => setFormOpen(true)}>
-            <Plus aria-hidden="true" /> Add card
-          </Button>
-        )}
+        <p className="mt-1 text-sm text-muted-foreground">
+          Save card details for future checkout and bidding.
+        </p>
       </div>
       <div className="space-y-4">
         {showForm && (
@@ -333,7 +338,7 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
                     aria-hidden="true"
                     className="size-5 shrink-0 text-muted-foreground"
                   />
-                  <p className="min-w-0 flex-1 font-medium">
+                  <p className="min-w-0 flex-1 font-medium whitespace-nowrap">
                     <span className="sr-only">Card ending in </span>
                     <span aria-hidden="true">•••• </span>
                     <span className="tabular-nums">{method.last4}</span>

@@ -457,7 +457,7 @@ export function Account() {
       : undefined;
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 md:px-8 md:py-12">
-      <div className="rounded-2xl border bg-card p-5 md:p-8">
+      <div className="rounded-2xl border bg-card p-4 sm:p-5 md:p-8">
         <header className="flex flex-wrap items-center gap-4 border-b pb-6">
           <span
             aria-hidden="true"
@@ -475,11 +475,14 @@ export function Account() {
             <h1 className="text-2xl leading-tight break-words md:text-3xl">
               {current.name}
             </h1>
-            <p className="text-sm break-all text-muted-foreground">
+            <p
+              className="truncate text-sm text-muted-foreground"
+              title={current.email}
+            >
               {current.email}
             </p>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="-ml-2.5 flex basis-full items-center gap-1 sm:ml-0 sm:basis-auto">
             {current.role === 'producer' && (
               <Button asChild variant="ghost" size="sm">
                 <Link to="/producer/auctions">

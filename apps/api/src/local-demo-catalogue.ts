@@ -1318,6 +1318,14 @@ async function build(context: BuildContext) {
     const auctionId = oid(`auction_${index}`);
     const kind = index < 5 ? 'scheduled' : index < 10 ? 'active' : 'finished';
     const increment = 100;
+    if (kind !== 'finished') {
+      // Scheduled and live lots hold their quantity as reserved stock, which
+      // settlement later consumes (winner) or releases (no bids).
+      const productRow = products.find((row) =>
+        row._id.equals(oid(`product_${item.image}`)),
+      )!;
+      productRow.reservedStock = Number(productRow.reservedStock) + quantity;
+    }
     const startsAt =
       kind === 'scheduled'
         ? new Date(now.getTime() + (index + 1) * 5 * 60 * 60_000)
