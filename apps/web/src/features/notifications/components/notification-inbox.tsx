@@ -67,9 +67,6 @@ export function NotificationInbox({ user }: { user: User }) {
         <div>
           <h1>Notifications</h1>
         </div>
-        <p className="notification-page-description">
-          Order and application updates, all in one place.
-        </p>
       </div>
       {readError && (
         <p className="notification-error" role="alert">

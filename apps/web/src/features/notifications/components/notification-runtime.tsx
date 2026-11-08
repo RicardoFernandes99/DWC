@@ -1,5 +1,4 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import { useEffect, useRef, useState } from 'react';
 import type {
@@ -23,6 +22,7 @@ import {
   type Notification,
 } from '../notifications';
 import { NotificationLink } from './notification-link';
+import { NotificationMenu } from './notification-menu';
 import './notifications.css';
 
 type ToastItem = Notification | { id: string; title: string; message: string };
@@ -245,21 +245,7 @@ export function NotificationRuntime({ user }: { user: User }) {
 
   return (
     <>
-      <Link
-        to="/notifications"
-        className="notification-nav-link"
-        aria-label={
-          unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'
-        }
-        activeProps={{ className: 'notification-nav-active' }}
-      >
-        <Bell aria-hidden="true" className="notification-bell" />
-        {Boolean(unreadCount) && (
-          <span className="notification-count" aria-hidden="true">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
-      </Link>
+      <NotificationMenu user={user} unreadCount={unreadCount} />
       <section
         className="notification-toasts"
         aria-label="New notifications"
