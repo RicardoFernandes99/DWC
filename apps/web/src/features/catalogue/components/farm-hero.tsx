@@ -1,16 +1,6 @@
-import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import {
-  ArrowRight,
-  Gavel,
-  MapPin,
-  Navigation,
-  Package,
-  Star,
-  Sprout,
-  MessageSquare,
-} from 'lucide-react';
+import { ArrowRight, MapPin, Navigation, Star, Sprout } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import { publicRequest } from '@/lib/session';
 import { producerReviewsOptions } from '@/features/reviews/review-queries';
@@ -74,9 +64,6 @@ export function FarmHero({
   const liveAuction = auctions.data?.items.find(
     (auction) => auction.state === 'active',
   );
-  const openAuctions =
-    auctions.data?.items.filter((auction) => auction.state !== 'finished')
-      .length ?? null;
   const rating = reviews.data?.summary.averageRating ?? null;
   const ratingCount = reviews.data?.summary.ratingCount ?? 0;
   const coordinates = validCoordinates(producer);
@@ -162,63 +149,24 @@ export function FarmHero({
         </Link>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <section className="flex flex-col rounded-xl border bg-card p-5 md:p-6">
-          <h2 className="font-sans text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-            About the farm
-          </h2>
-          <p className="mt-2 max-w-[70ch] leading-relaxed break-words whitespace-pre-line">
-            {producer.description}
-          </p>
-          <dl className="mt-auto grid grid-cols-2 gap-3 pt-5 md:grid-cols-4">
-            <Stat
-              icon={<Package aria-hidden="true" />}
-              label="Products"
-              value={products.data ? String(products.data.total) : '—'}
-            />
-            <Stat
-              icon={<Star aria-hidden="true" />}
-              label="Rating"
-              value={rating === null ? 'New' : rating.toFixed(1)}
-            />
-            <Stat
-              icon={<MessageSquare aria-hidden="true" />}
-              label="Reviews"
-              value={reviews.data ? String(ratingCount) : '—'}
-            />
-            <Stat
-              icon={<Gavel aria-hidden="true" />}
-              label="Open auctions"
-              value={openAuctions === null ? '—' : String(openAuctions)}
-            />
-          </dl>
-        </section>
-
-        <section className="overflow-hidden rounded-xl border bg-card">
-          {coordinates ? (
-            <iframe
-              title={`Map showing ${producer.farmName} in ${producer.city}`}
-              src={`https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(
-                `${coordinates.longitude - 0.03},${coordinates.latitude - 0.02},${coordinates.longitude + 0.03},${coordinates.latitude + 0.02}`,
-              )}&layer=mapnik&marker=${coordinates.latitude}%2C${coordinates.longitude}`}
-              loading="lazy"
-              className="h-44 w-full border-b bg-secondary"
-            />
-          ) : (
-            <div className="grid h-44 place-items-center border-b bg-secondary text-sm text-muted-foreground">
-              Map location unavailable
-            </div>
-          )}
-          <div className="flex items-center gap-3 p-4">
-            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary text-primary">
-              <MapPin aria-hidden="true" className="size-5" />
+      <section className="grid gap-5 rounded-xl border bg-card p-4 md:grid-cols-[minmax(0,1fr)_20rem] md:p-5">
+        <div className="flex min-w-0 flex-col gap-4 md:py-1 md:pl-1">
+          <div>
+            <h2 className="font-sans text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              About the farm
+            </h2>
+            <p className="mt-2 max-w-[70ch] leading-relaxed break-words whitespace-pre-line">
+              {producer.description}
+            </p>
+          </div>
+          <div className="mt-auto flex flex-wrap items-center gap-3 border-t pt-4">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-primary">
+              <MapPin aria-hidden="true" className="size-4" />
             </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">Collection near</p>
-              <p className="truncate text-sm text-muted-foreground">
-                {producer.city}
-              </p>
-            </div>
+            <p className="min-w-0 flex-1 text-sm">
+              <span className="text-muted-foreground">Collection near </span>
+              <span className="font-semibold">{producer.city}</span>
+            </p>
             {coordinates && (
               <a
                 href={`https://www.openstreetmap.org/?mlat=${coordinates.latitude}&mlon=${coordinates.longitude}#map=14/${coordinates.latitude}/${coordinates.longitude}`}
@@ -231,7 +179,23 @@ export function FarmHero({
               </a>
             )}
           </div>
-          <p className="px-4 pb-3 text-[11px] text-muted-foreground">
+        </div>
+        <div>
+          {coordinates ? (
+            <iframe
+              title={`Map showing ${producer.farmName} in ${producer.city}`}
+              src={`https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(
+                `${coordinates.longitude - 0.03},${coordinates.latitude - 0.02},${coordinates.longitude + 0.03},${coordinates.latitude + 0.02}`,
+              )}&layer=mapnik&marker=${coordinates.latitude}%2C${coordinates.longitude}`}
+              loading="lazy"
+              className="h-44 w-full rounded-lg border bg-secondary"
+            />
+          ) : (
+            <div className="grid h-44 place-items-center rounded-lg bg-secondary text-sm text-muted-foreground">
+              Map location unavailable
+            </div>
+          )}
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
             Map data ©{' '}
             <a
               href="https://www.openstreetmap.org/copyright"
@@ -242,28 +206,8 @@ export function FarmHero({
               OpenStreetMap contributors
             </a>
           </p>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-function Stat({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-lg bg-secondary/50 p-3">
-      <dt className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground [&_svg]:size-3.5 [&_svg]:text-primary">
-        {icon}
-        {label}
-      </dt>
-      <dd className="mt-1 text-xl font-semibold tabular-nums">{value}</dd>
+        </div>
+      </section>
     </div>
   );
 }
