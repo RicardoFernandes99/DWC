@@ -128,7 +128,7 @@ function ListingResults({ scope }: { scope: string }) {
       <ProductGrid items={query.data.items} />
       <nav
         aria-label="Product pages"
-        className="mt-8 flex items-center justify-between gap-3"
+        className="mt-8 flex items-center justify-end gap-3"
       >
         <Button
           variant="outline"
