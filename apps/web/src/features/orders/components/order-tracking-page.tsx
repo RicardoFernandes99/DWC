@@ -116,7 +116,6 @@ function OrderTrackingContent({
       ? search.page
       : 1;
   const [reason, setReason] = useState('');
-  const [notice, setNotice] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const userId = session.data?.id ?? 'anonymous';
   const orders = useQuery({
@@ -153,7 +152,6 @@ function OrderTrackingContent({
       if (client.getQueryData<User | null>(['session'])?.id !== userId) return;
       setErrorMessage('');
       setReason('');
-      setNotice('Order updated. The latest server status is shown below.');
       client.setQueryData(
         [...queryRoot, audience, userId, updated.id],
         updated,
@@ -163,7 +161,6 @@ function OrderTrackingContent({
       });
     },
     onError: async (error) => {
-      setNotice('');
       setErrorMessage(
         error instanceof ApiError && error.status === 409
           ? 'The server rejected this action because the order changed. Refresh the order and review its latest state before deciding what to do.'
@@ -190,7 +187,6 @@ function OrderTrackingContent({
     body?: Record<string, unknown>,
   ) {
     if (orders.isFetching || orders.isError) return;
-    setNotice('');
     setErrorMessage('');
     mutation.mutate({ endpoint, method, body });
   }
@@ -295,11 +291,6 @@ function OrderTrackingContent({
           <p>{errorMessage}</p>
         </div>
       )}
-      {notice && (
-        <p className="order-feedback" role="status">
-          {notice}
-        </p>
-      )}
       {orders.isPending && (
         <div
           className="order-loading"
@@ -326,11 +317,6 @@ function OrderTrackingContent({
             Retry
           </Button>
         </Card>
-      )}
-      {orders.isFetching && !orders.isPending && (
-        <p className="order-refreshing" role="status">
-          Refreshing order details…
-        </p>
       )}
       {!id && orders.data && isOrderList(orders.data) && (
         <section className="orders-ledger" aria-label="Order history">
