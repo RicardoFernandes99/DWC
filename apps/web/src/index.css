@@ -487,10 +487,6 @@
     gap: 14px;
     font-size: 12px;
   }
-  .site-nav-links .home-link,
-  .site-nav-links .nav-register {
-    display: none;
-  }
   .auth-layout {
     min-height: calc(100svh - 76px);
   }

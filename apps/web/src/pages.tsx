@@ -1,9 +1,8 @@
 import { safeReturn } from './safe-return';
-import { routeAccess, canPurchase } from './route-access';
+import { routeAccess } from './route-access';
 import { useState } from 'react';
 import {
   ArrowRight,
-  ArrowUpRight,
   Leaf,
   ShoppingBasket,
   Sprout,
@@ -35,7 +34,7 @@ import {
 } from '@/lib/session';
 import { sessionOptions } from './lib/session-query';
 import { useCart } from '@/features/cart/use-cart';
-import { NotificationRuntime } from '@/features/notifications/components/notification-runtime';
+import { SiteHeader } from '@/components/shared/site-header';
 import './pages.css';
 
 const sessionKey = ['session'] as const;
@@ -51,88 +50,7 @@ export function Shell() {
     location.pathname === '/login' || location.pathname === '/register';
   return (
     <>
-      <header className="site-header">
-        <nav
-          className="site-nav mobile-auction-nav"
-          aria-label="Main navigation"
-        >
-          <Link to="/" className="brand-link">
-            <span className="brand-mark">
-              <Sprout aria-hidden="true" />
-            </span>
-            <span>
-              From Farm <span className="brand-connector">to</span> Table
-            </span>
-          </Link>
-          <div className="site-nav-links">
-            <Link to="/" className="home-link">
-              Home
-            </Link>
-            <Link
-              to="/auctions"
-              search={{ page: 1 }}
-              activeProps={{
-                className: 'text-primary underline underline-offset-4',
-              }}
-            >
-              Auctions
-            </Link>
-            {canPurchase(query.data) && (
-              <Link
-                to="/cart"
-                className="inline-flex items-center gap-1.5 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-                aria-label={
-                  totalItemCount > 0
-                    ? `Shopping cart with ${totalItemCount} items`
-                    : 'Shopping cart, empty'
-                }
-              >
-                <ShoppingBasket aria-hidden="true" className="size-4" />
-                <span>Cart</span>
-                {totalItemCount > 0 && (
-                  <span className="inline-flex items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground min-w-5 h-5 tabular-nums">
-                    {totalItemCount}
-                  </span>
-                )}
-              </Link>
-            )}
-            {query.data && query.data.role !== 'admin' && (
-              <Link
-                to={
-                  query.data.role === 'producer'
-                    ? '/producer/orders'
-                    : '/orders'
-                }
-                search={{ page: 1 }}
-                activeProps={{
-                  className: 'text-primary underline underline-offset-4',
-                }}
-              >
-                Orders
-              </Link>
-            )}
-            {query.data && (
-              <NotificationRuntime key={query.data.id} user={query.data} />
-            )}
-            {query.data ? (
-              <Link
-                to={query.data.role === 'producer' ? '/producer' : '/account'}
-              >
-                My account
-              </Link>
-            ) : (
-              <>
-                <Link to="/login" activeProps={{ className: 'nav-active' }}>
-                  Sign in
-                </Link>
-                <Link to="/register" className="nav-register">
-                  Sign up <ArrowUpRight aria-hidden="true" />
-                </Link>
-              </>
-            )}
-          </div>
-        </nav>
-      </header>
+      <SiteHeader user={query.data} cartCount={totalItemCount} />
       {query.data?.role === 'buyer' &&
         query.data.buyerStatus === 'suspended' && (
           <section
