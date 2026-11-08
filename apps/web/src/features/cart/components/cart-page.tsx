@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, ArrowRight, ShoppingBasket, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShoppingBasket } from 'lucide-react';
 import { ProductGrid } from '@/components/shared/product-card';
 import { Button } from '@/components/ui/button';
 import { formatMoney } from '@/lib/format';
@@ -24,8 +23,7 @@ interface ProducerGroup {
 }
 
 export function CartPage() {
-  const { items, updateQuantity, removeItem, clearCart, totalItemCount } =
-    useCart();
+  const { items, updateQuantity, removeItem, totalItemCount } = useCart();
 
   const userQuery = useQuery({
     queryKey: ['session'],
@@ -128,14 +126,6 @@ export function CartPage() {
         <h1 className="mt-2 font-editorial text-3xl font-bold tracking-tight md:text-4xl">
           Your Shopping Cart
         </h1>
-        <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-muted-foreground">
-            {totalItemCount === 1 ? '1 item' : `${totalItemCount} items`} from{' '}
-            {producerGroups.length}{' '}
-            {producerGroups.length === 1 ? 'producer' : 'producers'}
-          </p>
-          {!isEmpty && <ClearCartButton onClear={clearCart} />}
-        </div>
       </div>
 
       {isEmpty ? (
@@ -253,48 +243,5 @@ export function CartPage() {
         </div>
       )}
     </main>
-  );
-}
-
-function ClearCartButton({ onClear }: { onClear: () => void }) {
-  const [confirming, setConfirming] = useState(false);
-  if (confirming)
-    return (
-      <div
-        className="flex items-center gap-2 text-sm"
-        role="group"
-        aria-label="Confirm clearing the cart"
-      >
-        <span className="text-muted-foreground">Remove all items?</span>
-        <Button
-          type="button"
-          size="sm"
-          variant="destructive"
-          onClick={() => {
-            onClear();
-            setConfirming(false);
-          }}
-        >
-          Clear cart
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => setConfirming(false)}
-        >
-          Cancel
-        </Button>
-      </div>
-    );
-  return (
-    <button
-      type="button"
-      onClick={() => setConfirming(true)}
-      className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-    >
-      <Trash2 aria-hidden="true" className="size-4" />
-      Clear cart
-    </button>
   );
 }
