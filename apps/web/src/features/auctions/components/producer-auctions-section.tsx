@@ -1,9 +1,17 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ArrowRight, Gavel } from 'lucide-react';
+import { ArrowRight, Clock, Gavel } from 'lucide-react';
+import type { components } from '@/lib/api-schema';
+import { publicRequest } from '@/lib/session';
+import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { formatMoney, formatUnit, PRODUCT_UNITS } from '@/lib/format';
-import { auctionListKey, fetchPublicAuctions } from '../auction-data';
+import {
+  auctionListKey,
+  fetchPublicAuctions,
+  type AuctionList,
+} from '../auction-data';
 
 function localDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -17,45 +25,102 @@ function auctionUnit(value: string) {
   return unit ? formatUnit(unit) : value;
 }
 
+type ProductList = components['schemas']['CatalogueListDto'];
+type Auction = AuctionList['items'][number];
+
+const STATE_ORDER: Record<Auction['state'], number> = {
+  active: 0,
+  upcoming: 1,
+  finished: 2,
+};
+
+function relativeTime(target: string) {
+  const minutes = Math.round((Date.parse(target) - Date.now()) / 60_000);
+  const abs = Math.abs(minutes);
+  const text =
+    abs < 60
+      ? `${abs} min`
+      : abs < 48 * 60
+        ? `${Math.round(abs / 60)} h`
+        : `${Math.round(abs / 1440)} days`;
+  return minutes >= 0 ? `in ${text}` : `${text} ago`;
+}
+
+function timeLine(auction: Auction) {
+  if (auction.state === 'active')
+    return `Closes ${relativeTime(auction.endsAt)}`;
+  if (auction.state === 'upcoming')
+    return `Starts ${relativeTime(auction.startsAt)}`;
+  return `Ended ${localDate(auction.endsAt)}`;
+}
+
 export function ProducerAuctionsSection({
   producerId,
-  farmName,
 }: {
   producerId: string;
   farmName: string;
 }) {
+  const [showPast, setShowPast] = useState(false);
   const query = useQuery({
     queryKey: auctionListKey({ page: 1, producerId }),
     queryFn: () => fetchPublicAuctions({ page: 1, producerId }),
     refetchInterval: 15_000,
     retry: false,
   });
+  // Shares the farm hero's product query for photos.
+  const products = useQuery({
+    queryKey: ['catalogue', 'farm-hero', producerId],
+    queryFn: () =>
+      publicRequest<ProductList>(
+        `producers/${encodeURIComponent(producerId)}/products?sort=newest&page=1`,
+      ),
+    retry: false,
+  });
+  const photoById = new Map(
+    (products.data?.items ?? []).map((item) => [item.id, item.imageUrl]),
+  );
+  const sorted = [...(query.data?.items ?? [])].sort((left, right) => {
+    const byState = STATE_ORDER[left.state] - STATE_ORDER[right.state];
+    if (byState) return byState;
+    return left.state === 'finished'
+      ? Date.parse(right.endsAt) - Date.parse(left.endsAt)
+      : Date.parse(left.startsAt) - Date.parse(right.startsAt);
+  });
+  const current = sorted.filter((auction) => auction.state !== 'finished');
+  const past = sorted.filter((auction) => auction.state === 'finished');
+  const visible = showPast ? sorted : current;
+
   return (
     <section
-      className="mt-10 space-y-4 border-t pt-8"
+      className="mt-12 space-y-5"
       aria-labelledby="farm-auctions-heading"
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 id="farm-auctions-heading" className="text-2xl">
-            Auctions from this farm
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Scheduled and past lots from {farmName}.
-          </p>
-        </div>
+        <h2 id="farm-auctions-heading" className="text-2xl">
+          Auctions
+          {query.data && (
+            <span className="ml-2 font-sans text-base font-normal text-muted-foreground tabular-nums">
+              {query.data.items.length}
+            </span>
+          )}
+        </h2>
         <Link
           to="/auctions"
           search={{ page: 1, producerId }}
-          className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary underline underline-offset-4"
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary hover:underline underline-offset-4"
         >
           All farm auctions <ArrowRight aria-hidden="true" className="size-4" />
         </Link>
       </div>
       {query.isPending && (
-        <Card className="p-4 text-sm text-muted-foreground" role="status">
-          Loading farm auctions…
-        </Card>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4">
+          {[0, 1].map((key) => (
+            <div
+              key={key}
+              className="aspect-[4/5] animate-pulse rounded-lg bg-secondary motion-reduce:animate-none"
+            />
+          ))}
+        </div>
       )}
       {query.isError && (
         <Card className="p-4 text-sm text-destructive" role="alert">
@@ -63,62 +128,129 @@ export function ProducerAuctionsSection({
         </Card>
       )}
       {query.data && query.data.items.length === 0 && (
-        <Card className="p-4 text-sm text-muted-foreground">
+        <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
           This farm has no public auctions yet.
-        </Card>
+        </p>
       )}
-      {query.data && query.data.items.length > 0 && (
+      {query.data && visible.length === 0 && past.length > 0 && (
+        <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+          No live or upcoming auctions right now.
+        </p>
+      )}
+      {visible.length > 0 && (
         <ul
-          className="grid gap-3 md:grid-cols-2 xl:grid-cols-3"
+          className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4"
           aria-label="Farm auctions"
         >
-          {query.data.items.slice(0, 3).map((auction) => (
+          {visible.map((auction) => (
             <li key={auction.id}>
-              <Card className="h-full p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="rounded-md border px-2 py-1 text-xs font-medium">
-                    {auction.state === 'upcoming'
-                      ? 'Upcoming'
-                      : auction.state === 'active'
-                        ? 'Live now'
-                        : 'Finished'}
-                  </span>
-                  {auction.state === 'active' && (
-                    <span
-                      className="size-2 rounded-full bg-primary"
-                      aria-label="Live"
-                    />
-                  )}
-                </div>
-                <h3 className="mt-3 font-semibold">{auction.product.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Lot of {auction.quantity} {auctionUnit(auction.product.unit)}{' '}
-                  ·{' '}
-                  {formatMoney(
-                    auction.currentBidCents ?? auction.startingPriceCents,
-                  )}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {auction.state === 'upcoming' ? 'Starts' : 'Ends'}{' '}
-                  {localDate(
-                    auction.state === 'upcoming'
-                      ? auction.startsAt
-                      : auction.endsAt,
-                  )}
-                </p>
-                <Link
-                  to="/auctions/$auctionId"
-                  params={{ auctionId: auction.id }}
-                  className="mt-3 inline-flex min-h-11 items-center gap-2 font-medium text-primary underline underline-offset-4"
-                  data-auction-card-link
-                >
-                  <Gavel aria-hidden="true" className="size-4" /> View auction
-                </Link>
-              </Card>
+              <AuctionCard
+                auction={auction}
+                photo={photoById.get(auction.productId)}
+              />
             </li>
           ))}
         </ul>
       )}
+      {past.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowPast((value) => !value)}
+          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary hover:underline underline-offset-4"
+          aria-expanded={showPast}
+        >
+          {showPast
+            ? 'Hide past auctions'
+            : `Show past auctions (${past.length})`}
+        </button>
+      )}
     </section>
+  );
+}
+
+function AuctionCard({
+  auction,
+  photo,
+}: {
+  auction: Auction;
+  photo: string | null | undefined;
+}) {
+  const live = auction.state === 'active';
+  const finished = auction.state === 'finished';
+  return (
+    <Link
+      to="/auctions/$auctionId"
+      params={{ auctionId: auction.id }}
+      data-auction-card-link
+      className={cn(
+        'group flex h-full flex-col overflow-hidden rounded-lg border bg-card shadow-xs transition-[border-color,box-shadow] hover:shadow-md focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none',
+        live && 'border-primary ring-1 ring-primary',
+        finished && 'opacity-70 hover:opacity-100',
+      )}
+    >
+      <div className="relative aspect-[4/3] bg-secondary">
+        {photo ? (
+          <img
+            src={photo}
+            alt=""
+            loading="lazy"
+            className={cn('size-full object-cover', finished && 'grayscale')}
+          />
+        ) : (
+          <div className="grid size-full place-items-center text-primary/40">
+            <Gavel aria-hidden="true" className="size-10" />
+          </div>
+        )}
+        <span
+          className={cn(
+            'absolute top-2 left-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold',
+            live
+              ? 'bg-destructive text-white'
+              : finished
+                ? 'bg-foreground/70 text-white'
+                : 'bg-white/90 text-foreground',
+          )}
+        >
+          {live && (
+            <span className="relative flex size-1.5">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-white opacity-75 motion-reduce:animate-none" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-white" />
+            </span>
+          )}
+          {live ? 'Live now' : finished ? 'Ended' : 'Upcoming'}
+        </span>
+      </div>
+      <div className="flex flex-1 flex-col p-3 md:p-4">
+        <h3 className="font-serif text-lg leading-snug group-hover:text-primary">
+          {auction.product.name}
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Lot of {auction.quantity} {auctionUnit(auction.product.unit)}
+        </p>
+        <div className="mt-auto pt-3">
+          <p className="text-xs text-muted-foreground">
+            {auction.currentBidCents === null
+              ? finished
+                ? 'No bids'
+                : 'Starting at'
+              : finished
+                ? 'Winning bid'
+                : 'Current bid'}
+          </p>
+          <p className="text-lg font-semibold tabular-nums">
+            {formatMoney(auction.currentBidCents ?? auction.startingPriceCents)}
+          </p>
+          <p
+            className={cn(
+              'mt-1 inline-flex items-center gap-1 text-xs',
+              live ? 'font-medium text-primary' : 'text-muted-foreground',
+            )}
+          >
+            <Clock aria-hidden="true" className="size-3.5" />
+            {timeLine(auction)}
+          </p>
+        </div>
+      </div>
+    </Link>
   );
 }

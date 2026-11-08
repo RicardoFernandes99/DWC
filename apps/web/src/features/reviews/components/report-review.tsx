@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { Check, Flag } from 'lucide-react';
+import { Check, Flag, MoreHorizontal } from 'lucide-react';
+import { DropdownMenu } from 'radix-ui';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiError } from '@/lib/session';
@@ -26,6 +27,7 @@ export function ReportReview({
   const [category, setCategory] = useState<ReportCategory | ''>('');
   const [note, setNote] = useState('');
   const [message, setMessage] = useState<string>();
+  const [open, setOpen] = useState(false);
   const mutation = useMutation({
     mutationFn: (selected: ReportCategory) =>
       reportReview(reviewId, {
@@ -51,42 +53,69 @@ export function ReportReview({
   });
   const user = session.data;
   if (session.isPending || user?.role === 'admin') return null;
-  if (!user)
-    return (
-      <Link
-        to="/login"
-        search={{
-          returnTo: `${window.location.pathname}${window.location.search}`,
-        }}
-        className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-      >
-        <Flag aria-hidden="true" className="size-3.5" />
-        Sign in to report
-      </Link>
-    );
+  const menu = (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          aria-label="Review options"
+          className="absolute top-3 right-3 grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none data-[state=open]:bg-accent"
+        >
+          <MoreHorizontal aria-hidden="true" className="size-4" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={4}
+          className="z-50 min-w-44 rounded-lg border bg-popover p-1 text-sm shadow-md"
+        >
+          {user ? (
+            <DropdownMenu.Item
+              onSelect={() => setOpen(true)}
+              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none data-highlighted:bg-accent"
+            >
+              <Flag aria-hidden="true" className="size-4" /> Report review
+            </DropdownMenu.Item>
+          ) : (
+            <DropdownMenu.Item asChild>
+              <Link
+                to="/login"
+                search={{
+                  returnTo: `${window.location.pathname}${window.location.search}`,
+                }}
+                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none data-highlighted:bg-accent"
+              >
+                <Flag aria-hidden="true" className="size-4" /> Sign in to report
+              </Link>
+            </DropdownMenu.Item>
+          )}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
   if (mutation.isSuccess)
     return (
       <p
         role="status"
-        className="inline-flex min-h-11 items-center gap-1.5 text-sm text-primary"
+        className="mt-3 inline-flex items-center gap-1.5 text-sm text-primary"
       >
         <Check aria-hidden="true" className="size-4" />
         Thanks — we’ve received your report.
       </p>
     );
+  if (!open || !user) return menu;
   return (
-    <details className="text-sm">
-      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 rounded-md text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
-        <Flag aria-hidden="true" className="size-3.5" />
-        Report this review
-      </summary>
+    <>
+      {menu}
       <form
-        className="mt-2 max-w-xl space-y-4 rounded-lg border bg-background p-4"
+        className="mt-3 space-y-4 rounded-lg border bg-background p-4 text-sm"
         onSubmit={(event) => {
           event.preventDefault();
           if (category && !mutation.isPending) mutation.mutate(category);
         }}
       >
+        {' '}
         <fieldset disabled={mutation.isPending} className="space-y-1">
           <legend className="font-medium">
             Why are you reporting it?{' '}
@@ -134,14 +163,24 @@ export function ReportReview({
             {message}
           </p>
         )}
-        <Button type="submit" disabled={!category || mutation.isPending}>
-          {mutation.isPending
-            ? 'Sending…'
-            : mutation.isError
-              ? 'Try again'
-              : 'Send report'}
-        </Button>
+        <div className="flex gap-2">
+          <Button type="submit" disabled={!category || mutation.isPending}>
+            {mutation.isPending
+              ? 'Sending…'
+              : mutation.isError
+                ? 'Try again'
+                : 'Send report'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={mutation.isPending}
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </Button>
+        </div>
       </form>
-    </details>
+    </>
   );
 }

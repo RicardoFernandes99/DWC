@@ -37,20 +37,28 @@ export function ProducerRatingSummary({ producerId }: { producerId: string }) {
   );
 }
 
+const COLLAPSED_REVIEWS = 4;
+
 export function ProducerReviews({ producerId }: { producerId: string }) {
   const [page, setPage] = useState(1);
+  const [expanded, setExpanded] = useState(false);
   const query = useQuery(producerReviewsOptions(producerId, page));
   const data = query.data;
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
   return (
     <section
       id="reviews"
-      className="mt-10 scroll-mt-6 space-y-4 border-t pt-8"
+      className="mt-12 scroll-mt-6 space-y-5"
       aria-labelledby="farm-reviews-heading"
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 id="farm-reviews-heading" className="text-2xl">
           Reviews
+          {data && (
+            <span className="ml-2 font-sans text-base font-normal text-muted-foreground tabular-nums">
+              {data.total}
+            </span>
+          )}
         </h2>
         {data && data.summary.ratingCount > 0 && (
           <p className="text-sm tabular-nums text-muted-foreground">
@@ -107,32 +115,54 @@ export function ProducerReviews({ producerId }: { producerId: string }) {
       )}
       {data && data.items.length > 0 && (
         <ul
-          className="divide-y rounded-lg border bg-card"
+          className="grid gap-3 md:grid-cols-2"
           aria-busy={query.isPlaceholderData}
         >
-          {data.items.map((review) => (
-            <li key={review.id} className="space-y-2 p-4 md:p-5">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <StarsDisplay rating={review.rating} />
-                <span className="font-medium">{review.reviewerFirstName}</span>
-                <time
-                  dateTime={review.createdAt}
-                  className="text-sm text-muted-foreground"
-                >
-                  {reviewDate(review.createdAt)}
-                </time>
-              </div>
-              {review.comment && (
-                <p className="max-w-3xl break-words whitespace-pre-line leading-relaxed">
-                  {review.comment}
-                </p>
-              )}
-              <ReportReview reviewId={review.id} producerId={producerId} />
-            </li>
-          ))}
+          {(expanded ? data.items : data.items.slice(0, COLLAPSED_REVIEWS)).map(
+            (review) => (
+              <li
+                key={review.id}
+                className="relative rounded-lg border bg-card p-4 md:p-5"
+              >
+                <div className="flex items-center gap-3 pr-10">
+                  <span
+                    aria-hidden="true"
+                    className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary"
+                  >
+                    {review.reviewerFirstName.slice(0, 1).toUpperCase()}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">
+                      {review.reviewerFirstName}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <StarsDisplay rating={review.rating} />
+                      <time
+                        dateTime={review.createdAt}
+                        className="text-xs text-muted-foreground"
+                      >
+                        {reviewDate(review.createdAt)}
+                      </time>
+                    </div>
+                  </div>
+                </div>
+                {review.comment && (
+                  <p className="mt-3 break-words whitespace-pre-line leading-relaxed">
+                    {review.comment}
+                  </p>
+                )}
+                <ReportReview reviewId={review.id} producerId={producerId} />
+              </li>
+            ),
+          )}
         </ul>
       )}
-      {data && totalPages > 1 && (
+      {data && !expanded && data.items.length > COLLAPSED_REVIEWS && (
+        <Button variant="outline" onClick={() => setExpanded(true)}>
+          Show more reviews
+        </Button>
+      )}
+      {data && expanded && totalPages > 1 && (
         <nav
           aria-label="Review pages"
           className="flex items-center justify-between gap-3"
