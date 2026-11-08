@@ -265,6 +265,8 @@ test('ProductsService refuses image URL minting for archived, moderated or ineli
   const service = new ProductsService(
     fakeProductsModel as never,
     fakeUsersModel as never,
+    // Signed URL minting does not open MongoDB transactions.
+    {} as never,
     fakeStorage,
   );
 

@@ -184,8 +184,9 @@ export class AdminInspectionService {
             submittedAt: iso(user.producerApplication.submittedAt),
           }
         : null,
-      producerRejectionReason: user.producerRejectionReason,
-      producerSuspensionReason: user.producerSuspensionReason,
+      // Older and script-created users may lack these fields; the contract is nullable, not optional.
+      producerRejectionReason: user.producerRejectionReason ?? null,
+      producerSuspensionReason: user.producerSuspensionReason ?? null,
       producerDecisionRevision: user.producerDecisionRevision ?? 0,
       producerDecisionBy: id(user.producerDecisionBy),
       producerDecisionAt: iso(user.producerDecisionAt),

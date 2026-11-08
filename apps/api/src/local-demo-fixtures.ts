@@ -931,7 +931,8 @@ async function create(
       'pending',
       application('Pending Orchard'),
       passwordHash,
-      { producerDecisionRevision: 0, producerDecisionAt: null },
+      // Submitting an application increments the revision, so a submitted pending application starts at 1.
+      { producerDecisionAt: null },
     ),
     user(
       'Rejected Orchard',
