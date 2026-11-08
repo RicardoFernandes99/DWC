@@ -177,6 +177,14 @@ export class ListAuctionsQueryDto {
 }
 
 export class ListPublicAuctionsQueryDto extends ListAuctionsQueryDto {
+  @ApiPropertyOptional({ minimum: 1, maximum: 50, default: 12 })
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  override limit = 12;
+
   @ApiPropertyOptional({ enum: AuctionPublicState })
   @ValidateIf((_object, value: unknown) => value !== undefined)
   @IsEnum(AuctionPublicState)

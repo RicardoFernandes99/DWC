@@ -2731,7 +2731,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 50,
-              "default": 20,
+              "default": 12,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"

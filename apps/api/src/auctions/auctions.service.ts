@@ -516,15 +516,61 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
       ];
     }
     const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
-    const [items, total] = await Promise.all([
-      this.auctions
-        .find(filter)
-        .sort({ startsAt: -1, _id: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit),
+    const limit = query.limit ?? 12;
+    // Live first (closing soonest), then upcoming (starting soonest), then
+    // finished (most recent first), consistently across pages.
+    const live = {
+      $and: [
+        { $eq: ['$status', AuctionStatus.Active] },
+        { $gt: ['$endsAt', now] },
+      ],
+    };
+    const [rows, total] = await Promise.all([
+      this.auctions.aggregate<Record<string, unknown>>([
+        { $match: filter },
+        {
+          $addFields: {
+            listRank: {
+              $switch: {
+                branches: [
+                  { case: live, then: 0 },
+                  {
+                    case: { $eq: ['$status', AuctionStatus.Scheduled] },
+                    then: 1,
+                  },
+                ],
+                default: 2,
+              },
+            },
+          },
+        },
+        {
+          $addFields: {
+            listOrder: {
+              $switch: {
+                branches: [
+                  {
+                    case: { $eq: ['$listRank', 0] },
+                    then: { $toLong: '$endsAt' },
+                  },
+                  {
+                    case: { $eq: ['$listRank', 1] },
+                    then: { $toLong: '$startsAt' },
+                  },
+                ],
+                default: { $multiply: [{ $toLong: '$endsAt' }, -1] },
+              },
+            },
+          },
+        },
+        { $sort: { listRank: 1, listOrder: 1, _id: 1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        { $project: { listRank: 0, listOrder: 0 } },
+      ]),
       this.auctions.countDocuments(filter),
     ]);
+    const items = rows.map((row) => this.auctions.hydrate(row));
     return {
       items: items.map((item) => toAuctionResponse(item, now)),
       total,
