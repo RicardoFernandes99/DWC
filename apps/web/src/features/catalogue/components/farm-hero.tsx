@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { ArrowRight, MapPin, Navigation, Star, Sprout } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import { publicRequest } from '@/lib/session';
+import { cn } from '@/lib/utils';
 import { producerReviewsOptions } from '@/features/reviews/review-queries';
 import {
   auctionListKey,
@@ -19,6 +20,19 @@ function initials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]!.toUpperCase())
     .join('');
+}
+
+/**
+ * Desktop collage on a 4×2 grid, laid out for the number of photos so no
+ * tile is left empty.
+ */
+function collageTile(count: number, index: number) {
+  if (count === 1) return 'md:col-span-4 md:row-span-2';
+  if (count === 2) return 'md:col-span-2 md:row-span-2';
+  if (index === 0) return 'md:col-span-2 md:row-span-2';
+  if (count === 3) return 'md:col-span-2';
+  if (count === 4) return index === 1 ? 'md:col-span-2' : '';
+  return '';
 }
 
 function validCoordinates(producer: PublicProducer) {
@@ -82,11 +96,11 @@ export function FarmHero({
                 key={url}
                 src={url}
                 alt=""
-                className={
-                  index === 0
-                    ? `size-full object-cover ${photos.length === 1 ? 'md:col-span-4 md:row-span-2' : 'md:col-span-2 md:row-span-2'}`
-                    : 'hidden size-full object-cover md:block'
-                }
+                className={cn(
+                  'size-full object-cover',
+                  index > 0 && 'hidden md:block',
+                  collageTile(photos.length, index),
+                )}
               />
             ))
           )}

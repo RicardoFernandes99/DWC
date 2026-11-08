@@ -1,6 +1,6 @@
 import { sessionOptions } from '@/lib/session-query';
 import { canPurchase } from '@/route-access';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import {
@@ -348,101 +348,23 @@ export function ProductPage({ productId }: { productId: string }) {
           </div>
         </section>
 
-        <aside className="space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <ProductAddToCart product={product} />
-          <FarmCard product={product} />
+        <aside className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <div className="lg:sticky lg:top-6">
+            <ProductAddToCart product={product} seasons={seasons} />
+          </div>
         </aside>
 
-        <div className="min-w-0 space-y-4 lg:col-start-1 lg:row-start-2">
-          <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <FactTile
-              icon={<Leaf aria-hidden="true" />}
-              label="Method"
-              value={formatLabel(product.productionMethod)}
-            />
-            <FactTile
-              icon={<CalendarDays aria-hidden="true" />}
-              label="Season"
-              value={seasons}
-            />
-            <FactTile
-              icon={<Package aria-hidden="true" />}
-              label="Sold by"
-              value={formatUnit(product.unit)}
-            />
-            <FactTile
-              icon={<Boxes aria-hidden="true" />}
-              label="In stock"
-              value={
-                product.availableStock > 0
-                  ? String(product.availableStock)
-                  : 'None'
-              }
-            />
-          </dl>
-          <section className="rounded-xl border bg-card p-5 md:p-6">
-            <h2 className="font-sans text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              About this product
-            </h2>
-            <p className="mt-2 max-w-[70ch] leading-relaxed break-words whitespace-pre-line">
-              {product.description}
-            </p>
-          </section>
-        </div>
+        <section className="min-w-0 rounded-xl border bg-card p-5 md:p-6 lg:col-start-1 lg:row-start-2 lg:self-start">
+          <h2 className="font-sans text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+            About this product
+          </h2>
+          <p className="mt-2 max-w-[70ch] leading-relaxed break-words whitespace-pre-line">
+            {product.description}
+          </p>
+        </section>
       </div>
       <MoreFromFarm product={product} />
     </main>
-  );
-}
-
-function FactTile({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-xl border bg-card p-3 md:p-4">
-      <dt className="flex items-center justify-between text-xs font-medium tracking-wide text-muted-foreground uppercase [&_svg]:size-4 [&_svg]:text-primary">
-        {label} {icon}
-      </dt>
-      <dd className="mt-1.5 truncate text-lg font-semibold">{value}</dd>
-    </div>
-  );
-}
-
-function FarmCard({ product }: { product: Product }) {
-  return (
-    <section className="flex items-center gap-3 rounded-xl border bg-card p-4">
-      <span
-        aria-hidden="true"
-        className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary"
-      >
-        {product.producerFarmName
-          .split(/\s+/)
-          .slice(0, 2)
-          .map((part) => part[0])
-          .join('')}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold">{product.producerFarmName}</p>
-        <p className="flex items-center gap-1 text-sm text-muted-foreground">
-          <MapPin aria-hidden="true" className="size-3.5" />
-          {product.producerCity}
-        </p>
-      </div>
-      <Button asChild size="sm" variant="outline">
-        <Link
-          to="/farm/$producerId"
-          params={{ producerId: product.producerId }}
-        >
-          Visit farm
-        </Link>
-      </Button>
-    </section>
   );
 }
 
@@ -478,7 +400,13 @@ function MoreFromFarm({ product }: { product: Product }) {
   );
 }
 
-function ProductAddToCart({ product }: { product: Product }) {
+function ProductAddToCart({
+  product,
+  seasons,
+}: {
+  product: Product;
+  seasons: string;
+}) {
   const { items, addItem } = useCart();
   const session = useQuery(sessionOptions);
   const [quantity, setQuantity] = useState(1);
@@ -487,6 +415,7 @@ function ProductAddToCart({ product }: { product: Product }) {
   const cartItem = items.find((item) => item.productId === product.id);
   const inCartQty = cartItem?.quantity ?? 0;
   const isOutOfStock = product.availableStock <= 0;
+  const lowStock = !isOutOfStock && product.availableStock <= 5;
   const purchasable = canPurchase(session.data);
 
   const handleAdd = () => {
@@ -497,60 +426,130 @@ function ProductAddToCart({ product }: { product: Product }) {
   };
 
   return (
-    <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
-      <div className="border-b bg-secondary/40 p-4 md:p-5">
-        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-          Price
-        </p>
-        <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">
-          {formatMoney(product.priceCents)}
-          <span className="ml-1 text-base font-normal text-muted-foreground">
-            / {formatUnit(product.unit)}
-          </span>
-        </p>
-        <p
-          className={cn(
-            'mt-2 inline-flex items-center gap-1.5 text-sm font-medium',
-            isOutOfStock
-              ? 'text-destructive'
-              : product.availableStock <= 5
-                ? 'text-warning-foreground'
-                : 'text-primary',
-          )}
+    <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+      <Link
+        to="/farm/$producerId"
+        params={{ producerId: product.producerId }}
+        className="group flex items-center gap-3 border-b px-5 py-4 hover:bg-secondary/40"
+      >
+        <span
+          aria-hidden="true"
+          className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary"
         >
-          <span
+          {product.producerFarmName
+            .split(/\s+/)
+            .slice(0, 2)
+            .map((part) => part[0])
+            .join('')}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold">
+            {product.producerFarmName}
+          </span>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin aria-hidden="true" className="size-3" />
+            {product.producerCity}
+          </span>
+        </span>
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+          Visit farm
+          <ArrowRight
             aria-hidden="true"
-            className={cn(
-              'size-2 rounded-full',
-              isOutOfStock
-                ? 'bg-destructive'
-                : product.availableStock <= 5
-                  ? 'bg-warning'
-                  : 'bg-primary',
-            )}
+            className="size-3.5 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
           />
-          {isOutOfStock
-            ? 'Out of stock'
-            : product.availableStock <= 5
-              ? `Only ${product.availableStock} left`
-              : `${product.availableStock} in stock`}
-        </p>
+        </span>
+      </Link>
+
+      <div className="px-5 pt-5">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-4xl font-semibold tracking-tight tabular-nums">
+            {formatMoney(product.priceCents)}
+            <span className="ml-1 text-base font-normal text-muted-foreground">
+              / {formatUnit(product.unit)}
+            </span>
+          </p>
+          <span
+            className={cn(
+              'mt-1.5 inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold',
+              isOutOfStock
+                ? 'bg-destructive/10 text-destructive'
+                : lowStock
+                  ? 'bg-warning/30 text-foreground'
+                  : 'bg-secondary text-primary',
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className={cn(
+                'size-1.5 rounded-full',
+                isOutOfStock
+                  ? 'bg-destructive'
+                  : lowStock
+                    ? 'bg-warning'
+                    : 'bg-primary',
+              )}
+            />
+            {isOutOfStock
+              ? 'Out of stock'
+              : lowStock
+                ? `Only ${product.availableStock} left`
+                : 'In stock'}
+          </span>
+        </div>
+
+        <dl className="mt-5 divide-y rounded-lg border text-sm">
+          {[
+            {
+              icon: <Leaf aria-hidden="true" />,
+              label: 'Method',
+              value: formatLabel(product.productionMethod),
+            },
+            {
+              icon: <CalendarDays aria-hidden="true" />,
+              label: 'Season',
+              value: seasons,
+            },
+            {
+              icon: <Package aria-hidden="true" />,
+              label: 'Sold by',
+              value: formatUnit(product.unit),
+            },
+            {
+              icon: <Boxes aria-hidden="true" />,
+              label: 'Available',
+              value: isOutOfStock
+                ? 'None'
+                : `${product.availableStock} ${formatUnit(product.unit)}`,
+            },
+          ].map((fact) => (
+            <div
+              key={fact.label}
+              className="flex items-center justify-between gap-3 px-3 py-2.5"
+            >
+              <dt className="flex items-center gap-2 text-muted-foreground [&_svg]:size-4 [&_svg]:text-primary">
+                {fact.icon}
+                {fact.label}
+              </dt>
+              <dd className="truncate font-medium">{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
-      <div className="space-y-4 p-4 md:p-5">
+
+      <div className="space-y-3 p-5">
         {!purchasable ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="rounded-lg bg-secondary/50 p-3 text-sm text-muted-foreground">
             Producer and admin accounts can browse but not buy.
           </p>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-medium">Quantity</span>
-              <div className="flex items-center gap-1 rounded-lg border bg-background p-1">
+            <div className="flex items-stretch gap-2">
+              <div className="flex items-center rounded-lg border bg-background">
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-8"
+                  className="h-12 w-10 rounded-r-none"
                   disabled={quantity <= 1 || isOutOfStock}
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   aria-label="Decrease quantity"
@@ -567,7 +566,7 @@ function ProductAddToCart({ product }: { product: Product }) {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-8"
+                  className="h-12 w-10 rounded-l-none"
                   disabled={quantity >= product.availableStock || isOutOfStock}
                   onClick={() =>
                     setQuantity((q) => Math.min(product.availableStock, q + 1))
@@ -577,23 +576,23 @@ function ProductAddToCart({ product }: { product: Product }) {
                   <Plus aria-hidden="true" className="size-4" />
                 </Button>
               </div>
+              <Button
+                type="button"
+                size="lg"
+                onClick={handleAdd}
+                disabled={isOutOfStock}
+                className="h-12 flex-1 text-base"
+              >
+                {isOutOfStock ? (
+                  'Out of stock'
+                ) : (
+                  <>
+                    <ShoppingBasket aria-hidden="true" />
+                    Add · {formatMoney(product.priceCents * quantity)}
+                  </>
+                )}
+              </Button>
             </div>
-            <Button
-              type="button"
-              size="lg"
-              onClick={handleAdd}
-              disabled={isOutOfStock}
-              className="h-12 w-full text-base"
-            >
-              {isOutOfStock ? (
-                'Out of stock'
-              ) : (
-                <>
-                  <ShoppingBasket aria-hidden="true" />
-                  Add to cart · {formatMoney(product.priceCents * quantity)}
-                </>
-              )}
-            </Button>
             {feedback ? (
               <div
                 role="status"
@@ -622,11 +621,18 @@ function ProductAddToCart({ product }: { product: Product }) {
             )}
           </>
         )}
-        <p className="flex items-center justify-center gap-1.5 border-t pt-3 text-xs text-muted-foreground">
-          <Truck aria-hidden="true" className="size-3.5" /> Delivery or
-          collection from the farm at checkout
-        </p>
       </div>
+
+      <ul className="grid grid-cols-2 gap-px border-t bg-border text-xs text-muted-foreground">
+        <li className="flex items-center gap-2 bg-secondary/30 px-4 py-3">
+          <Truck aria-hidden="true" className="size-4 shrink-0 text-primary" />
+          Delivery or farm collection
+        </li>
+        <li className="flex items-center gap-2 bg-secondary/30 px-4 py-3">
+          <Sprout aria-hidden="true" className="size-4 shrink-0 text-primary" />
+          Straight from the producer
+        </li>
+      </ul>
     </section>
   );
 }
