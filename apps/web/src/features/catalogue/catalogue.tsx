@@ -1,17 +1,24 @@
 import { sessionOptions } from '@/lib/session-query';
 import { canPurchase } from '@/route-access';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import {
   ArrowLeft,
   ArrowRight,
+  Boxes,
+  CalendarDays,
   Check,
+  Leaf,
+  MapPin,
   Minus,
+  Package,
   Plus,
   ShoppingBasket,
   Sprout,
+  Truck,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { components } from '@/lib/api-schema';
 import { ProductGrid } from '@/components/shared/product-card';
 import { Button } from '@/components/ui/button';
@@ -273,10 +280,14 @@ export function ProductPage({ productId }: { productId: string }) {
       />
     );
   const product = query.data;
+  const lowStock = product.availableStock > 0 && product.availableStock <= 5;
+  const seasons = product.seasons.includes('year_round')
+    ? 'All year'
+    : product.seasons.map((season) => formatLabel(season)).join(', ');
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-12">
+    <main className="mx-auto max-w-7xl space-y-5 px-4 py-6 md:px-8 md:py-8">
       {query.isError && (
-        <p role="status" className="mb-4 text-sm text-destructive">
+        <p role="status" className="text-sm text-destructive">
           Could not refresh this product. Showing the last loaded details.
         </p>
       )}
@@ -286,60 +297,184 @@ export function ProductPage({ productId }: { productId: string }) {
       >
         <ArrowLeft aria-hidden="true" className="size-4" /> Back to the market
       </Link>
-      <article className="mt-6 grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-12">
-        <div className="aspect-[4/3] min-w-0 overflow-hidden rounded-lg bg-secondary">
-          {product.imageUrl ? (
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              width="1000"
-              height="750"
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="grid h-full place-items-center text-primary">
-              <Sprout aria-hidden="true" className="size-12 stroke-[1.2]" />
-            </div>
-          )}
-        </div>
-        <div className="min-w-0 py-2">
-          <p className="text-sm text-muted-foreground">
-            {formatLabel(product.category)} ·{' '}
-            {formatLabel(product.seasons.join(', '))}
-          </p>
-          <h1 className="mt-3 break-words text-4xl leading-tight">
-            {product.name}
-          </h1>
-          <p className="mt-4 text-2xl font-semibold tabular-nums">
-            {formatMoney(product.priceCents)}{' '}
-            <span className="text-base font-normal text-muted-foreground">
-              / {formatUnit(product.unit)}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-[auto_1fr] lg:gap-5">
+        <section className="relative min-w-0 overflow-hidden rounded-2xl bg-secondary lg:col-start-1 lg:row-start-1">
+          <div className="aspect-[4/3] md:aspect-[16/10]">
+            {product.imageUrl ? (
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                width="1000"
+                height="750"
+                className="size-full object-cover"
+              />
+            ) : (
+              <div className="grid size-full place-items-center text-primary">
+                <Sprout aria-hidden="true" className="size-16 stroke-[1.2]" />
+              </div>
+            )}
+          </div>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-black/15" />
+          <div className="absolute inset-x-0 top-0 flex flex-wrap gap-2 p-3 md:p-4">
+            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-foreground">
+              {formatLabel(product.productionMethod)}
             </span>
-          </p>
-          <p className="mt-6 break-words whitespace-pre-line leading-relaxed">
-            {product.description}
-          </p>
-          <p className="mt-5 text-sm text-muted-foreground">
-            {formatLabel(product.productionMethod)} production ·{' '}
-            {product.availableStock} available
-          </p>
+            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-foreground">
+              {formatLabel(product.category)}
+            </span>
+            {product.availableStock <= 0 ? (
+              <span className="rounded-full bg-foreground/80 px-2.5 py-1 text-xs font-semibold text-white">
+                Out of stock
+              </span>
+            ) : (
+              lowStock && (
+                <span className="rounded-full bg-warning px-2.5 py-1 text-xs font-semibold text-foreground">
+                  Only {product.availableStock} left
+                </span>
+              )
+            )}
+          </div>
+          <div className="absolute inset-x-0 bottom-0 p-4 text-white md:p-6">
+            <Link
+              to="/farm/$producerId"
+              params={{ producerId: product.producerId }}
+              className="text-xs font-medium tracking-wide text-white/85 uppercase hover:underline"
+            >
+              {product.producerFarmName} · {product.producerCity}
+            </Link>
+            <h1 className="mt-1 text-3xl leading-tight break-words text-white md:text-5xl">
+              {product.name}
+            </h1>
+          </div>
+        </section>
+
+        <aside className="space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <ProductAddToCart product={product} />
-          <Link
-            to="/farm/$producerId"
-            params={{ producerId: product.producerId }}
-            className="mt-8 inline-flex min-h-11 min-w-0 max-w-full flex-wrap items-center gap-2 border-t pt-5 text-sm font-medium underline underline-offset-4"
-          >
-            <span className="min-w-0 break-words">
-              Meet {product.producerFarmName}
-            </span>
-            <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
-          </Link>
-          <p className="mt-3 text-sm text-muted-foreground">
-            From {product.producerCity}
-          </p>
+          <FarmCard product={product} />
+        </aside>
+
+        <div className="min-w-0 space-y-4 lg:col-start-1 lg:row-start-2">
+          <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <FactTile
+              icon={<Leaf aria-hidden="true" />}
+              label="Method"
+              value={formatLabel(product.productionMethod)}
+            />
+            <FactTile
+              icon={<CalendarDays aria-hidden="true" />}
+              label="Season"
+              value={seasons}
+            />
+            <FactTile
+              icon={<Package aria-hidden="true" />}
+              label="Sold by"
+              value={formatUnit(product.unit)}
+            />
+            <FactTile
+              icon={<Boxes aria-hidden="true" />}
+              label="In stock"
+              value={
+                product.availableStock > 0
+                  ? String(product.availableStock)
+                  : 'None'
+              }
+            />
+          </dl>
+          <section className="rounded-xl border bg-card p-5 md:p-6">
+            <h2 className="font-sans text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              About this product
+            </h2>
+            <p className="mt-2 max-w-[70ch] leading-relaxed break-words whitespace-pre-line">
+              {product.description}
+            </p>
+          </section>
         </div>
-      </article>
+      </div>
+      <MoreFromFarm product={product} />
     </main>
+  );
+}
+
+function FactTile({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-3 md:p-4">
+      <dt className="flex items-center justify-between text-xs font-medium tracking-wide text-muted-foreground uppercase [&_svg]:size-4 [&_svg]:text-primary">
+        {label} {icon}
+      </dt>
+      <dd className="mt-1.5 truncate text-lg font-semibold">{value}</dd>
+    </div>
+  );
+}
+
+function FarmCard({ product }: { product: Product }) {
+  return (
+    <section className="flex items-center gap-3 rounded-xl border bg-card p-4">
+      <span
+        aria-hidden="true"
+        className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary"
+      >
+        {product.producerFarmName
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((part) => part[0])
+          .join('')}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-semibold">{product.producerFarmName}</p>
+        <p className="flex items-center gap-1 text-sm text-muted-foreground">
+          <MapPin aria-hidden="true" className="size-3.5" />
+          {product.producerCity}
+        </p>
+      </div>
+      <Button asChild size="sm" variant="outline">
+        <Link
+          to="/farm/$producerId"
+          params={{ producerId: product.producerId }}
+        >
+          Visit farm
+        </Link>
+      </Button>
+    </section>
+  );
+}
+
+function MoreFromFarm({ product }: { product: Product }) {
+  const query = useQuery({
+    queryKey: ['catalogue', 'farm-hero', product.producerId],
+    queryFn: () =>
+      publicRequest<ProductList>(
+        `producers/${encodeURIComponent(product.producerId)}/products?sort=newest&page=1`,
+      ),
+    retry: false,
+  });
+  const others = (query.data?.items ?? [])
+    .filter((item) => item.id !== product.id)
+    .slice(0, 4);
+  if (others.length === 0) return null;
+  return (
+    <section className="space-y-4 pt-6" aria-labelledby="more-from-farm">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h2 id="more-from-farm" className="text-2xl">
+          More from {product.producerFarmName}
+        </h2>
+        <Link
+          to="/farm/$producerId"
+          params={{ producerId: product.producerId }}
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          See all <ArrowRight aria-hidden="true" className="size-4" />
+        </Link>
+      </div>
+      <ProductGrid items={others} />
+    </section>
   );
 }
 
@@ -349,11 +484,10 @@ function ProductAddToCart({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const [feedback, setFeedback] = useState(false);
 
-  if (!canPurchase(session.data)) return null;
-
   const cartItem = items.find((item) => item.productId === product.id);
   const inCartQty = cartItem?.quantity ?? 0;
   const isOutOfStock = product.availableStock <= 0;
+  const purchasable = canPurchase(session.data);
 
   const handleAdd = () => {
     if (isOutOfStock) return;
@@ -363,82 +497,137 @@ function ProductAddToCart({ product }: { product: Product }) {
   };
 
   return (
-    <div className="mt-6 rounded-lg border bg-card p-4 shadow-2xs">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-1.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-9 rounded-md"
-            disabled={quantity <= 1 || isOutOfStock}
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            aria-label="Decrease quantity"
-          >
-            <Minus aria-hidden="true" className="size-4" />
-          </Button>
-          <span
-            className="min-w-10 text-center font-medium tabular-nums"
-            aria-label={`Quantity: ${quantity}`}
-          >
-            {quantity}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-9 rounded-md"
-            disabled={quantity >= product.availableStock || isOutOfStock}
-            onClick={() =>
-              setQuantity((q) => Math.min(product.availableStock, q + 1))
-            }
-            aria-label="Increase quantity"
-          >
-            <Plus aria-hidden="true" className="size-4" />
-          </Button>
-        </div>
-
-        <Button
-          type="button"
-          onClick={handleAdd}
-          disabled={isOutOfStock}
-          className="rounded-md flex-1 min-w-[140px]"
-        >
-          {isOutOfStock ? (
-            'Out of stock'
-          ) : (
-            <>
-              <ShoppingBasket aria-hidden="true" className="size-4" />
-              Add to cart
-            </>
-          )}
-        </Button>
-      </div>
-
-      {inCartQty > 0 && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          {inCartQty} currently in your{' '}
-          <Link to="/cart" className="text-primary underline">
-            cart
-          </Link>
+    <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
+      <div className="border-b bg-secondary/40 p-4 md:p-5">
+        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+          Price
         </p>
-      )}
-
-      {feedback && (
-        <div
-          role="status"
-          className="mt-3 flex items-center justify-between rounded-md bg-secondary/80 px-3 py-2 text-xs font-medium text-secondary-foreground"
-        >
-          <span className="flex items-center gap-1.5">
-            <Check aria-hidden="true" className="size-3.5 text-primary" />
-            Added {quantity} to cart
+        <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">
+          {formatMoney(product.priceCents)}
+          <span className="ml-1 text-base font-normal text-muted-foreground">
+            / {formatUnit(product.unit)}
           </span>
-          <Link to="/cart" className="text-primary underline font-semibold">
-            View cart
-          </Link>
-        </div>
-      )}
-    </div>
+        </p>
+        <p
+          className={cn(
+            'mt-2 inline-flex items-center gap-1.5 text-sm font-medium',
+            isOutOfStock
+              ? 'text-destructive'
+              : product.availableStock <= 5
+                ? 'text-warning-foreground'
+                : 'text-primary',
+          )}
+        >
+          <span
+            aria-hidden="true"
+            className={cn(
+              'size-2 rounded-full',
+              isOutOfStock
+                ? 'bg-destructive'
+                : product.availableStock <= 5
+                  ? 'bg-warning'
+                  : 'bg-primary',
+            )}
+          />
+          {isOutOfStock
+            ? 'Out of stock'
+            : product.availableStock <= 5
+              ? `Only ${product.availableStock} left`
+              : `${product.availableStock} in stock`}
+        </p>
+      </div>
+      <div className="space-y-4 p-4 md:p-5">
+        {!purchasable ? (
+          <p className="text-sm text-muted-foreground">
+            Producer and admin accounts can browse but not buy.
+          </p>
+        ) : (
+          <>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium">Quantity</span>
+              <div className="flex items-center gap-1 rounded-lg border bg-background p-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  disabled={quantity <= 1 || isOutOfStock}
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  aria-label="Decrease quantity"
+                >
+                  <Minus aria-hidden="true" className="size-4" />
+                </Button>
+                <span
+                  className="min-w-8 text-center font-semibold tabular-nums"
+                  aria-label={`Quantity: ${quantity}`}
+                >
+                  {quantity}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  disabled={quantity >= product.availableStock || isOutOfStock}
+                  onClick={() =>
+                    setQuantity((q) => Math.min(product.availableStock, q + 1))
+                  }
+                  aria-label="Increase quantity"
+                >
+                  <Plus aria-hidden="true" className="size-4" />
+                </Button>
+              </div>
+            </div>
+            <Button
+              type="button"
+              size="lg"
+              onClick={handleAdd}
+              disabled={isOutOfStock}
+              className="h-12 w-full text-base"
+            >
+              {isOutOfStock ? (
+                'Out of stock'
+              ) : (
+                <>
+                  <ShoppingBasket aria-hidden="true" />
+                  Add to cart · {formatMoney(product.priceCents * quantity)}
+                </>
+              )}
+            </Button>
+            {feedback ? (
+              <div
+                role="status"
+                className="flex items-center justify-between rounded-md bg-secondary px-3 py-2 text-sm font-medium"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Check aria-hidden="true" className="size-4 text-primary" />
+                  Added {quantity} to cart
+                </span>
+                <Link
+                  to="/cart"
+                  className="font-semibold text-primary underline"
+                >
+                  View cart
+                </Link>
+              </div>
+            ) : (
+              inCartQty > 0 && (
+                <p className="text-center text-xs text-muted-foreground">
+                  {inCartQty} already in your{' '}
+                  <Link to="/cart" className="text-primary underline">
+                    cart
+                  </Link>
+                </p>
+              )
+            )}
+          </>
+        )}
+        <p className="flex items-center justify-center gap-1.5 border-t pt-3 text-xs text-muted-foreground">
+          <Truck aria-hidden="true" className="size-3.5" /> Delivery or
+          collection from the farm at checkout
+        </p>
+      </div>
+    </section>
   );
 }
 
