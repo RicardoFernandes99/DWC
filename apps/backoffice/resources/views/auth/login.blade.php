@@ -15,7 +15,6 @@
         <x-ui.card-header>
             <p class="text-primary text-xs font-bold tracking-widest uppercase">Administrator access</p>
             <h1 id="login-title" class="text-3xl font-normal tracking-tight">Sign in to the backoffice</h1>
-            <p class="text-muted-foreground text-sm">Use your administrator account to continue.</p>
         </x-ui.card-header>
         <x-ui.card-content>
             <form class="flex flex-col gap-5" method="post" action="{{ route('login.submit') }}" aria-labelledby="login-title">

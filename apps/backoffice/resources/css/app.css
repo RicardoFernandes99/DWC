@@ -34,3 +34,13 @@
     --ring: #24563d;
     --destructive: #a12b22;
 }
+
+/* Tailwind's reset gives buttons the default cursor; show that they are clickable. */
+button:not(:disabled),
+[type='submit']:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+summary,
+select:not(:disabled),
+label[for] {
+    cursor: pointer;
+}
