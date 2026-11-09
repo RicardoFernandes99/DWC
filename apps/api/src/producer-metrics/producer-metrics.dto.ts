@@ -8,13 +8,13 @@ export type MetricsPeriod = (typeof METRICS_PERIODS)[number];
 export class ProducerMetricsQueryDto {
   @ApiPropertyOptional({
     enum: METRICS_PERIODS,
-    default: '30d',
+    default: '7d',
     description:
       'Rolling window ending at server time, applied to order creation time. "all" has no lower bound.',
   })
   @IsOptional()
   @IsIn(METRICS_PERIODS)
-  period?: MetricsPeriod = '30d';
+  period?: MetricsPeriod = '7d';
 }
 
 export class SalesBreakdownDto {

@@ -69,6 +69,6 @@ export class ProducerMetricsController {
         'Only approved or suspended producers may view metrics.',
       );
     }
-    return this.metrics.metrics(user.id, query.period ?? '30d');
+    return this.metrics.metrics(user.id, query.period ?? '7d');
   }
 }

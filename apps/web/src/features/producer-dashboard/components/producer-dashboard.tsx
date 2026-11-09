@@ -6,6 +6,7 @@ import { formatMoney, formatUnit } from '@/lib/format';
 import { ApiError, authenticatedRequest } from '@/lib/session';
 import { cn } from '@/lib/utils';
 import {
+  DEFAULT_METRICS_PERIOD,
   parseMetricsPeriod,
   producerMetricsOptions,
   type ProducerMetrics,
@@ -18,7 +19,7 @@ const card = 'rounded-xl border bg-card p-4 md:p-5';
 
 /** Attention banner for orders that need the producer to act. */
 export function AttentionBanner() {
-  const query = useQuery(producerMetricsOptions('30d'));
+  const query = useQuery(producerMetricsOptions(DEFAULT_METRICS_PERIOD));
   const attention = query.data?.attention;
   if (!attention) return null;
   const total = attention.pendingOrders + attention.openRefunds;

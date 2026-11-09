@@ -3201,7 +3201,7 @@
             "in": "query",
             "description": "Rolling window ending at server time, applied to order creation time. \"all\" has no lower bound.",
             "schema": {
-              "default": "30d",
+              "default": "7d",
               "type": "string",
               "enum": [
                 "7d",

@@ -12,7 +12,7 @@ export const METRICS_PERIODS: readonly MetricsPeriod[] = [
   '90d',
   'all',
 ];
-export const DEFAULT_METRICS_PERIOD: MetricsPeriod = '30d';
+export const DEFAULT_METRICS_PERIOD: MetricsPeriod = '7d';
 
 /** Invalid, missing or default periods fall back to 30d. */
 export function parseMetricsPeriod(value: unknown): MetricsPeriod {
