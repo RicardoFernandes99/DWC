@@ -58,12 +58,9 @@ function toProducerProductImageMetadata(
   };
 }
 
+/** Producers still see their own archived products' photos; moderated ones stay hidden. */
 function canMintProductImageUrl(product: ProductDocument): boolean {
-  return (
-    Boolean(product.image?.objectKey) &&
-    product.archivedAt === null &&
-    product.moderatedAt === null
-  );
+  return Boolean(product.image?.objectKey) && product.moderatedAt === null;
 }
 
 function toProducerProductResponse(
@@ -365,6 +362,46 @@ export class ProductsService {
       }
       if (existing.archivedAt !== null) {
         throw new ConflictException('Product is already archived.');
+      }
+      throw new ConflictException(
+        'Product was modified concurrently. Refresh and try again.',
+      );
+    }
+
+    return toProducerProductResponse(updated, this.storage);
+  }
+
+  /** Un-archives a product; it stays unpublished until the producer publishes it. */
+  async restoreForProducer(
+    userId: string,
+    id: string,
+    input: ArchiveProducerProductDto,
+  ): Promise<ProducerProductResponseDto> {
+    await this.requireApprovedProducer(userId);
+    const updated = await this.products.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(id),
+        producerId: new Types.ObjectId(userId),
+        archivedAt: { $ne: null },
+        revision: input.revision,
+      },
+      {
+        $set: { archivedAt: null, published: false },
+        $inc: { revision: 1 },
+      },
+      { returnDocument: 'after', runValidators: true },
+    );
+
+    if (!updated) {
+      const existing = await this.products.findOne({
+        _id: new Types.ObjectId(id),
+        producerId: new Types.ObjectId(userId),
+      });
+      if (!existing) {
+        throw new NotFoundException('Product not found.');
+      }
+      if (existing.archivedAt === null) {
+        throw new ConflictException('Product is not archived.');
       }
       throw new ConflictException(
         'Product was modified concurrently. Refresh and try again.',

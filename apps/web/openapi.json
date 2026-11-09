@@ -1099,6 +1099,71 @@
         ]
       }
     },
+    "/api/producer/products/{id}/restore": {
+      "post": {
+        "operationId": "ProducerProductsController_restore",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Product identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveProducerProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Archived product restored. It stays unpublished until the producer publishes it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProductResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid product identifier or revision payload."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may manage products."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "409": {
+            "description": "Product is not archived or its revision changed concurrently."
+          },
+          "503": {
+            "description": "Authentication or product image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer products"
+        ]
+      }
+    },
     "/api/producer/products/{id}/image": {
       "post": {
         "operationId": "ProducerProductsController_uploadImage",

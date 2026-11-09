@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
-import { Archive, Pencil, Plus, Sprout } from 'lucide-react';
+import { Archive, ArchiveRestore, Pencil, Plus, Sprout } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import {
   formatLabel as label,
@@ -36,9 +36,9 @@ type Unit = Product['unit'];
 const productKey = ['producer-products'] as const;
 const profileKey = ['producer-profile'] as const;
 
-function fetchProducts(page: number) {
+function fetchProducts(page: number, includeArchived = false) {
   return authenticatedRequest<ProductListResponse>(
-    `producer/products?page=${page}&limit=50`,
+    `producer/products?page=${page}&limit=50${includeArchived ? '&includeArchived=true' : ''}`,
   );
 }
 
@@ -555,13 +555,24 @@ function ProductImage({ product }: { product: Product }) {
 
 function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
   const [page, setPage] = useState(1);
+  const [view, setView] = useState<'active' | 'archived'>('active');
   const client = useQueryClient();
   const query = useQuery({
-    queryKey: [...productKey, page],
-    queryFn: () => fetchProducts(page),
+    queryKey: [...productKey, view, page],
+    queryFn: () => fetchProducts(page, view === 'archived'),
     retry: false,
   });
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const restore = useMutation({
+    mutationFn: (product: Product) =>
+      authenticatedRequest<Product>(`producer/products/${product.id}/restore`, {
+        method: 'POST',
+        body: JSON.stringify({ revision: product.revision }),
+      }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: producerMetricsKey });
+      return client.invalidateQueries({ queryKey: productKey });
+    },
+  });
   const archive = useMutation({
     mutationFn: (product: Product) =>
       authenticatedRequest<Product>(`producer/products/${product.id}/archive`, {
@@ -569,7 +580,6 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
         body: JSON.stringify({ revision: product.revision }),
       }),
     onSuccess: () => {
-      setConfirmingId(null);
       void client.invalidateQueries({ queryKey: producerMetricsKey });
       return client.invalidateQueries({ queryKey: productKey });
     },
@@ -595,6 +605,10 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
         </Button>
       </Card>
     );
+  const items =
+    view === 'archived'
+      ? query.data.items.filter((product) => product.archivedAt)
+      : query.data.items;
   return (
     <section aria-labelledby="products-heading">
       {query.isError && query.data && (
@@ -602,15 +616,52 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
           Product refresh failed. The saved list may be out of date.
         </p>
       )}
-      <p id="products-heading" className="text-sm text-muted-foreground">
-        {query.data.total} active listing{query.data.total === 1 ? '' : 's'}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          role="tablist"
+          aria-label="Product status"
+          className="inline-flex rounded-lg border bg-muted p-0.5"
+        >
+          {(['active', 'archived'] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={view === value}
+              onClick={() => {
+                setView(value);
+                setPage(1);
+              }}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${view === value ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              {value === 'active' ? 'Active' : 'Archived'}
+            </button>
+          ))}
+        </div>
+        <p id="products-heading" className="text-sm text-muted-foreground">
+          {items.length} {view === 'active' ? 'active' : 'archived'}{' '}
+          {items.length === 1 ? 'listing' : 'listings'}
+        </p>
+      </div>
       {archive.isError && (
         <p role="alert" className="mt-4 text-sm text-destructive">
           {errorCopy(archive.error, 'archive the product')}
         </p>
       )}
-      {query.data.items.length === 0 ? (
+      {restore.isError && (
+        <p role="alert" className="mt-4 text-sm text-destructive">
+          {errorCopy(restore.error, 'restore the product')}
+        </p>
+      )}
+      {items.length === 0 && view === 'archived' ? (
+        <EmptyState
+          className="mt-5"
+          headingLevel="h3"
+          icon={<Archive />}
+          title="No archived products"
+          description="Products you archive appear here, ready to restore."
+        />
+      ) : items.length === 0 ? (
         <EmptyState
           className="mt-5"
           headingLevel="h3"
@@ -620,8 +671,11 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
         />
       ) : (
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
-          {query.data.items.map((product) => (
-            <Card key={product.id} className="min-w-0 overflow-hidden">
+          {items.map((product) => (
+            <Card
+              key={product.id}
+              className={`min-w-0 overflow-hidden ${product.archivedAt ? 'opacity-80' : ''}`}
+            >
               <ProductImage
                 key={`${product.id}-${product.revision}-${product.imageUrl ?? ''}`}
                 product={product}
@@ -634,7 +688,11 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
                   <span
                     className={`shrink-0 rounded-full border px-2.5 py-1 text-xs ${product.published ? 'border-success/30 bg-success/10 text-foreground' : 'bg-muted text-muted-foreground'}`}
                   >
-                    {product.published ? 'Published' : 'Unpublished'}
+                    {product.archivedAt
+                      ? 'Archived'
+                      : product.published
+                        ? 'Published'
+                        : 'Unpublished'}
                   </span>
                 </div>
                 <p className="mt-2 line-clamp-3 break-words text-sm text-muted-foreground">
@@ -650,50 +708,41 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
                   {product.availableStock} available
                   {product.isLowStock ? ' · Low stock' : ''}
                 </p>
-                {confirmingId === product.id && (
-                  <p className="mt-4 text-sm" role="status">
-                    Archive this product? It will be unpublished and can’t be
-                    restored from here.
-                  </p>
-                )}
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {confirmingId !== product.id && (
+                  {product.archivedAt ? (
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onEdit(product)}
+                      disabled={restore.isPending}
+                      onClick={() => restore.mutate(product)}
                     >
-                      <Pencil aria-hidden="true" /> Edit
+                      <ArchiveRestore aria-hidden="true" /> Restore
                     </Button>
-                  )}
-                  {confirmingId === product.id ? (
+                  ) : (
                     <>
                       <Button
                         size="sm"
-                        variant="destructive"
-                        disabled={archive.isPending}
-                        onClick={() => archive.mutate(product)}
+                        variant="outline"
+                        onClick={() => onEdit(product)}
                       >
-                        {archive.isPending ? 'Archiving…' : 'Archive'}
+                        <Pencil aria-hidden="true" /> Edit
                       </Button>
                       <Button
                         size="sm"
-                        variant="ghost"
+                        variant="outline"
                         disabled={archive.isPending}
-                        onClick={() => setConfirmingId(null)}
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Archive “${product.name}”? It will be unpublished. You can restore it from Archived.`,
+                            )
+                          )
+                            archive.mutate(product);
+                        }}
                       >
-                        Cancel
+                        <Archive aria-hidden="true" /> Archive
                       </Button>
                     </>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={archive.isPending}
-                      onClick={() => setConfirmingId(product.id)}
-                    >
-                      <Archive aria-hidden="true" /> Archive
-                    </Button>
                   )}
                 </div>
               </div>
