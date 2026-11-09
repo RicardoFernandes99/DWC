@@ -2,14 +2,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
-import {
-  Archive,
-  ArchiveRestore,
-  ImagePlus,
-  Pencil,
-  Plus,
-  Sprout,
-} from 'lucide-react';
+import { Archive, ArchiveRestore, ImagePlus, Plus, Sprout } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import {
   formatLabel as label,
@@ -807,83 +800,94 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
         />
       ) : (
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
-          {items.map((product) => (
-            <Card
-              key={product.id}
-              className={`min-w-0 overflow-hidden ${product.archivedAt ? 'opacity-80' : ''}`}
-            >
-              <ProductImage
-                key={`${product.id}-${product.revision}-${product.imageUrl ?? ''}`}
-                product={product}
-              />
-              <div className="p-3 sm:p-4 md:p-5">
-                <div className="flex min-w-0 flex-col items-start gap-2">
-                  <h3 className="w-full min-w-0 break-words font-semibold leading-snug">
-                    {product.name}
-                  </h3>
-                  <span
-                    className={`shrink-0 rounded-full border px-2.5 py-1 text-xs ${product.published ? 'border-success/30 bg-success/10 text-foreground' : 'bg-muted text-muted-foreground'}`}
-                  >
-                    {product.archivedAt
-                      ? 'Archived'
-                      : product.published
-                        ? 'Published'
-                        : 'Unpublished'}
-                  </span>
-                </div>
-                <p className="mt-2 line-clamp-3 break-words text-sm text-muted-foreground">
-                  {product.description}
-                </p>
-                <p className="mt-4 font-medium tabular-nums">
-                  €{(product.priceCents / 100).toFixed(2)} /{' '}
-                  {label(product.unit)}
-                </p>
-                <p
-                  className={`mt-1 text-sm ${product.isLowStock ? 'font-medium text-destructive' : 'text-muted-foreground'}`}
-                >
-                  {product.availableStock} available
-                  {product.isLowStock ? ' · Low stock' : ''}
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {product.archivedAt ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
+          {items.map((product) => {
+            const archived = Boolean(product.archivedAt);
+            const quick =
+              'absolute top-2 right-2 z-10 grid size-8 place-items-center rounded-full bg-white/90 text-foreground shadow-sm transition-colors hover:bg-white focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50';
+            return (
+              <Card
+                key={product.id}
+                className={`group relative min-w-0 overflow-hidden transition-[border-color,box-shadow] ${archived ? 'opacity-80' : 'hover:border-primary/40 hover:shadow-md'}`}
+              >
+                <div className="relative">
+                  <ProductImage
+                    key={`${product.id}-${product.revision}-${product.imageUrl ?? ''}`}
+                    product={product}
+                  />
+                  {archived ? (
+                    <button
+                      type="button"
+                      aria-label={`Restore ${product.name}`}
+                      title="Restore"
                       disabled={restore.isPending}
                       onClick={() => restore.mutate(product)}
+                      className={quick}
                     >
-                      <ArchiveRestore aria-hidden="true" /> Restore
-                    </Button>
+                      <ArchiveRestore aria-hidden="true" className="size-4" />
+                    </button>
                   ) : (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onEdit(product)}
-                      >
-                        <Pencil aria-hidden="true" /> Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={archive.isPending}
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              `Archive “${product.name}”? It will be unpublished. You can restore it from Archived.`,
-                            )
+                    <button
+                      type="button"
+                      aria-label={`Archive ${product.name}`}
+                      title="Archive"
+                      disabled={archive.isPending}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Archive “${product.name}”? It will be unpublished. You can restore it from Archived.`,
                           )
-                            archive.mutate(product);
-                        }}
-                      >
-                        <Archive aria-hidden="true" /> Archive
-                      </Button>
-                    </>
+                        )
+                          archive.mutate(product);
+                      }}
+                      className={`${quick} hover:text-destructive`}
+                    >
+                      <Archive aria-hidden="true" className="size-4" />
+                    </button>
                   )}
                 </div>
-              </div>
-            </Card>
-          ))}
+                <div className="p-3 sm:p-4 md:p-5">
+                  <div className="flex min-w-0 flex-col items-start gap-2">
+                    <h3 className="w-full min-w-0 break-words font-semibold leading-snug">
+                      {archived ? (
+                        product.name
+                      ) : (
+                        // Stretched button: the whole card opens the editor.
+                        <button
+                          type="button"
+                          onClick={() => onEdit(product)}
+                          className="cursor-pointer text-left after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-[3px] focus-visible:after:ring-inset focus-visible:after:ring-ring/50"
+                        >
+                          {product.name}
+                        </button>
+                      )}
+                    </h3>
+                    <span
+                      className={`shrink-0 rounded-full border px-2.5 py-1 text-xs ${product.published && !archived ? 'border-success/30 bg-success/10 text-foreground' : 'bg-muted text-muted-foreground'}`}
+                    >
+                      {archived
+                        ? 'Archived'
+                        : product.published
+                          ? 'Published'
+                          : 'Unpublished'}
+                    </span>
+                  </div>
+                  <p className="mt-2 line-clamp-3 break-words text-sm text-muted-foreground">
+                    {product.description}
+                  </p>
+                  <p className="mt-4 font-medium tabular-nums">
+                    €{(product.priceCents / 100).toFixed(2)} /{' '}
+                    {label(product.unit)}
+                  </p>
+                  <p
+                    className={`mt-1 text-sm ${product.isLowStock ? 'font-medium text-destructive' : 'text-muted-foreground'}`}
+                  >
+                    {product.availableStock} available
+                    {product.isLowStock ? ' · Low stock' : ''}
+                  </p>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
       {query.data.total > query.data.limit && (
