@@ -44,7 +44,9 @@ export function ProducerOrderActions({
   }
   const openRequest = order.refundRequest?.status === 'open';
   const canProgress = next && !(order.status === 'pending' && openRequest);
-  const canCancel = order.status === 'pending' && order.origin === 'catalogue';
+  // With an open refund request, Accept already does this; don't offer it twice.
+  const canCancel =
+    order.status === 'pending' && order.origin === 'catalogue' && !openRequest;
   if (!openRequest && !canProgress && !canCancel) return null;
   return (
     <section className="order-actions" aria-label="Order actions">
