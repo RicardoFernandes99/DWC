@@ -143,6 +143,7 @@ services:
       NEST_API_URL: http://api:${API_PORT:-3000}/api
     volumes:
       - ./apps/backoffice:/var/www/html
+      - ./apps/backoffice/docker/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini:ro
     depends_on:
       api:
         condition: service_healthy
