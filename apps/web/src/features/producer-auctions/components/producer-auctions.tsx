@@ -14,6 +14,7 @@ import { sessionOptions } from '@/lib/session-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AuctionForm } from './auction-form';
+import { AuctionCard } from '@/features/auctions/components/auction-card';
 import {
   auctionKey,
   auctionListKey,
@@ -23,7 +24,6 @@ import {
   producerProductKey,
   producerProductListKey,
   type Auction,
-  type Product,
 } from './auction-data';
 import { useAuctionBeforeStart } from './use-auction-before-start';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -58,16 +58,6 @@ function statusLabel(auction: Auction) {
     return 'Finished';
   if (auction.status === 'active') return 'Active';
   return 'Scheduled';
-}
-
-function statusClass(auction: Auction) {
-  if (auction.status === 'cancelled')
-    return 'border-destructive/30 bg-destructive/10 text-destructive';
-  if (auction.status === 'active')
-    return 'border-primary/30 bg-primary/10 text-primary';
-  if (auction.status === 'finished' || auction.state === 'finished')
-    return 'border-border bg-muted text-muted-foreground';
-  return 'border-warning/40 bg-warning/20 text-foreground';
 }
 
 function AuctionStatusBanner({
@@ -143,29 +133,40 @@ function AuctionListView({
   });
   const canCreate = status === 'approved' && writable;
   const showHeaderCreate = canCreate && query.data?.items.length !== 0;
+  const products = useQuery({
+    queryKey: producerProductListKey,
+    queryFn: fetchProducerProducts,
+    staleTime: 60_000,
+  });
+  const photoById = new Map(
+    (products.data?.items ?? []).map((item) => [item.id, item.imageUrl]),
+  );
   return (
     <section className="space-y-5" aria-labelledby="producer-auctions-title">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 id="producer-auctions-title" className="text-2xl font-semibold">
-            Your auctions
-          </h1>
-          <p className="mt-1 max-w-[65ch] text-sm text-muted-foreground">
-            Review scheduled lots, current auctions and completed sales.
-          </p>
-        </div>
+        <h1 id="producer-auctions-title" className="text-3xl md:text-4xl">
+          Auctions
+        </h1>
         {showHeaderCreate && (
           <Button
             onClick={() => void navigate({ to: '/producer/auctions/new' })}
           >
-            <Plus aria-hidden="true" /> Create auction
+            <Plus aria-hidden="true" /> New auction
           </Button>
         )}
       </div>
       {query.isPending && (
-        <Card className="p-5 text-sm text-muted-foreground" role="status">
-          Loading your auctions…
-        </Card>
+        <div
+          role="status"
+          className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4"
+        >
+          {Array.from({ length: 4 }, (_, index) => (
+            <div
+              key={index}
+              className="aspect-[4/5] animate-pulse rounded-lg bg-secondary motion-reduce:animate-none"
+            />
+          ))}
+        </div>
       )}
       {query.isError && (
         <Card className="p-5" role="alert">
@@ -198,77 +199,51 @@ function AuctionListView({
         />
       )}
       {query.data && query.data.items.length > 0 && (
-        <div className="overflow-hidden rounded-xl border bg-card">
-          <ul className="divide-y divide-border" aria-label="Producer auctions">
+        <>
+          <ul
+            className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4"
+            aria-label="Producer auctions"
+          >
             {query.data.items.map((auction) => (
               <li key={auction.id}>
-                <div className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:px-5">
-                  <Link
-                    to="/producer/auctions/$auctionId"
-                    params={{ auctionId: auction.id }}
-                    className="grid min-w-0 gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="truncate font-semibold">
-                          {auction.product.name}
-                        </h2>
-                        <span
-                          className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${statusClass(auction)}`}
-                        >
-                          {statusLabel(auction)}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {auction.quantity} {auctionUnit(auction.product.unit)} ·
-                        Starts {localDateTime(auction.startsAt)}
-                      </p>
-                    </div>
-                    <p className="text-sm font-medium tabular-nums md:text-right">
-                      {auction.currentBidCents
-                        ? `High bid ${formatMoney(auction.currentBidCents)}`
-                        : `Opening at ${formatMoney(auction.startingPriceCents)}`}
-                    </p>
-                  </Link>
-                  <Link
-                    to="/auctions/$auctionId"
-                    params={{ auctionId: auction.id }}
-                    className="inline-flex min-h-11 items-center text-sm text-primary underline underline-offset-4 md:justify-self-end"
-                    data-auction-card-link
-                  >
-                    Open public room
-                  </Link>
-                </div>
+                <AuctionCard
+                  auction={auction}
+                  scope="producer"
+                  photo={
+                    products.isPending
+                      ? undefined
+                      : (photoById.get(auction.productId) ?? null)
+                  }
+                />
               </li>
             ))}
           </ul>
           {query.data.total > query.data.items.length && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm">
-              <p className="text-muted-foreground">
+            <nav
+              aria-label="Auction pages"
+              className="flex flex-wrap items-center gap-3"
+            >
+              <p className="mr-auto text-sm text-muted-foreground tabular-nums">
                 Page {query.data.page} of{' '}
                 {Math.ceil(query.data.total / query.data.limit)}
               </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage((value) => value - 1)}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page * query.data.limit >= query.data.total}
-                  onClick={() => setPage((value) => value + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
+              <Button
+                variant="outline"
+                disabled={page <= 1}
+                onClick={() => setPage((value) => value - 1)}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                disabled={page * query.data.limit >= query.data.total}
+                onClick={() => setPage((value) => value + 1)}
+              >
+                Next
+              </Button>
+            </nav>
           )}
-        </div>
+        </>
       )}
     </section>
   );
@@ -415,19 +390,6 @@ function CancelControl({
   );
 }
 
-function StockSummary({ product }: { product: Product }) {
-  return (
-    <div className="mt-5 rounded-lg border bg-secondary/40 p-4 text-sm">
-      <h2 className="font-medium">Current product stock</h2>
-      <p className="mt-1 text-muted-foreground">
-        {product.availableStock} {formatUnit(product.unit)} available for normal
-        sales · {product.reservedStock} {formatUnit(product.unit)} reserved
-        across auctions.
-      </p>
-    </div>
-  );
-}
-
 function AuctionDetail({
   auction,
   status,
@@ -449,136 +411,168 @@ function AuctionDetail({
   const beforeStart = useAuctionBeforeStart(auction.startsAt);
   const upcoming = auction.status === 'scheduled' && beforeStart === true;
   const editable = upcoming && status === 'approved' && writable;
+  const photo = stockQuery.data?.imageUrl ?? undefined;
+  const live = auction.status === 'active';
   return (
     <section className="space-y-5" aria-labelledby="auction-detail-title">
-      <div>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/producer/auctions">
-            <ArrowLeft aria-hidden="true" /> All auctions
-          </Link>
-        </Button>
-      </div>
+      <Link
+        to="/producer/auctions"
+        className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft aria-hidden="true" className="size-4" /> Back to auctions
+      </Link>
       <AuctionStatusBanner status={status} rejectionReason={rejectionReason} />
-      <Card className="p-5 md:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 id="auction-detail-title" className="text-2xl font-semibold">
-                {auction.product.name}
-              </h1>
-              <span
-                className={`rounded-md border px-2 py-0.5 text-xs font-medium ${statusClass(auction)}`}
-              >
-                {statusLabel(auction)}
-              </span>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-5">
+        <div className="relative min-w-0 overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/70">
+          <div className="aspect-[4/3] md:aspect-[16/10] lg:aspect-auto lg:h-full lg:min-h-[26rem]">
+            {photo ? (
+              <img src={photo} alt="" className="size-full object-cover" />
+            ) : (
+              <div className="grid size-full place-items-center text-primary-foreground/30">
+                <CalendarClock
+                  aria-hidden="true"
+                  className="size-16 stroke-[1.2]"
+                />
+              </div>
+            )}
+          </div>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/25" />
+          <div className="absolute inset-x-0 top-0 flex flex-wrap gap-2 p-3 md:p-4">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${live ? 'bg-destructive text-white' : 'bg-white/90 text-foreground'}`}
+            >
+              {live && (
+                <span
+                  aria-hidden="true"
+                  className="size-1.5 rounded-full bg-white"
+                />
+              )}
+              {statusLabel(auction)}
+            </span>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-3 p-4 text-white md:p-6">
+            <h1
+              id="auction-detail-title"
+              className="min-w-0 text-3xl leading-tight break-words text-white md:text-5xl"
+            >
+              {auction.product.name}
+            </h1>
+            <div className="text-right">
+              <p className="text-xs font-medium tracking-wide text-white/80 uppercase">
+                Lot size
+              </p>
+              <p className="text-2xl font-semibold tabular-nums">
+                {auction.quantity}{' '}
+                <span className="text-sm font-normal">
+                  {auctionUnit(auction.product.unit)}
+                </span>
+              </p>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Lot of {auction.quantity} {auctionUnit(auction.product.unit)} ·
-              bids are for the whole lot
-            </p>
           </div>
-          {editable && (
-            <Button
-              onClick={() =>
-                void navigate({
-                  to: '/producer/auctions/$auctionId/edit',
-                  params: { auctionId: auction.id },
-                })
-              }
-            >
-              Edit scheduled auction
-            </Button>
-          )}
-          <Button asChild variant="outline">
-            <Link to="/auctions/$auctionId" params={{ auctionId: auction.id }}>
-              Open public room
-            </Link>
-          </Button>
         </div>
-        <dl className="mt-6 grid gap-x-6 gap-y-4 border-t pt-5 text-sm sm:grid-cols-2 xl:grid-cols-3">
-          <div>
-            <dt className="text-muted-foreground">Starting price for lot</dt>
-            <dd className="mt-1 font-medium tabular-nums">
-              {formatMoney(auction.startingPriceCents)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Minimum increment</dt>
-            <dd className="mt-1 font-medium tabular-nums">
-              {formatMoney(auction.minimumIncrementCents)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Current high bid</dt>
-            <dd className="mt-1 font-medium tabular-nums">
+
+        <aside className="flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-card">
+          <div className="border-b bg-secondary/40 p-5">
+            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
               {auction.currentBidCents === null
-                ? 'No bids yet'
-                : formatMoney(auction.currentBidCents)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Starts in your local time</dt>
-            <dd className="mt-1 font-medium">
-              <time dateTime={auction.startsAt}>
-                {localDateTime(auction.startsAt)}
-              </time>
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Ends in your local time</dt>
-            <dd className="mt-1 font-medium">
-              <time dateTime={auction.endsAt}>
-                {localDateTime(auction.endsAt)}
-              </time>
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Auction ID</dt>
-            <dd className="mt-1 break-all font-mono text-xs">{auction.id}</dd>
-          </div>
-        </dl>
-        <p className="mt-5 rounded-lg border bg-secondary/40 p-4 text-sm">
-          The lot quantity is reserved from normal product sales until the
-          auction is cancelled or settled.
-        </p>
-        {status === 'approved' && stockQuery.data && (
-          <StockSummary product={stockQuery.data} />
-        )}
-        {status === 'approved' && stockQuery.isError && (
-          <div
-            role="alert"
-            className="mt-5 space-y-2 rounded-lg border p-4 text-sm"
-          >
-            <p className="text-destructive">
-              Could not refresh the product’s available and reserved stock.
+                ? 'Starting price'
+                : 'Current high bid'}
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void stockQuery.refetch()}
-            >
-              Reload product stock
-            </Button>
+            <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">
+              {formatMoney(
+                auction.currentBidCents ?? auction.startingPriceCents,
+              )}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {auction.currentBidCents === null
+                ? 'No bids yet. Bids are for the whole lot.'
+                : 'Bids are for the whole lot.'}
+            </p>
           </div>
-        )}
-        {status === 'approved' && stockQuery.isPending && (
-          <p role="status" className="mt-5 text-sm text-muted-foreground">
-            Loading current product stock…
-          </p>
-        )}
-        <div className="mt-5">
-          <CancelControl
-            auction={auction}
-            status={status}
-            writable={writable}
-          />
-        </div>
-      </Card>
-      {!upcoming && (
-        <p className="text-sm text-muted-foreground">
-          Auction terms are locked after the scheduled start.
-        </p>
-      )}
+          <dl className="divide-y px-5 text-sm">
+            <div className="flex justify-between gap-3 py-3">
+              <dt className="text-muted-foreground">Minimum increment</dt>
+              <dd className="font-medium tabular-nums">
+                {formatMoney(auction.minimumIncrementCents)}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3 py-3">
+              <dt className="text-muted-foreground">Starts</dt>
+              <dd className="text-right font-medium">
+                <time dateTime={auction.startsAt}>
+                  {localDateTime(auction.startsAt)}
+                </time>
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3 py-3">
+              <dt className="text-muted-foreground">Ends</dt>
+              <dd className="text-right font-medium">
+                <time dateTime={auction.endsAt}>
+                  {localDateTime(auction.endsAt)}
+                </time>
+              </dd>
+            </div>
+            {status === 'approved' && stockQuery.data && (
+              <div className="flex justify-between gap-3 py-3">
+                <dt className="text-muted-foreground">Product stock</dt>
+                <dd className="text-right font-medium tabular-nums">
+                  {stockQuery.data.availableStock}{' '}
+                  {formatUnit(stockQuery.data.unit)} available ·{' '}
+                  {stockQuery.data.reservedStock} reserved
+                </dd>
+              </div>
+            )}
+          </dl>
+          {status === 'approved' && stockQuery.isError && (
+            <div role="alert" className="space-y-2 px-5 pb-3 text-sm">
+              <p className="text-destructive">
+                Could not refresh the product stock.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void stockQuery.refetch()}
+              >
+                Reload product stock
+              </Button>
+            </div>
+          )}
+          <div className="mt-auto space-y-3 p-5">
+            {editable && (
+              <Button
+                size="lg"
+                className="h-12 w-full text-base"
+                onClick={() =>
+                  void navigate({
+                    to: '/producer/auctions/$auctionId/edit',
+                    params: { auctionId: auction.id },
+                  })
+                }
+              >
+                Edit scheduled auction
+              </Button>
+            )}
+            <Button asChild variant="outline" className="w-full">
+              <Link
+                to="/auctions/$auctionId"
+                params={{ auctionId: auction.id }}
+              >
+                View public room
+              </Link>
+            </Button>
+            <CancelControl
+              auction={auction}
+              status={status}
+              writable={writable}
+            />
+            {!upcoming && (
+              <p className="text-center text-xs text-muted-foreground">
+                Terms are locked after the scheduled start.
+              </p>
+            )}
+          </div>
+        </aside>
+      </div>
     </section>
   );
 }
@@ -767,13 +761,19 @@ export function ProducerAuctions({
   const session = useQuery({ ...sessionOptions, staleTime: 0 });
   if (session.isPending)
     return (
-      <main className="mx-auto max-w-5xl px-4 py-8 md:px-6" role="status">
+      <main
+        className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 xl:px-12"
+        role="status"
+      >
         Restoring your session…
       </main>
     );
   if (!session.data || session.data.role !== 'producer')
     return (
-      <main className="mx-auto max-w-5xl px-4 py-8 md:px-6" role="alert">
+      <main
+        className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 xl:px-12"
+        role="alert"
+      >
         Producer sign-in is required to view these auctions.
       </main>
     );
@@ -782,7 +782,7 @@ export function ProducerAuctions({
     rejectionReason ?? session.data.producerRejectionReason;
   const writable = !session.isError && !session.isFetching;
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 md:px-6 md:py-12 xl:py-14">
+    <main className="mx-auto max-w-[1440px] space-y-6 px-4 py-8 md:px-8 md:py-10 xl:px-12">
       {session.isError && (
         <div
           role="alert"

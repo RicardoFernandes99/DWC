@@ -43,6 +43,7 @@ function relativeTime(target: string) {
 }
 
 function timeLine(auction: Auction) {
+  if (auction.status === 'cancelled') return 'Cancelled';
   if (auction.state === 'active')
     return `Closes ${relativeTime(auction.endsAt)}`;
   if (auction.state === 'upcoming')
@@ -50,8 +51,20 @@ function timeLine(auction: Auction) {
   return `Ended ${localDate(auction.endsAt)}`;
 }
 
-/** Auction card with the product photo, status chip, bid and time. */
-export function AuctionCard({ auction }: { auction: Auction }) {
+/**
+ * Auction card with the product photo, status chip, bid and time.
+ * `scope="producer"` links to the producer's management page and uses a
+ * photo passed in by the caller (unpublished products have no public photo).
+ */
+export function AuctionCard({
+  auction,
+  scope = 'public',
+  photo: providedPhoto,
+}: {
+  auction: Auction;
+  scope?: 'public' | 'producer';
+  photo?: string | null;
+}) {
   // Shares the product page cache; archived products simply show no photo.
   const product = useQuery({
     queryKey: ['catalogue', 'product', auction.productId],
@@ -61,13 +74,20 @@ export function AuctionCard({ auction }: { auction: Auction }) {
       ),
     staleTime: 5 * 60_000,
     retry: false,
+    enabled: providedPhoto === undefined,
   });
-  const photo = product.data?.imageUrl;
-  const live = auction.state === 'active';
-  const finished = auction.state === 'finished';
+  const photo =
+    providedPhoto === undefined ? product.data?.imageUrl : providedPhoto;
+  const cancelled = auction.status === 'cancelled';
+  const live = auction.state === 'active' && !cancelled;
+  const finished = auction.state === 'finished' || cancelled;
   return (
     <Link
-      to="/auctions/$auctionId"
+      to={
+        scope === 'producer'
+          ? '/producer/auctions/$auctionId'
+          : '/auctions/$auctionId'
+      }
       params={{ auctionId: auction.id }}
       data-auction-card-link
       className={cn(
@@ -105,7 +125,13 @@ export function AuctionCard({ auction }: { auction: Auction }) {
               <span className="relative inline-flex size-1.5 rounded-full bg-white" />
             </span>
           )}
-          {live ? 'Live now' : finished ? 'Ended' : 'Upcoming'}
+          {cancelled
+            ? 'Cancelled'
+            : live
+              ? 'Live now'
+              : finished
+                ? 'Ended'
+                : 'Upcoming'}
         </span>
       </div>
       <div className="flex flex-1 flex-col p-3 md:p-4">
