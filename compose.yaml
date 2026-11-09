@@ -155,9 +155,6 @@ services:
       context: ./apps/backoffice
     ports:
       - '127.0.0.1:${BACKOFFICE_PORT:-8080}:8080'
-      # `localhost` tries ::1 first; without this every request waits ~270ms for
-      # the IPv6 attempt to fail before falling back to 127.0.0.1.
-      - '[::1]:${BACKOFFICE_PORT:-8080}:8080'
     env_file:
       - ./apps/backoffice/.env
     environment:
