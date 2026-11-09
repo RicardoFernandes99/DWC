@@ -275,7 +275,11 @@ function ProductEditor({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-5">
         {/* Photo, name, category and method: mirrors the public product page. */}
         <section className="relative min-w-0 overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/70">
-          <div className="aspect-[4/3] md:aspect-[16/10] lg:aspect-auto lg:h-full lg:min-h-[30rem]">
+          <label
+            htmlFor="product-image"
+            title={photo ? 'Replace photo' : 'Add photo'}
+            className="block aspect-[4/3] cursor-pointer transition-[filter] hover:brightness-110 md:aspect-[16/10] lg:aspect-auto lg:h-full lg:min-h-[30rem]"
+          >
             {photo ? (
               <img src={photo} alt="" className="size-full object-cover" />
             ) : (
@@ -283,9 +287,10 @@ function ProductEditor({
                 <Sprout aria-hidden="true" className="size-16 stroke-[1.2]" />
               </div>
             )}
-          </div>
+          </label>
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/25" />
-          <div className="absolute inset-x-0 top-0 flex flex-wrap items-start gap-2 p-3 md:p-4">
+          {/* Overlays let clicks on empty areas fall through to the photo label. */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-wrap items-start gap-2 p-3 *:pointer-events-auto md:p-4">
             <form.Field name="productionMethod">
               {(field) => (
                 <select
@@ -339,7 +344,7 @@ function ProductEditor({
               />
             </label>
           </div>
-          <div className="absolute inset-x-0 bottom-0 p-4 md:p-6">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 md:p-6">
             <p className="mb-1 text-xs text-white/80">
               JPEG, PNG or WebP, up to 5 MB
               {selectedFile ? ` · ${selectedFile.name}` : ''}
@@ -354,7 +359,7 @@ function ProductEditor({
                   placeholder="Product name"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  className="w-full border-b border-white/40 bg-transparent pb-1 font-serif text-3xl leading-tight text-white outline-none placeholder:text-white/50 focus:border-white md:text-5xl"
+                  className="pointer-events-auto w-full border-b border-white/40 bg-transparent pb-1 font-serif text-3xl leading-tight text-white outline-none placeholder:text-white/50 focus:border-white md:text-5xl"
                 />
               )}
             </form.Field>
