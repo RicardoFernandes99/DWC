@@ -359,7 +359,7 @@
 .auth-form .auth-submit {
   height: 49px;
   width: 100%;
-  justify-content: space-between;
+  justify-content: center;
   padding-inline: 18px;
   margin-top: 5px;
   font-size: 13px;

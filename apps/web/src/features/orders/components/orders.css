@@ -477,16 +477,15 @@ body:has(.orders-screen) .site-header {
   border-bottom: 1px solid var(--border);
 }
 .order-item-quantity {
-  flex: 0 0 40px;
+  flex: 0 0 88px;
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
+  gap: 6px;
   font-size: 22px;
-  text-align: center;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
 }
 .order-item-quantity > span {
-  margin-top: 4px;
   font-size: 11px;
   color: var(--muted-foreground);
 }

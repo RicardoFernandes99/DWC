@@ -105,7 +105,7 @@ export function OrderDetail({
               <li key={line.productId}>
                 <span className="order-item-quantity">
                   {line.quantity}
-                  <span>{formatUnit(line.productUnit)}</span>
+                  <span>({formatUnit(line.productUnit)})</span>
                 </span>
                 <div className="order-item-name">
                   <span>{line.productName}</span>
