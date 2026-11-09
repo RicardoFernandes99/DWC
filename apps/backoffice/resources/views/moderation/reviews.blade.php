@@ -8,7 +8,6 @@
 
 @section('content')
 <main class="workspace producer-workspace moderation-workspace">
-    <a class="back-link" href="{{ route('home') }}">← Administration</a>
     <div class="workspace-heading">
         <div><p class="eyebrow">Administration / Content</p><h1>Reported reviews</h1><p class="page-intro">Reports are reviewed individually. The report count does not hide a review automatically.</p></div>
         <div class="identity" aria-label="Signed-in administrator"><span class="identity-name">{{ session('admin_identity.name') }}</span><span class="role-label">Administrator</span></div>

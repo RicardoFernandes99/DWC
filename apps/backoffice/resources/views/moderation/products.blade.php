@@ -8,7 +8,6 @@
 
 @section('content')
 <main class="workspace producer-workspace moderation-workspace">
-    <a class="back-link" href="{{ route('home') }}">← Administration</a>
     <div class="workspace-heading">
         <div><p class="eyebrow">Administration / Content</p><h1>Products</h1><p class="page-intro">Check a listing's current moderation and publication state before hiding it.</p></div>
         <div class="identity" aria-label="Signed-in administrator"><span class="identity-name">{{ session('admin_identity.name') }}</span><span class="role-label">Administrator</span></div>
