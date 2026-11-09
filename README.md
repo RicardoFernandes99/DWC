@@ -171,7 +171,11 @@ accounts. Create a local administrator account deliberately with:
 pnpm --filter @dwc/api admin:bootstrap -- --name "Local Admin" --email "admin@example.com" --password "<8..72-byte-secret>"
 ```
 
-`ADMIN_BOOTSTRAP_NAME`, `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` are
+When `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` are set in `.env` (the
+`.env.example` ships `admin@admin.com` / `admin`), the API also creates that
+administrator on start if the email is not taken. It never changes an existing
+account; remove the variables to disable it. `ADMIN_BOOTSTRAP_NAME`,
+`ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` are
 also accepted from the environment. The bootstrap command hashes the password with
 bcrypt, refuses to overwrite or promote an existing user, and never logs credentials.
 
