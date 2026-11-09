@@ -261,6 +261,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/producer/products/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ProducerProductsController_restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/producer/products/{id}/image": {
         parameters: {
             query?: never;
@@ -2525,6 +2541,33 @@ export interface components {
             /** @description Up to 50 products, lowest available stock first. */
             items: components["schemas"]["LowStockItemDto"][];
         };
+        DailyOrdersDto: {
+            /**
+             * @description UTC calendar day.
+             * @example 2026-11-08
+             */
+            date: string;
+            /** @example 2 */
+            orderCount: number;
+        };
+        PreviousPeriodDto: {
+            /** @example 4 */
+            orderCount: number;
+            /** @example 2850 */
+            productRevenueCents: number;
+        };
+        AttentionDto: {
+            /**
+             * @description Orders awaiting confirmation.
+             * @example 1
+             */
+            pendingOrders: number;
+            /**
+             * @description Refund requests awaiting a decision.
+             * @example 1
+             */
+            openRefunds: number;
+        };
         ProducerMetricsResponseDto: {
             /** @enum {string} */
             period: "7d" | "30d" | "90d" | "all";
@@ -2543,6 +2586,12 @@ export interface components {
             /** @description Top 5 by revenue, then order count, then product id. */
             bestSellers: components["schemas"]["BestSellerDto"][];
             lowStock: components["schemas"]["LowStockMetricsDto"];
+            /** @description Non-cancelled orders per UTC day across the window, zero-filled. Empty for "all". */
+            daily: components["schemas"]["DailyOrdersDto"][];
+            /** @description Same totals for the window just before; null for "all". */
+            previous: components["schemas"]["PreviousPeriodDto"] | null;
+            /** @description Current open work, independent of the period. */
+            attention: components["schemas"]["AttentionDto"];
         };
         AdminUserListItemDto: {
             id: string;
@@ -3979,6 +4028,75 @@ export interface operations {
                 content?: never;
             };
             /** @description Product is already archived or its revision changed concurrently. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication or product image storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProducerProductsController_restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Product identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchiveProducerProductDto"];
+            };
+        };
+        responses: {
+            /** @description Archived product restored. It stays unpublished until the producer publishes it. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProducerProductResponseDto"];
+                };
+            };
+            /** @description Invalid product identifier or revision payload. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only approved producers may manage products. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product is not archived or its revision changed concurrently. */
             409: {
                 headers: {
                     [name: string]: unknown;
