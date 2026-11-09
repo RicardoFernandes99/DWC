@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'DWC Backoffice')</title>
-    <link rel="stylesheet" href="{{ asset('app.css') }}">
+    <link rel="preload" href="{{ asset('fonts/fraunces-regular.ttf') }}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="{{ asset('app.css') }}?v={{ filemtime(public_path('app.css')) }}">
+    {{-- Chromium: prepare same-site pages as soon as a link is hovered or focused. --}}
+    <script type="speculationrules">
+        {"prerender":[{"where":{"and":[{"href_matches":"/*"},{"not":{"href_matches":"/logout"}}]},"eagerness":"moderate"}]}
+    </script>
 </head>
 <body>
     <header class="site-header">

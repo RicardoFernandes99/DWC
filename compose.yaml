@@ -141,6 +141,8 @@ services:
     environment:
       APP_DEBUG: 'false'
       NEST_API_URL: http://api:${API_PORT:-3000}/api
+      # Serve requests in parallel (the built-in server is otherwise one at a time).
+      PHP_CLI_SERVER_WORKERS: '4'
     volumes:
       - ./apps/backoffice:/var/www/html
       - ./apps/backoffice/docker/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini:ro
