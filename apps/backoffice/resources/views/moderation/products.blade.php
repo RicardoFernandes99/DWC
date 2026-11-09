@@ -14,14 +14,14 @@
     </div>
 
     <nav class="moderation-tabs" aria-label="Filter products by moderation state">
-        @foreach (\App\DTOs\ModerationState::cases() as $filter)
-            <a class="filter-link @if ($state === $filter) is-active @endif" href="{{ route('moderation.products', ['state' => $filter->value]) }}" @if ($state === $filter) aria-current="page" @endif>{{ match ($filter) { \App\DTOs\ModerationState::All => 'All products', \App\DTOs\ModerationState::Visible => 'Not hidden', \App\DTOs\ModerationState::Hidden => 'Hidden' } }}</a>
+        @foreach ([\App\DTOs\ModerationState::All, \App\DTOs\ModerationState::Hidden] as $filter)
+            <a class="filter-link @if ($state === $filter) is-active @endif" href="{{ route('moderation.products', ['state' => $filter->value]) }}" @if ($state === $filter) aria-current="page" @endif>{{ $filter === \App\DTOs\ModerationState::All ? 'All' : 'Hidden' }}</a>
         @endforeach
     </nav>
 
     <p class="moderation-count">{{ $total }} {{ \Illuminate\Support\Str::plural('product', $total) }} · Page {{ $page }}</p>
     @if ($items === [])
-        <section class="empty-state moderation-empty"><div><h2>No products in this view</h2><p>Choose another moderation state to inspect more listings.</p></div></section>
+        <section class="empty-state moderation-empty"><div><h2>No products in this view</h2><p>Hidden products appear here once you hide one.</p></div></section>
     @else
         <section class="moderation-list" aria-label="Products">
             @foreach ($items as $item)

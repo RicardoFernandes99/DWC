@@ -14,8 +14,8 @@
     </div>
 
     <nav class="moderation-tabs" aria-label="Filter reported reviews by visibility">
-        @foreach (\App\DTOs\ModerationState::cases() as $filter)
-            <a class="filter-link @if ($state === $filter) is-active @endif" href="{{ route('moderation.reviews', ['state' => $filter->value]) }}" @if ($state === $filter) aria-current="page" @endif>{{ match ($filter) { \App\DTOs\ModerationState::All => 'All reports', \App\DTOs\ModerationState::Visible => 'Visible reviews', \App\DTOs\ModerationState::Hidden => 'Hidden reviews' } }}</a>
+        @foreach ([\App\DTOs\ModerationState::All, \App\DTOs\ModerationState::Hidden] as $filter)
+            <a class="filter-link @if ($state === $filter) is-active @endif" href="{{ route('moderation.reviews', ['state' => $filter->value]) }}" @if ($state === $filter) aria-current="page" @endif>{{ $filter === \App\DTOs\ModerationState::All ? 'All' : 'Hidden' }}</a>
         @endforeach
     </nav>
 
