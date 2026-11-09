@@ -29,7 +29,6 @@
                 <a href="{{ route('inspection.users') }}" @if (request()->routeIs('inspection.users', 'inspection.user')) aria-current="page" @endif>Users</a>
                 <a href="{{ route('inspection.orders') }}" @if (request()->routeIs('inspection.orders', 'inspection.order')) aria-current="page" @endif>Orders</a>
                 <a href="{{ route('inspection.auctions') }}" @if (request()->routeIs('inspection.auctions', 'inspection.auction')) aria-current="page" @endif>Auctions</a>
-                <a href="{{ route('inspection.health') }}" @if (request()->routeIs('inspection.health')) aria-current="page" @endif>Health</a>
             </nav>
             <div class="header-user">
                 <span class="header-user-name">{{ session('admin_identity.name') }}</span>
