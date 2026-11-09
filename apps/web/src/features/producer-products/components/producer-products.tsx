@@ -762,7 +762,8 @@ function ProductRoute({
   );
 }
 
-function ProfileEditor() {
+/** Farm details buyers see; shown on the producer's account page. */
+export function ProducerProfileEditor() {
   const query = useQuery({
     queryKey: profileKey,
     queryFn: fetchProfile,
@@ -1115,7 +1116,6 @@ export function ProducerProducts({
       ) : (
         <ProductList onEdit={setSelectedProduct} />
       )}
-      {!isCreate && !editId && <ProfileEditor />}
     </section>
   );
 }

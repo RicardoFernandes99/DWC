@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/form-field';
 import { PaymentMethods } from '@/features/payment-methods/components/payment-methods';
 import { ProducerOnboarding } from '@/features/producer-onboarding/components/producer-onboarding';
+import { ProducerProfileEditor } from '@/features/producer-products/components/producer-products';
 import {
   ApiError,
   login,
@@ -528,6 +529,11 @@ export function Account() {
               user={current}
               requestedSellingPath={requestedSellingPath}
             />
+            {current.producerStatus === 'approved' && (
+              <div className="mt-8">
+                <ProducerProfileEditor />
+              </div>
+            )}
           </>
         )}
         {current.role === 'buyer' && (
