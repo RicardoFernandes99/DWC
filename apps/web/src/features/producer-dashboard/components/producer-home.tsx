@@ -36,7 +36,7 @@ export function ProducerHome() {
   const active =
     user.producerStatus === 'approved' || user.producerStatus === 'suspended';
   // Product create/edit pages show only the editor.
-  const editing = /^\/producer\/products\/(new|[^/]+\/edit)\/?$/.test(pathname);
+  const productsPage = /^\/producer\/products(\/|$)/.test(pathname);
   return (
     <main className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 md:py-10 xl:px-12">
       {!active ? (
@@ -47,7 +47,7 @@ export function ProducerHome() {
             pathname.startsWith('/producer/') ? pathname : undefined
           }
         />
-      ) : editing ? (
+      ) : productsPage ? (
         <ProducerProducts status={user.producerStatus} />
       ) : (
         <>
@@ -87,7 +87,6 @@ export function ProducerHome() {
             </p>
           )}
           <ProducerDashboard canEdit={user.producerStatus === 'approved'} />
-          <ProducerProducts status={user.producerStatus} />
         </>
       )}
     </main>

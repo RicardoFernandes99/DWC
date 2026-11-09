@@ -307,12 +307,12 @@ function StockHealth({ canEdit }: { canEdit: boolean }) {
         <h3 id="stock-health-title" className="text-xl">
           Stock health
         </h3>
-        <a
-          href="#producer-products-title"
+        <Link
+          to="/producer/products"
           className="text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
           Products
-        </a>
+        </Link>
       </div>
       {query.isPending ? (
         <p className="mt-3 text-sm text-muted-foreground">Loading stock…</p>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
-import { Archive, Pencil, Sprout } from 'lucide-react';
+import { Archive, Pencil, Plus, Sprout } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import {
   formatLabel as label,
@@ -1091,19 +1091,27 @@ export function ProducerProducts({
   const [selectedProduct, setSelectedProduct] = useState<Product>();
   if (status !== 'approved') return null;
   return (
-    <section
-      className="mt-8 space-y-6"
-      aria-labelledby="producer-products-title"
-    >
-      <h2 id="producer-products-title" className="text-2xl font-semibold">
-        {isCreate ? 'Add product' : editId ? 'Edit product' : 'Products'}
-      </h2>
+    <section className="space-y-6" aria-labelledby="producer-products-title">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 id="producer-products-title" className="text-3xl md:text-4xl">
+          {isCreate ? 'Add product' : editId ? 'Edit product' : 'Products'}
+        </h1>
+        {!isCreate && !editId && status === 'approved' && (
+          <Button
+            onClick={() => void navigate({ to: '/producer/products/new' })}
+          >
+            <Plus aria-hidden="true" /> Add product
+          </Button>
+        )}
+      </div>
       {isCreate ? (
-        <ProductEditor onSaved={() => void navigate({ to: '/producer' })} />
+        <ProductEditor
+          onSaved={() => void navigate({ to: '/producer/products' })}
+        />
       ) : editId ? (
         <ProductRoute
           productId={editId}
-          onDone={() => void navigate({ to: '/producer' })}
+          onDone={() => void navigate({ to: '/producer/products' })}
         />
       ) : selectedProduct ? (
         <ProductEditor

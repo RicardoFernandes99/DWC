@@ -229,6 +229,11 @@ const producerSubroute = createRoute({
   validateSearch: validateMetricsSearch,
   component: ProducerHome,
 });
+const producerProductsRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/producer/products',
+  component: ProducerHome,
+});
 const producerProductRoute = createRoute({
   getParentRoute: () => root,
   path: '/producer/products/$productId/edit',
@@ -280,6 +285,7 @@ export const router = createRouter({
     account,
     producer,
     producerSubroute,
+    producerProductsRoute,
     producerProductRoute,
     producerNewProductRoute,
     producerAuctionsRoute,
