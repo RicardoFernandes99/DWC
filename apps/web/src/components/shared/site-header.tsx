@@ -70,14 +70,24 @@ export function SiteHeader({
               Market
             </Link>
           )}
-          <Link
-            to="/auctions"
-            search={{ page: 1 }}
-            className="hidden md:inline"
-            activeProps={activeLink}
-          >
-            Auctions
-          </Link>
+          {isProducer ? (
+            <Link
+              to="/producer/auctions"
+              className="hidden md:inline"
+              activeProps={activeLink}
+            >
+              Auctions
+            </Link>
+          ) : (
+            <Link
+              to="/auctions"
+              search={{ page: 1 }}
+              className="hidden md:inline"
+              activeProps={activeLink}
+            >
+              Auctions
+            </Link>
+          )}
           {canPurchase(user) && (
             <Link
               to="/cart"
@@ -152,8 +162,8 @@ function itemsFor(user: User | null | undefined): DrawerItem[] {
         search: { page: 1 },
         prefix: true,
       },
-      { label: 'My auctions', to: '/producer/auctions', prefix: true },
-      ...marketplace,
+      { label: 'Auctions', to: '/producer/auctions', prefix: true },
+      { label: 'Market', to: '/' },
       { label: 'Account', to: '/account' },
     ];
   if (user?.role === 'buyer')
