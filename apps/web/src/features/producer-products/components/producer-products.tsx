@@ -1,8 +1,20 @@
-import { useEffect, useState } from 'react';
-import { useForm } from '@tanstack/react-form';
+import { useEffect, useRef, useState } from 'react';
+import { useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
-import { Archive, ArchiveRestore, ImagePlus, Plus, Sprout } from 'lucide-react';
+import {
+  useBlocker,
+  useLocation,
+  useNavigate,
+  useParams,
+} from '@tanstack/react-router';
+import {
+  Archive,
+  ArchiveRestore,
+  ArrowLeft,
+  ImagePlus,
+  Plus,
+  Sprout,
+} from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import {
   formatLabel as label,
@@ -70,6 +82,31 @@ function errorCopy(error: unknown, action: string) {
     : `Could not ${action}. Please try again.`;
 }
 
+function EditorHeader({
+  title,
+  onBack,
+}: {
+  title: string;
+  onBack: () => void;
+}) {
+  return (
+    <div className="mb-5">
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft aria-hidden="true" className="size-4" /> Back to products
+      </button>
+      <h1 id="producer-products-title" className="text-3xl md:text-4xl">
+        {title}
+      </h1>
+    </div>
+  );
+}
+
+const DISCARD_MESSAGE = 'Discard your unsaved changes?';
+
 function ProductEditor({
   product,
   onSaved,
@@ -85,6 +122,8 @@ function ProductEditor({
   const [reloadError, setReloadError] = useState('');
   const [imageUploadFailed, setImageUploadFailed] = useState(false);
   const [preview, setPreview] = useState<string>();
+  // Set once the user has chosen to leave (or saved), so the guard stays out of the way.
+  const leaving = useRef(false);
   // Release the object URL of a replaced or discarded photo preview.
   useEffect(
     () => () => {
@@ -105,6 +144,7 @@ function ProductEditor({
     onSuccess: async () => {
       await client.invalidateQueries({ queryKey: productKey });
       void client.invalidateQueries({ queryKey: producerMetricsKey });
+      leaving.current = true;
       onSaved();
     },
   });
@@ -145,6 +185,7 @@ function ProductEditor({
       }
       await client.invalidateQueries({ queryKey: productKey });
       void client.invalidateQueries({ queryKey: producerMetricsKey });
+      leaving.current = true;
       onSaved();
     },
   });
@@ -254,6 +295,23 @@ function ProductEditor({
       );
     }
   };
+  const unsaved =
+    useStore(form.store, (state) => !state.isDefaultValue) ||
+    Boolean(selectedFile);
+  const dirty = unsaved && !save.isSuccess;
+  // Header links and the browser's back button.
+  useBlocker({
+    shouldBlockFn: () => {
+      if (!dirty || leaving.current) return false;
+      return !window.confirm(DISCARD_MESSAGE);
+    },
+    enableBeforeUnload: () => dirty && !leaving.current,
+  });
+  const requestLeave = () => {
+    if (dirty && !window.confirm(DISCARD_MESSAGE)) return;
+    leaving.current = true;
+    onSaved();
+  };
   const pill =
     'h-8 cursor-pointer rounded-full border-0 bg-white/90 px-3 text-xs font-medium text-foreground shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
   const photo = preview ?? baseProduct?.imageUrl ?? undefined;
@@ -265,6 +323,10 @@ function ProductEditor({
         void form.handleSubmit();
       }}
     >
+      <EditorHeader
+        title={baseProduct ? 'Edit product' : 'Add product'}
+        onBack={requestLeave}
+      />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-5">
         {/* Photo, name, category and method: mirrors the public product page. */}
         <section className="relative min-w-0 overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/70">
@@ -598,7 +660,7 @@ function ProductEditor({
                 type="button"
                 variant="outline"
                 className="h-12"
-                onClick={onSaved}
+                onClick={requestLeave}
               >
                 Cancel
               </Button>
@@ -936,24 +998,30 @@ function ProductRoute({
   });
   if (query.isPending)
     return (
-      <Card className="p-6" role="status">
-        Loading product…
-      </Card>
+      <>
+        <EditorHeader title="Edit product" onBack={onDone} />
+        <Card className="p-6" role="status">
+          Loading product…
+        </Card>
+      </>
     );
   if (query.isError && !query.data)
     return (
-      <Card className="p-6">
-        <p role="alert" className="text-sm text-destructive">
-          {errorCopy(query.error, 'load this product')}
-        </p>
-        <Button
-          className="mt-4"
-          variant="outline"
-          onClick={() => void query.refetch()}
-        >
-          Try again
-        </Button>
-      </Card>
+      <>
+        <EditorHeader title="Edit product" onBack={onDone} />
+        <Card className="p-6">
+          <p role="alert" className="text-sm text-destructive">
+            {errorCopy(query.error, 'load this product')}
+          </p>
+          <Button
+            className="mt-4"
+            variant="outline"
+            onClick={() => void query.refetch()}
+          >
+            Try again
+          </Button>
+        </Card>
+      </>
     );
   return (
     <>
@@ -1305,22 +1373,18 @@ export function ProducerProducts({
   if (status !== 'approved') return null;
   return (
     <section className="space-y-6" aria-labelledby="producer-products-title">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 id="producer-products-title" className="text-3xl md:text-4xl">
-          {isCreate
-            ? 'Add product'
-            : editId || selectedProduct
-              ? 'Edit product'
-              : 'Products'}
-        </h1>
-        {!isCreate && !editId && !selectedProduct && status === 'approved' && (
+      {!isCreate && !editId && !selectedProduct && (
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h1 id="producer-products-title" className="text-3xl md:text-4xl">
+            Products
+          </h1>
           <Button
             onClick={() => void navigate({ to: '/producer/products/new' })}
           >
             <Plus aria-hidden="true" /> Add product
           </Button>
-        )}
-      </div>
+        </div>
+      )}
       {isCreate ? (
         <ProductEditor
           onSaved={() => void navigate({ to: '/producer/products' })}
