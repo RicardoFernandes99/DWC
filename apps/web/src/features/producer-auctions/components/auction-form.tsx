@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useForm } from '@tanstack/react-form';
+import { useRef, useState } from 'react';
+import { useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link, useBlocker, useNavigate } from '@tanstack/react-router';
 import type { components } from '@/lib/api-schema';
 import { formatUnit } from '@/lib/format';
 import { ApiError, authenticatedRequest } from '@/lib/session';
@@ -21,7 +21,7 @@ import {
 } from './auction-data';
 import { useAuctionBeforeStart } from './use-auction-before-start';
 import { EmptyState } from '@/components/shared/empty-state';
-import { PackagePlus } from 'lucide-react';
+import { ArrowLeft, CalendarClock, PackagePlus } from 'lucide-react';
 
 type CreateAuction = components['schemas']['CreateAuctionDto'];
 type UpdateAuction = components['schemas']['UpdateAuctionDto'];
@@ -71,6 +71,27 @@ function errorMessage(error: unknown, action: string) {
     : `Could not ${action}. Please try again.`;
 }
 
+const DISCARD_MESSAGE = 'Discard your unsaved changes?';
+
+function BackToAuctions({ onClick }: { onClick?: () => void }) {
+  const className =
+    'inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground';
+  const content = (
+    <>
+      <ArrowLeft aria-hidden="true" className="size-4" /> Back to auctions
+    </>
+  );
+  return onClick ? (
+    <button type="button" onClick={onClick} className={className}>
+      {content}
+    </button>
+  ) : (
+    <Link to="/producer/auctions" className={className}>
+      {content}
+    </Link>
+  );
+}
+
 export function AuctionForm({
   auction,
   writable = true,
@@ -94,6 +115,8 @@ export function AuctionForm({
     Partial<Record<AuctionFieldName, string>>
   >({});
   const [stockNote, setStockNote] = useState('');
+  // Set once the user has chosen to leave (or saved), so the guard steps aside.
+  const leaving = useRef(false);
   const existingProductQuery = useQuery({
     queryKey: baseAuction
       ? producerProductKey(baseAuction.productId)
@@ -136,6 +159,7 @@ export function AuctionForm({
           queryKey: producerProductKey(saved.productId),
         }),
       ]);
+      leaving.current = true;
       await navigate({
         to: '/producer/auctions/$auctionId',
         params: { auctionId: saved.id },
@@ -230,6 +254,21 @@ export function AuctionForm({
     },
   });
 
+  const unsaved = useStore(form.store, (state) => !state.isDefaultValue);
+  const dirty = unsaved && !write.isSuccess;
+  // Header links and the browser's back button.
+  useBlocker({
+    shouldBlockFn: () => {
+      if (!dirty || leaving.current) return false;
+      return !window.confirm(DISCARD_MESSAGE);
+    },
+    enableBeforeUnload: () => dirty && !leaving.current,
+  });
+  const requestLeave = () => {
+    if (dirty && !window.confirm(DISCARD_MESSAGE)) return;
+    leaving.current = true;
+    void navigate({ to: '/producer/auctions' });
+  };
   const reloadCurrent = async () => {
     if (!baseAuction) {
       setStockNote('');
@@ -280,24 +319,30 @@ export function AuctionForm({
 
   if (!baseAuction && productsQuery.isPending)
     return (
-      <Card className="p-5 text-sm text-muted-foreground" role="status">
-        Loading product stock…
-      </Card>
+      <>
+        <BackToAuctions />
+        <Card className="p-5 text-sm text-muted-foreground" role="status">
+          Loading product stock…
+        </Card>
+      </>
     );
   if (!baseAuction && productsQuery.isError && !productsQuery.data)
     return (
-      <Card className="p-5" role="alert">
-        <p className="text-sm text-destructive">
-          Could not load your current product stock.
-        </p>
-        <Button
-          className="mt-3"
-          variant="outline"
-          onClick={() => void productsQuery.refetch()}
-        >
-          Try again
-        </Button>
-      </Card>
+      <>
+        <BackToAuctions />
+        <Card className="p-5" role="alert">
+          <p className="text-sm text-destructive">
+            Could not load your current product stock.
+          </p>
+          <Button
+            className="mt-3"
+            variant="outline"
+            onClick={() => void productsQuery.refetch()}
+          >
+            Try again
+          </Button>
+        </Card>
+      </>
     );
   if (
     baseAuction &&
@@ -305,46 +350,49 @@ export function AuctionForm({
     !existingProductQuery.data
   )
     return (
-      <Card className="p-5 text-sm text-muted-foreground" role="status">
-        Loading current product stock…
-      </Card>
+      <>
+        <BackToAuctions />
+        <Card className="p-5 text-sm text-muted-foreground" role="status">
+          Loading current product stock…
+        </Card>
+      </>
     );
   if (baseAuction && existingProductQuery.isError && !existingProductQuery.data)
     return (
-      <Card className="p-5" role="alert">
-        <p className="text-sm text-destructive">
-          Could not load the current product stock.
-        </p>
-        <Button
-          className="mt-3"
-          variant="outline"
-          onClick={() => void existingProductQuery.refetch()}
-        >
-          Try again
-        </Button>
-      </Card>
+      <>
+        <BackToAuctions />
+        <Card className="p-5" role="alert">
+          <p className="text-sm text-destructive">
+            Could not load the current product stock.
+          </p>
+          <Button
+            className="mt-3"
+            variant="outline"
+            onClick={() => void existingProductQuery.refetch()}
+          >
+            Try again
+          </Button>
+        </Card>
+      </>
     );
 
-  return (
-    <Card className="min-w-0 p-5 md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">
-            {baseAuction ? 'Edit scheduled auction' : 'Create an auction lot'}
-          </h1>
-          <p className="mt-1 max-w-[65ch] text-sm leading-relaxed text-muted-foreground">
-            Bids are for the whole lot. Its quantity is reserved from normal
-            product stock until the auction is cancelled or settled.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link to="/producer/auctions">Back to auctions</Link>
-        </Button>
-      </div>
+  const publishedProducts = (productsQuery.data?.items ?? []).filter(
+    (item) => item.published && !item.archivedAt && !item.moderatedAt,
+  );
+  const noProducts = publishedProducts.length === 0 && !baseAuction;
+  const title = baseAuction ? 'Edit scheduled auction' : 'New auction';
+  const unit = selectedProduct ? formatUnit(selectedProduct.unit) : 'units';
+  const photo = selectedProduct?.imageUrl ?? undefined;
+  const maxLot = selectedProduct
+    ? selectedProduct.availableStock + (baseAuction?.quantity ?? 0)
+    : undefined;
+
+  const stale = (
+    <>
       {!writable && (
         <p
           role="status"
-          className="mt-4 rounded-lg border border-warning/40 bg-warning/20 p-3 text-sm"
+          className="rounded-lg border border-warning/40 bg-warning/20 p-3 text-sm"
         >
           Your current producer status could not be confirmed. Your entries are
           saved here, but you cannot submit until it refreshes.
@@ -353,7 +401,7 @@ export function AuctionForm({
       {productsQuery.isError && productsQuery.data && !baseAuction && (
         <div
           role="alert"
-          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning/20 p-3 text-sm"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning/20 p-3 text-sm"
         >
           <p>
             Product stock could not be refreshed. The values shown may be out of
@@ -372,7 +420,7 @@ export function AuctionForm({
       {existingProductQuery.isError && existingProductQuery.data && (
         <div
           role="alert"
-          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning/20 p-3 text-sm"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning/20 p-3 text-sm"
         >
           <p>
             Product stock could not be refreshed. The values shown may be out of
@@ -388,11 +436,16 @@ export function AuctionForm({
           </Button>
         </div>
       )}
-      {(productsQuery.data?.items ?? []).filter(
-        (item) => item.published && !item.archivedAt && !item.moderatedAt,
-      ).length === 0 && !baseAuction ? (
+    </>
+  );
+
+  if (noProducts)
+    return (
+      <div className="space-y-5">
+        <BackToAuctions />
+        <h1 className="text-3xl md:text-4xl">{title}</h1>
+        {stale}
         <EmptyState
-          className="mt-6"
           icon={<PackagePlus />}
           title="Add a product first"
           description="You need a published product with available stock before you can schedule an auction."
@@ -402,119 +455,115 @@ export function AuctionForm({
             </Button>
           }
         />
-      ) : (
-        <form
-          className="mt-6 space-y-5"
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            void form.handleSubmit();
-          }}
-        >
-          <fieldset disabled={write.isPending} className="min-w-0 space-y-5">
-            {!baseAuction && (
-              <form.Field name="productId">
-                {(field) => (
-                  <FormField
-                    id="auction-product"
-                    label="Product"
-                    description="Only published products are available. Stock shown here is the server’s current available amount."
-                    error={fieldErrors.productId}
-                  >
-                    <select
-                      id="auction-product"
-                      name={field.name}
-                      required
-                      value={field.state.value}
-                      aria-invalid={Boolean(fieldErrors.productId)}
-                      aria-describedby={fieldDescriptionIds(
-                        'auction-product',
-                        Boolean(fieldErrors.productId),
-                      )}
-                      onChange={(event) => {
-                        clearFieldError('productId');
-                        field.handleChange(event.target.value);
-                        setChosenProductId(event.target.value);
-                      }}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    >
-                      <option value="">Choose a product</option>
-                      {(productsQuery.data?.items ?? [])
-                        .filter(
-                          (item) =>
-                            item.published &&
-                            !item.archivedAt &&
-                            !item.moderatedAt,
-                        )
-                        .map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name} — {item.availableStock} available ·{' '}
-                            {item.reservedStock} reserved
-                          </option>
-                        ))}
-                    </select>
-                  </FormField>
-                )}
-              </form.Field>
-            )}
-            {selectedProduct && (
-              <div className="rounded-lg border bg-secondary/40 p-4 text-sm">
-                <h3 className="font-medium">{selectedProduct.name}</h3>
-                <p className="mt-1 text-muted-foreground">
-                  {selectedProduct.availableStock}{' '}
-                  {formatUnit(selectedProduct.unit)} available ·{' '}
-                  {selectedProduct.reservedStock}{' '}
-                  {formatUnit(selectedProduct.unit)} reserved
-                </p>
-                {baseAuction && (
-                  <p className="mt-1 text-muted-foreground">
-                    This auction already reserves {baseAuction.quantity}{' '}
-                    {formatUnit(selectedProduct.unit)}. You may use the current
-                    available stock plus this lot when changing its quantity.
-                  </p>
-                )}
+      </div>
+    );
+
+  return (
+    <form
+      noValidate
+      className="min-w-0"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void form.handleSubmit();
+      }}
+    >
+      <div className="mb-5">
+        <BackToAuctions onClick={requestLeave} />
+        <h1 className="text-3xl md:text-4xl">{title}</h1>
+      </div>
+      <div className="mb-4 space-y-3 empty:hidden">{stale}</div>
+      <fieldset
+        disabled={write.isPending}
+        className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-5"
+      >
+        {/* The lot: product photo and stock, mirroring the auction page. */}
+        <section className="relative min-w-0 overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/70">
+          <div className="aspect-[4/3] md:aspect-[16/10] lg:aspect-auto lg:h-full lg:min-h-[26rem]">
+            {photo ? (
+              <img src={photo} alt="" className="size-full object-cover" />
+            ) : (
+              <div className="grid size-full place-items-center text-primary-foreground/30">
+                <CalendarClock
+                  aria-hidden="true"
+                  className="size-16 stroke-[1.2]"
+                />
               </div>
             )}
-            <div className="grid gap-4 md:grid-cols-2">
-              <form.Field name="quantity">
+          </div>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/25" />
+          {!baseAuction && (
+            <div className="absolute inset-x-0 top-0 p-3 md:p-4">
+              <form.Field name="productId">
                 {(field) => (
-                  <FormField
-                    id="auction-quantity"
-                    label={`Lot quantity${selectedProduct ? ` (${formatUnit(selectedProduct.unit)})` : ''}`}
-                    description="Use a whole number of product units."
-                    error={fieldErrors.quantity}
+                  <select
+                    id="auction-product"
+                    name={field.name}
+                    aria-label="Product"
+                    required
+                    value={field.state.value}
+                    aria-invalid={Boolean(fieldErrors.productId)}
+                    onChange={(event) => {
+                      clearFieldError('productId');
+                      field.handleChange(event.target.value);
+                      setChosenProductId(event.target.value);
+                    }}
+                    className="h-9 max-w-full cursor-pointer rounded-full border-0 bg-white/90 px-3 text-sm font-medium text-foreground shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                   >
-                    <Input
-                      id="auction-quantity"
-                      name={field.name}
-                      type="number"
-                      min="1"
-                      max="1000000"
-                      step="1"
-                      inputMode="numeric"
-                      required
-                      value={field.state.value}
-                      aria-invalid={Boolean(fieldErrors.quantity)}
-                      aria-describedby={fieldDescriptionIds(
-                        'auction-quantity',
-                        Boolean(fieldErrors.quantity),
-                      )}
-                      onChange={(event) => {
-                        clearFieldError('quantity');
-                        field.handleChange(event.target.value);
-                      }}
-                    />
-                  </FormField>
+                    <option value="">Choose a product</option>
+                    {publishedProducts.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
                 )}
               </form.Field>
-              <form.Field name="startingPrice">
-                {(field) => (
-                  <FormField
-                    id="auction-starting-price"
-                    label="Starting price for the whole lot (€)"
-                    description="Enter euros and cents. This is the opening bid for the entire quantity."
-                    error={fieldErrors.startingPrice}
-                  >
+            </div>
+          )}
+          <div className="absolute inset-x-0 bottom-0 p-4 text-white md:p-6">
+            {fieldErrors.productId && (
+              <p
+                id="auction-product-error"
+                role="alert"
+                className="mb-2 inline-block rounded-md bg-white/90 px-2 py-1 text-sm text-destructive"
+              >
+                {fieldErrors.productId}
+              </p>
+            )}
+            <h2 className="text-3xl leading-tight break-words text-white md:text-5xl">
+              {selectedProduct?.name ?? 'Choose a product'}
+            </h2>
+            {selectedProduct && (
+              <p className="mt-2 text-sm text-white/85 tabular-nums">
+                {selectedProduct.availableStock} {unit} available ·{' '}
+                {selectedProduct.reservedStock} {unit} reserved in other
+                auctions
+                {baseAuction
+                  ? ` · this lot holds ${baseAuction.quantity} ${unit}`
+                  : ''}
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* Terms: mirrors the bid panel. */}
+        <aside className="flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-card">
+          <div className="border-b bg-secondary/40 p-5">
+            <form.Field name="startingPrice">
+              {(field) => (
+                <FormField
+                  id="auction-starting-price"
+                  label="Starting price for the whole lot"
+                  description="The opening bid for the entire quantity."
+                  error={fieldErrors.startingPrice}
+                >
+                  <div className="relative">
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-2xl text-muted-foreground"
+                    >
+                      €
+                    </span>
                     <Input
                       id="auction-starting-price"
                       name={field.name}
@@ -524,6 +573,7 @@ export function AuctionForm({
                       step="0.01"
                       inputMode="decimal"
                       required
+                      placeholder="0.00"
                       value={field.state.value}
                       aria-invalid={Boolean(fieldErrors.startingPrice)}
                       aria-describedby={fieldDescriptionIds(
@@ -534,16 +584,21 @@ export function AuctionForm({
                         clearFieldError('startingPrice');
                         field.handleChange(event.target.value);
                       }}
+                      className="h-14 pl-8 text-3xl font-semibold tabular-nums"
                     />
-                  </FormField>
-                )}
-              </form.Field>
+                  </div>
+                </FormField>
+              )}
+            </form.Field>
+          </div>
+          <div className="space-y-4 p-5">
+            <div className="grid grid-cols-2 gap-3">
               <form.Field name="increment">
                 {(field) => (
                   <FormField
                     id="auction-increment"
-                    label="Minimum bid increment (€)"
-                    description="The next bid must be at least this much above the current high bid."
+                    label="Minimum increment (€)"
+                    description="Least a bid must beat the current one by."
                     error={fieldErrors.increment}
                   >
                     <Input
@@ -569,54 +624,35 @@ export function AuctionForm({
                   </FormField>
                 )}
               </form.Field>
-              <form.Field name="startsAt">
+              <form.Field name="quantity">
                 {(field) => (
                   <FormField
-                    id="auction-starts-at"
-                    label="Auction starts"
-                    description="Displayed in your local time; sent to the server as an exact timestamp."
-                    error={fieldErrors.startsAt}
+                    id="auction-quantity"
+                    label={`Lot quantity (${unit})`}
+                    description={
+                      maxLot === undefined
+                        ? 'A whole number.'
+                        : `Up to ${maxLot} available.`
+                    }
+                    error={fieldErrors.quantity}
                   >
                     <Input
-                      id="auction-starts-at"
+                      id="auction-quantity"
                       name={field.name}
-                      type="datetime-local"
+                      type="number"
+                      min="1"
+                      max="1000000"
+                      step="1"
+                      inputMode="numeric"
                       required
                       value={field.state.value}
-                      aria-invalid={Boolean(fieldErrors.startsAt)}
+                      aria-invalid={Boolean(fieldErrors.quantity)}
                       aria-describedby={fieldDescriptionIds(
-                        'auction-starts-at',
-                        Boolean(fieldErrors.startsAt),
+                        'auction-quantity',
+                        Boolean(fieldErrors.quantity),
                       )}
                       onChange={(event) => {
-                        clearFieldError('startsAt');
-                        field.handleChange(event.target.value);
-                      }}
-                    />
-                  </FormField>
-                )}
-              </form.Field>
-              <form.Field name="endsAt">
-                {(field) => (
-                  <FormField
-                    id="auction-ends-at"
-                    label="Auction ends"
-                    description="The end must be after the start."
-                    error={fieldErrors.endsAt}
-                  >
-                    <Input
-                      id="auction-ends-at"
-                      name={field.name}
-                      type="datetime-local"
-                      required
-                      value={field.state.value}
-                      aria-invalid={Boolean(fieldErrors.endsAt)}
-                      aria-describedby={fieldDescriptionIds(
-                        'auction-ends-at',
-                        Boolean(fieldErrors.endsAt),
-                      )}
-                      onChange={(event) => {
-                        clearFieldError('endsAt');
+                        clearFieldError('quantity');
                         field.handleChange(event.target.value);
                       }}
                     />
@@ -624,77 +660,146 @@ export function AuctionForm({
                 )}
               </form.Field>
             </div>
-          </fieldset>
-          {write.isError &&
-            write.error instanceof ApiError &&
-            write.error.status !== 409 && (
-              <p role="alert" className="text-sm text-destructive">
-                {errorMessage(
-                  write.error,
-                  baseAuction ? 'save the auction' : 'create the auction',
-                )}
-              </p>
-            )}
-          {write.isError &&
-            write.error instanceof ApiError &&
-            write.error.status === 409 && (
-              <div
-                role="alert"
-                className="space-y-3 rounded-lg border border-warning/40 bg-warning/20 p-4 text-sm"
-              >
-                <p>
+            <form.Field name="startsAt">
+              {(field) => (
+                <FormField
+                  id="auction-starts-at"
+                  label="Starts"
+                  description="Your local time."
+                  error={fieldErrors.startsAt}
+                >
+                  <Input
+                    id="auction-starts-at"
+                    name={field.name}
+                    type="datetime-local"
+                    required
+                    value={field.state.value}
+                    aria-invalid={Boolean(fieldErrors.startsAt)}
+                    aria-describedby={fieldDescriptionIds(
+                      'auction-starts-at',
+                      Boolean(fieldErrors.startsAt),
+                    )}
+                    onChange={(event) => {
+                      clearFieldError('startsAt');
+                      field.handleChange(event.target.value);
+                    }}
+                  />
+                </FormField>
+              )}
+            </form.Field>
+            <form.Field name="endsAt">
+              {(field) => (
+                <FormField
+                  id="auction-ends-at"
+                  label="Ends"
+                  description="Must be after the start."
+                  error={fieldErrors.endsAt}
+                >
+                  <Input
+                    id="auction-ends-at"
+                    name={field.name}
+                    type="datetime-local"
+                    required
+                    value={field.state.value}
+                    aria-invalid={Boolean(fieldErrors.endsAt)}
+                    aria-describedby={fieldDescriptionIds(
+                      'auction-ends-at',
+                      Boolean(fieldErrors.endsAt),
+                    )}
+                    onChange={(event) => {
+                      clearFieldError('endsAt');
+                      field.handleChange(event.target.value);
+                    }}
+                  />
+                </FormField>
+              )}
+            </form.Field>
+          </div>
+          <div className="mt-auto space-y-3 p-5 pt-0">
+            {write.isError &&
+              write.error instanceof ApiError &&
+              write.error.status !== 409 && (
+                <p role="alert" className="text-sm text-destructive">
                   {errorMessage(
                     write.error,
                     baseAuction ? 'save the auction' : 'create the auction',
                   )}
                 </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void reloadCurrent()}
+              )}
+            {write.isError &&
+              write.error instanceof ApiError &&
+              write.error.status === 409 && (
+                <div
+                  role="alert"
+                  className="space-y-3 rounded-lg border border-warning/40 bg-warning/20 p-3 text-sm"
                 >
-                  {baseAuction
-                    ? 'Reload current auction and stock'
-                    : 'Reload current product stock'}
-                </Button>
-              </div>
+                  <p>
+                    {errorMessage(
+                      write.error,
+                      baseAuction ? 'save the auction' : 'create the auction',
+                    )}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void reloadCurrent()}
+                  >
+                    {baseAuction
+                      ? 'Reload current auction and stock'
+                      : 'Reload current product stock'}
+                  </Button>
+                </div>
+              )}
+            {stockNote && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {stockNote}
+              </p>
             )}
-          {stockNote && (
-            <p role="status" className="text-sm text-muted-foreground">
-              {stockNote}
+            {write.isPending && (
+              <p className="text-sm text-muted-foreground" role="status">
+                {write.isPaused
+                  ? 'Waiting for a connection. Your auction will save automatically when you’re back online.'
+                  : 'Saving auction…'}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Bids are for the whole lot. Its quantity is reserved from normal
+              product stock until the auction is cancelled or settled.
             </p>
-          )}
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Button
-              type="submit"
-              disabled={
-                !writable ||
-                write.isPending ||
-                (baseAuction !== undefined &&
-                  (baseAuction.status !== 'scheduled' || beforeStart !== true))
-              }
-            >
-              {write.isPaused
-                ? 'Waiting for connection…'
-                : write.isPending
-                  ? 'Saving…'
-                  : baseAuction
-                    ? 'Save changes'
-                    : 'Schedule auction'}
-            </Button>
-            <Button asChild type="button" variant="outline">
-              <Link to="/producer/auctions">Cancel</Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="submit"
+                size="lg"
+                className="h-12 flex-1 text-base"
+                disabled={
+                  !writable ||
+                  write.isPending ||
+                  (baseAuction !== undefined &&
+                    (baseAuction.status !== 'scheduled' ||
+                      beforeStart !== true))
+                }
+              >
+                {write.isPaused
+                  ? 'Waiting for connection…'
+                  : write.isPending
+                    ? 'Saving…'
+                    : baseAuction
+                      ? 'Save changes'
+                      : 'Schedule auction'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12"
+                onClick={requestLeave}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
-          {write.isPending && (
-            <p className="text-sm text-muted-foreground" role="status">
-              {write.isPaused
-                ? 'Waiting for a connection. Your auction will save automatically when you’re back online.'
-                : 'Saving auction…'}
-            </p>
-          )}
-        </form>
-      )}
-    </Card>
+        </aside>
+      </fieldset>
+    </form>
   );
 }
