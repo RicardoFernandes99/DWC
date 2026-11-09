@@ -45,22 +45,22 @@
         @else
             <x-ui.table aria-label="Order items">
                 <x-ui.table-header>
-                    <x-ui.table-row class="hover:bg-transparent">
-                        <x-ui.table-head>Product</x-ui.table-head>
-                        <x-ui.table-head>Stored line total</x-ui.table-head>
-                        <x-ui.table-head>Product ID</x-ui.table-head>
-                    </x-ui.table-row>
+                    <tr class="border-b">
+                        <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Product</th>
+                        <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Stored line total</th>
+                        <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Product ID</th>
+                    </tr>
                 </x-ui.table-header>
                 <x-ui.table-body>
                     @foreach ($order['items'] as $item)
-                        <x-ui.table-row>
-                            <x-ui.table-cell>
+                        <tr class="hover:bg-muted/50 border-b transition-colors">
+                            <td class="p-2 align-middle whitespace-nowrap">
                                 <span class="font-semibold">{{ $item['productName'] }}</span>
                                 <div class="text-muted-foreground text-xs">{{ $item['quantity'] }} {{ str_replace('_', ' ', $item['productUnit']) }} × €{{ number_format($item['unitPriceCents'] / 100, 2) }}</div>
-                            </x-ui.table-cell>
-                            <x-ui.table-cell>€{{ number_format($item['lineTotalCents'] / 100, 2) }}</x-ui.table-cell>
-                            <x-ui.table-cell class="font-mono text-xs">{{ $item['productId'] }}</x-ui.table-cell>
-                        </x-ui.table-row>
+                            </td>
+                            <td class="p-2 align-middle whitespace-nowrap">€{{ number_format($item['lineTotalCents'] / 100, 2) }}</td>
+                            <td class="p-2 align-middle whitespace-nowrap font-mono text-xs">{{ $item['productId'] }}</td>
+                        </tr>
                     @endforeach
                 </x-ui.table-body>
             </x-ui.table>

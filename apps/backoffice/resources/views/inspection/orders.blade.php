@@ -21,28 +21,28 @@
     @else
         <x-ui.table variant="card" aria-label="Orders">
             <x-ui.table-header>
-                <x-ui.table-row class="hover:bg-transparent">
-                    <x-ui.table-head class="px-4">Order</x-ui.table-head>
-                    <x-ui.table-head>Status</x-ui.table-head>
-                    <x-ui.table-head>Total / refunded</x-ui.table-head>
-                    <x-ui.table-head>Buyer</x-ui.table-head>
-                    <x-ui.table-head>Producer</x-ui.table-head>
-                    <x-ui.table-head>Created</x-ui.table-head>
-                </x-ui.table-row>
+                <tr class="border-b">
+                    <th scope="col" class="text-foreground h-10 px-4 text-start align-middle font-medium whitespace-nowrap">Order</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Status</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Total / refunded</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Buyer</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Producer</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Created</th>
+                </tr>
             </x-ui.table-header>
             <x-ui.table-body>
                 @foreach ($items as $order)
-                    <x-ui.table-row>
-                        <x-ui.table-cell class="px-4 py-3 whitespace-normal">
+                    <tr class="hover:bg-muted/50 border-b transition-colors">
+                        <td class="px-4 py-3 align-middle">
                             <a class="font-semibold underline-offset-4 hover:underline" href="{{ route('inspection.order', $order['id']) }}">Order {{ substr($order['id'], -8) }}</a>
                             <div class="text-muted-foreground text-xs">{{ ucfirst($order['origin']) }} · {{ ucfirst($order['fulfilmentMethod']) }}@if ($order['auctionId']) · <a class="underline-offset-4 hover:underline" href="{{ route('inspection.auction', $order['auctionId']) }}">Auction {{ substr($order['auctionId'], -8) }}</a>@endif</div>
-                        </x-ui.table-cell>
-                        <x-ui.table-cell><x-status-pill :tone="$order['status']">{{ ucwords(str_replace('_', ' ', $order['status'])) }}</x-status-pill></x-ui.table-cell>
-                        <x-ui.table-cell>€{{ number_format($order['totalCents'] / 100, 2) }} / €{{ number_format($order['refundedCents'] / 100, 2) }}</x-ui.table-cell>
-                        <x-ui.table-cell><a class="underline-offset-4 hover:underline" href="{{ route('inspection.user', $order['buyerId']) }}">{{ substr($order['buyerId'], -8) }}</a></x-ui.table-cell>
-                        <x-ui.table-cell><a class="underline-offset-4 hover:underline" href="{{ route('inspection.user', $order['producerId']) }}">{{ substr($order['producerId'], -8) }}</a></x-ui.table-cell>
-                        <x-ui.table-cell><time datetime="{{ $order['createdAt'] }}">{{ $order['createdAt'] ? \Carbon\Carbon::parse($order['createdAt'])->format('j M Y, H:i') : 'Unknown' }}</time></x-ui.table-cell>
-                    </x-ui.table-row>
+                        </td>
+                        <td class="p-2 align-middle whitespace-nowrap"><x-status-pill :tone="$order['status']">{{ ucwords(str_replace('_', ' ', $order['status'])) }}</x-status-pill></td>
+                        <td class="p-2 align-middle whitespace-nowrap">€{{ number_format($order['totalCents'] / 100, 2) }} / €{{ number_format($order['refundedCents'] / 100, 2) }}</td>
+                        <td class="p-2 align-middle whitespace-nowrap"><a class="underline-offset-4 hover:underline" href="{{ route('inspection.user', $order['buyerId']) }}">{{ substr($order['buyerId'], -8) }}</a></td>
+                        <td class="p-2 align-middle whitespace-nowrap"><a class="underline-offset-4 hover:underline" href="{{ route('inspection.user', $order['producerId']) }}">{{ substr($order['producerId'], -8) }}</a></td>
+                        <td class="p-2 align-middle whitespace-nowrap"><time datetime="{{ $order['createdAt'] }}">{{ $order['createdAt'] ? \Carbon\Carbon::parse($order['createdAt'])->format('j M Y, H:i') : 'Unknown' }}</time></td>
+                    </tr>
                 @endforeach
             </x-ui.table-body>
         </x-ui.table>

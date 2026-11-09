@@ -17,26 +17,26 @@
     @else
         <x-ui.table variant="card" aria-label="Products">
             <x-ui.table-header>
-                <x-ui.table-row class="hover:bg-transparent">
-                    <x-ui.table-head class="px-4">Product</x-ui.table-head>
-                    <x-ui.table-head>Moderation</x-ui.table-head>
-                    <x-ui.table-head>Published by producer</x-ui.table-head>
-                    <x-ui.table-head>Added</x-ui.table-head>
-                    <x-ui.table-head><span class="sr-only">Action</span></x-ui.table-head>
-                </x-ui.table-row>
+                <tr class="border-b">
+                    <th scope="col" class="text-foreground h-10 px-4 text-start align-middle font-medium whitespace-nowrap">Product</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Moderation</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Published by producer</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Added</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap"><span class="sr-only">Action</span></th>
+                </tr>
             </x-ui.table-header>
             <x-ui.table-body>
                 @foreach ($items as $item)
-                    <x-ui.table-row>
-                        <x-ui.table-cell class="px-4 py-3 whitespace-normal">
+                    <tr class="hover:bg-muted/50 border-b transition-colors">
+                        <td class="px-4 py-3 align-middle">
                             <a class="font-semibold underline-offset-4 hover:underline" href="{{ route('moderation.product', $item->id) }}">{{ $item->name }}</a>
                             <div class="text-muted-foreground text-xs">{{ $item->producerName }} · {{ ucfirst(str_replace('_', ' ', $item->category)) }}</div>
-                        </x-ui.table-cell>
-                        <x-ui.table-cell><x-status-pill :tone="$item->moderation === null ? 'approved' : 'suspended'">{{ $item->moderation === null ? 'Not hidden' : 'Hidden' }}</x-status-pill></x-ui.table-cell>
-                        <x-ui.table-cell>{{ $item->published ? 'Yes' : 'No' }}</x-ui.table-cell>
-                        <x-ui.table-cell><time datetime="{{ $item->createdAt }}">{{ \Illuminate\Support\Carbon::parse($item->createdAt)->format('j M Y') }}</time></x-ui.table-cell>
-                        <x-ui.table-cell class="text-right"><x-ui.button variant="ghost" size="sm" :href="route('moderation.product', $item->id)">Inspect<span class="sr-only"> {{ $item->name }}</span> →</x-ui.button></x-ui.table-cell>
-                    </x-ui.table-row>
+                        </td>
+                        <td class="p-2 align-middle whitespace-nowrap"><x-status-pill :tone="$item->moderation === null ? 'approved' : 'suspended'">{{ $item->moderation === null ? 'Not hidden' : 'Hidden' }}</x-status-pill></td>
+                        <td class="p-2 align-middle whitespace-nowrap">{{ $item->published ? 'Yes' : 'No' }}</td>
+                        <td class="p-2 align-middle whitespace-nowrap"><time datetime="{{ $item->createdAt }}">{{ \Illuminate\Support\Carbon::parse($item->createdAt)->format('j M Y') }}</time></td>
+                        <td class="p-2 align-middle whitespace-nowrap text-right"><a class="text-primary text-sm font-medium underline-offset-4 hover:underline" href="{{ route('moderation.product', $item->id) }}">Inspect<span class="sr-only"> {{ $item->name }}</span> →</a></td>
+                    </tr>
                 @endforeach
             </x-ui.table-body>
         </x-ui.table>

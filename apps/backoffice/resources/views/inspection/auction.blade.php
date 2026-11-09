@@ -62,26 +62,26 @@
         @else
             <x-ui.table aria-label="Bid history">
                 <x-ui.table-header>
-                    <x-ui.table-row class="hover:bg-transparent">
-                        <x-ui.table-head>Bidder</x-ui.table-head>
-                        <x-ui.table-head>Amount</x-ui.table-head>
-                        <x-ui.table-head>Accepted</x-ui.table-head>
-                        <x-ui.table-head>Auction end after bid</x-ui.table-head>
-                        <x-ui.table-head>Revision</x-ui.table-head>
-                    </x-ui.table-row>
+                    <tr class="border-b">
+                        <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Bidder</th>
+                        <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Amount</th>
+                        <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Accepted</th>
+                        <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Auction end after bid</th>
+                        <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Revision</th>
+                    </tr>
                 </x-ui.table-header>
                 <x-ui.table-body>
                     @foreach ($auction['bidHistory']['items'] as $bid)
-                        <x-ui.table-row>
-                            <x-ui.table-cell>
+                        <tr class="hover:bg-muted/50 border-b transition-colors">
+                            <td class="p-2 align-middle whitespace-nowrap">
                                 <a class="font-semibold {{ $link }}" href="{{ route('inspection.user', $bid['buyerId']) }}">{{ $bid['bidderName'] }}</a>
                                 <div class="text-muted-foreground font-mono text-xs">{{ $bid['buyerId'] }}</div>
-                            </x-ui.table-cell>
-                            <x-ui.table-cell>€{{ number_format($bid['amountCents'] / 100, 2) }}</x-ui.table-cell>
-                            <x-ui.table-cell><time datetime="{{ $bid['acceptedAt'] }}">{{ \Carbon\Carbon::parse($bid['acceptedAt'])->format('j M Y, H:i') }}</time></x-ui.table-cell>
-                            <x-ui.table-cell><time datetime="{{ $bid['endsAt'] }}">{{ \Carbon\Carbon::parse($bid['endsAt'])->format('j M Y, H:i') }}</time></x-ui.table-cell>
-                            <x-ui.table-cell>{{ $bid['revision'] }}</x-ui.table-cell>
-                        </x-ui.table-row>
+                            </td>
+                            <td class="p-2 align-middle whitespace-nowrap">€{{ number_format($bid['amountCents'] / 100, 2) }}</td>
+                            <td class="p-2 align-middle whitespace-nowrap"><time datetime="{{ $bid['acceptedAt'] }}">{{ \Carbon\Carbon::parse($bid['acceptedAt'])->format('j M Y, H:i') }}</time></td>
+                            <td class="p-2 align-middle whitespace-nowrap"><time datetime="{{ $bid['endsAt'] }}">{{ \Carbon\Carbon::parse($bid['endsAt'])->format('j M Y, H:i') }}</time></td>
+                            <td class="p-2 align-middle whitespace-nowrap">{{ $bid['revision'] }}</td>
+                        </tr>
                     @endforeach
                 </x-ui.table-body>
             </x-ui.table>

@@ -38,8 +38,8 @@
             @if ($signedIn)
                 <nav class="order-last -mx-1 flex w-full gap-1 overflow-x-auto sm:order-none sm:mx-0 sm:w-auto sm:flex-1" aria-label="Sections">
                     @foreach ($sections as [$label, $route, $pattern])
-                        <x-ui.button :href="route($route)" variant="ghost" size="sm" :aria-current="request()->routeIs($pattern) ? 'page' : null"
-                            :class="request()->routeIs($pattern) ? 'rounded-full bg-accent text-accent-foreground' : 'rounded-full text-muted-foreground'">{{ $label }}</x-ui.button>
+                        <a href="{{ route($route) }}" @if (request()->routeIs($pattern)) aria-current="page" @endif
+                            class="inline-flex h-8 shrink-0 items-center rounded-full px-3 text-sm font-medium transition-colors {{ request()->routeIs($pattern) ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground' }}">{{ $label }}</a>
                     @endforeach
                 </nav>
                 <div class="ml-auto flex items-center gap-3 sm:ml-0">

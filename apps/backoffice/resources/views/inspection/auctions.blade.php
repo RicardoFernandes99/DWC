@@ -18,28 +18,28 @@
     @else
         <x-ui.table variant="card" aria-label="Auctions">
             <x-ui.table-header>
-                <x-ui.table-row class="hover:bg-transparent">
-                    <x-ui.table-head class="px-4">Product</x-ui.table-head>
-                    <x-ui.table-head>Status</x-ui.table-head>
-                    <x-ui.table-head>Current bid</x-ui.table-head>
-                    <x-ui.table-head>Producer</x-ui.table-head>
-                    <x-ui.table-head>Starts</x-ui.table-head>
-                    <x-ui.table-head>Ends</x-ui.table-head>
-                </x-ui.table-row>
+                <tr class="border-b">
+                    <th scope="col" class="text-foreground h-10 px-4 text-start align-middle font-medium whitespace-nowrap">Product</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Status</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Current bid</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Producer</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Starts</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Ends</th>
+                </tr>
             </x-ui.table-header>
             <x-ui.table-body>
                 @foreach ($items as $auction)
-                    <x-ui.table-row>
-                        <x-ui.table-cell class="px-4 py-3 whitespace-normal">
+                    <tr class="hover:bg-muted/50 border-b transition-colors">
+                        <td class="px-4 py-3 align-middle">
                             <a class="font-semibold underline-offset-4 hover:underline" href="{{ route('inspection.auction', $auction['id']) }}">{{ $auction['product']['name'] }}</a>
                             <div class="text-muted-foreground text-xs">{{ $auction['quantity'] }} {{ str_replace('_', ' ', $auction['product']['unit']) }}</div>
-                        </x-ui.table-cell>
-                        <x-ui.table-cell><x-status-pill :tone="$auction['status']">{{ ucfirst($auction['status']) }}</x-status-pill></x-ui.table-cell>
-                        <x-ui.table-cell>{{ $auction['currentBidCents'] === null ? 'No bids' : '€'.number_format($auction['currentBidCents'] / 100, 2) }}</x-ui.table-cell>
-                        <x-ui.table-cell><a class="underline-offset-4 hover:underline" href="{{ route('inspection.user', $auction['producerId']) }}">{{ substr($auction['producerId'], -8) }}</a></x-ui.table-cell>
-                        <x-ui.table-cell><time datetime="{{ $auction['startsAt'] }}">{{ \Carbon\Carbon::parse($auction['startsAt'])->format('j M Y, H:i') }}</time></x-ui.table-cell>
-                        <x-ui.table-cell><time datetime="{{ $auction['endsAt'] }}">{{ \Carbon\Carbon::parse($auction['endsAt'])->format('j M Y, H:i') }}</time></x-ui.table-cell>
-                    </x-ui.table-row>
+                        </td>
+                        <td class="p-2 align-middle whitespace-nowrap"><x-status-pill :tone="$auction['status']">{{ ucfirst($auction['status']) }}</x-status-pill></td>
+                        <td class="p-2 align-middle whitespace-nowrap">{{ $auction['currentBidCents'] === null ? 'No bids' : '€'.number_format($auction['currentBidCents'] / 100, 2) }}</td>
+                        <td class="p-2 align-middle whitespace-nowrap"><a class="underline-offset-4 hover:underline" href="{{ route('inspection.user', $auction['producerId']) }}">{{ substr($auction['producerId'], -8) }}</a></td>
+                        <td class="p-2 align-middle whitespace-nowrap"><time datetime="{{ $auction['startsAt'] }}">{{ \Carbon\Carbon::parse($auction['startsAt'])->format('j M Y, H:i') }}</time></td>
+                        <td class="p-2 align-middle whitespace-nowrap"><time datetime="{{ $auction['endsAt'] }}">{{ \Carbon\Carbon::parse($auction['endsAt'])->format('j M Y, H:i') }}</time></td>
+                    </tr>
                 @endforeach
             </x-ui.table-body>
         </x-ui.table>

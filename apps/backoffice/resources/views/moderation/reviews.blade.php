@@ -17,29 +17,29 @@
     @else
         <x-ui.table variant="card" aria-label="Reported reviews">
             <x-ui.table-header>
-                <x-ui.table-row class="hover:bg-transparent">
-                    <x-ui.table-head class="px-4">Review</x-ui.table-head>
-                    <x-ui.table-head>Rating</x-ui.table-head>
-                    <x-ui.table-head>Reports</x-ui.table-head>
-                    <x-ui.table-head>Latest report</x-ui.table-head>
-                    <x-ui.table-head>Visibility</x-ui.table-head>
-                    <x-ui.table-head><span class="sr-only">Action</span></x-ui.table-head>
-                </x-ui.table-row>
+                <tr class="border-b">
+                    <th scope="col" class="text-foreground h-10 px-4 text-start align-middle font-medium whitespace-nowrap">Review</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Rating</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Reports</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Latest report</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap">Visibility</th>
+                    <th scope="col" class="text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap"><span class="sr-only">Action</span></th>
+                </tr>
             </x-ui.table-header>
             <x-ui.table-body>
                 @foreach ($items as $item)
-                    <x-ui.table-row>
-                        <x-ui.table-cell class="max-w-md px-4 py-3 whitespace-normal">
+                    <tr class="hover:bg-muted/50 border-b transition-colors">
+                        <td class="max-w-md px-4 py-3 align-middle">
                             <a class="font-semibold underline-offset-4 hover:underline" href="{{ route('moderation.review', $item->reviewId) }}">{{ $item->producer['farmName'] }}</a>
                             <div class="text-sm">{{ $item->comment ?: 'No written comment' }}</div>
                             <div class="text-muted-foreground text-xs">By {{ $item->author['name'] }} · Order {{ $item->orderId }}</div>
-                        </x-ui.table-cell>
-                        <x-ui.table-cell>{{ $item->rating }} / 5</x-ui.table-cell>
-                        <x-ui.table-cell>{{ $item->reportCount }}</x-ui.table-cell>
-                        <x-ui.table-cell><time datetime="{{ $item->latestReportAt }}">{{ $item->latestReportAt ? \Illuminate\Support\Carbon::parse($item->latestReportAt)->format('j M Y') : '—' }}</time></x-ui.table-cell>
-                        <x-ui.table-cell><x-status-pill :tone="$item->visibility">{{ ucfirst($item->visibility) }}</x-status-pill></x-ui.table-cell>
-                        <x-ui.table-cell class="text-right"><x-ui.button variant="ghost" size="sm" :href="route('moderation.review', $item->reviewId)">Inspect<span class="sr-only"> review by {{ $item->author['name'] }}</span> →</x-ui.button></x-ui.table-cell>
-                    </x-ui.table-row>
+                        </td>
+                        <td class="p-2 align-middle whitespace-nowrap">{{ $item->rating }} / 5</td>
+                        <td class="p-2 align-middle whitespace-nowrap">{{ $item->reportCount }}</td>
+                        <td class="p-2 align-middle whitespace-nowrap"><time datetime="{{ $item->latestReportAt }}">{{ $item->latestReportAt ? \Illuminate\Support\Carbon::parse($item->latestReportAt)->format('j M Y') : '—' }}</time></td>
+                        <td class="p-2 align-middle whitespace-nowrap"><x-status-pill :tone="$item->visibility">{{ ucfirst($item->visibility) }}</x-status-pill></td>
+                        <td class="p-2 align-middle whitespace-nowrap text-right"><a class="text-primary text-sm font-medium underline-offset-4 hover:underline" href="{{ route('moderation.review', $item->reviewId) }}">Inspect<span class="sr-only"> review by {{ $item->author['name'] }}</span> →</a></td>
+                    </tr>
                 @endforeach
             </x-ui.table-body>
         </x-ui.table>
