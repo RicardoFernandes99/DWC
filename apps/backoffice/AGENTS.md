@@ -20,8 +20,15 @@ Composer are not required.
 - Treat API timeouts and malformed responses as sanitized unavailable errors.
   Clear expired/revoked or non-admin sessions, and revoke the current API cookie
   when possible. Never trust a role from stored browser state.
-- Keep this app Blade-only. Do not add React, a frontend build chain or links to
-  unfinished admin features.
+- Keep this app Blade-only: no React and no links to unfinished admin features.
+  UI comes from BlatUI (Blade components + Tailwind v4 + Alpine). Its copied
+  components live in `resources/views/components/ui` (add more with
+  `php artisan blatui:add <name>`); DWC wrappers such as `x-page`, `x-section`,
+  `x-tabs` and `x-status-pill` sit beside them. Views use those, not raw markup.
+- The only frontend build is Vite (`resources/css` and `resources/js` into
+  `public/build`, never committed). The `backoffice-assets` Compose service
+  runs it; `pnpm --filter @dwc/backoffice build` runs it once. `blatui*.css/js`
+  are vendored from the package: update them with `vendor:publish`, do not edit.
 
 ## Local commands
 

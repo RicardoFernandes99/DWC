@@ -3,38 +3,47 @@
 @section('title', 'Users | DWC Backoffice')
 
 @section('content')
-<main class="workspace inspection-workspace">
+<x-page>
     <x-page-heading eyebrow="Administration / Inspection" title="Users" />
-    @include('inspection.nav')
     @include('inspection.filter-errors')
     @include('inspection.filter-scope')
-    <form class="inspection-filter-form" method="get" action="{{ route('inspection.users') }}">
-        <details id="inspection-filter-disclosure" class="inspection-filter-disclosure" open>
-            <summary>Filters</summary>
-            <div class="inspection-filters">
-        <label>Role<select name="role"><option value="">All roles</option>@foreach (['buyer', 'producer', 'admin'] as $value)<option value="{{ $value }}" @selected(request('role') === $value)>{{ ucfirst($value) }}</option>@endforeach</select></label>
-        <label>Producer status<select name="producerStatus"><option value="">All statuses</option>@foreach (['pending', 'approved', 'rejected', 'suspended'] as $value)<option value="{{ $value }}" @selected(request('producerStatus') === $value)>{{ ucfirst($value) }}</option>@endforeach</select></label>
-        <label>Page size<select name="limit"><option value="20" @selected((int) request('limit', 20) === 20)>20</option><option value="50" @selected((int) request('limit', 20) === 50)>50</option></select></label>
-        <button class="quiet-button" type="submit">Apply filters</button>
-        <a class="filter-reset" href="{{ route('inspection.users') }}">Clear</a>
-            </div>
-        </details>
-    </form>
-    @include('inspection.filter-disclosure-script')
-    <ul class="inspection-list" aria-label="Users">
-        @forelse ($items as $user)
-            <li class="inspection-row">
-                <div class="inspection-primary"><a class="inspection-link" href="{{ route('inspection.user', $user['id']) }}">{{ $user['name'] }}</a><span>{{ $user['email'] }}</span></div>
-                <x-field label="Role"><span>{{ ucfirst($user['role']) }}</span></x-field>
-                <x-field label="Producer status"><span>{{ $user['producerStatus'] ? ucfirst($user['producerStatus']) : 'Not applicable' }}</span></x-field>
-                <x-field label="Buyer standing"><span>{{ $user['role'] === 'buyer' ? ucfirst($user['buyerStatus'] ?? 'active') : 'Not applicable' }}</span></x-field>
-                <x-field label="Farm / city"><span>{{ collect([$user['farmName'], $user['city']])->filter()->join(' · ') ?: '—' }}</span></x-field>
-                <x-field label="Created"><time datetime="{{ $user['createdAt'] }}">{{ $user['createdAt'] ? \Carbon\Carbon::parse($user['createdAt'])->format('j M Y, H:i') : 'Unknown' }}</time></x-field>
-            </li>
-        @empty
-            <li class="inspection-empty">No users match these filters.</li>
-        @endforelse
-    </ul>
+    <x-filters :action="route('inspection.users')">
+        <x-filter-select label="Role" name="role" :options="['' => 'All roles', 'buyer' => 'Buyer', 'producer' => 'Producer', 'admin' => 'Admin']" />
+        <x-filter-select label="Producer status" name="producerStatus" :options="['' => 'All statuses', 'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected', 'suspended' => 'Suspended']" />
+        <x-filter-select label="Page size" name="limit" :options="['20' => '20', '50' => '50']" />
+    </x-filters>
+
+    @if ($items === [])
+        <x-empty-state title="No users match these filters" />
+    @else
+        <x-ui.table variant="card" aria-label="Users">
+            <x-ui.table-header>
+                <x-ui.table-row class="hover:bg-transparent">
+                    <x-ui.table-head class="px-4">User</x-ui.table-head>
+                    <x-ui.table-head>Role</x-ui.table-head>
+                    <x-ui.table-head>Producer status</x-ui.table-head>
+                    <x-ui.table-head>Buyer standing</x-ui.table-head>
+                    <x-ui.table-head>Farm / city</x-ui.table-head>
+                    <x-ui.table-head>Created</x-ui.table-head>
+                </x-ui.table-row>
+            </x-ui.table-header>
+            <x-ui.table-body>
+                @foreach ($items as $user)
+                    <x-ui.table-row>
+                        <x-ui.table-cell class="px-4 py-3">
+                            <a class="font-semibold underline-offset-4 hover:underline" href="{{ route('inspection.user', $user['id']) }}">{{ $user['name'] }}</a>
+                            <div class="text-muted-foreground text-xs">{{ $user['email'] }}</div>
+                        </x-ui.table-cell>
+                        <x-ui.table-cell>{{ ucfirst($user['role']) }}</x-ui.table-cell>
+                        <x-ui.table-cell>{{ $user['producerStatus'] ? ucfirst($user['producerStatus']) : '—' }}</x-ui.table-cell>
+                        <x-ui.table-cell>{{ $user['role'] === 'buyer' ? ucfirst($user['buyerStatus'] ?? 'active') : '—' }}</x-ui.table-cell>
+                        <x-ui.table-cell class="whitespace-normal">{{ collect([$user['farmName'], $user['city']])->filter()->join(' · ') ?: '—' }}</x-ui.table-cell>
+                        <x-ui.table-cell><time datetime="{{ $user['createdAt'] }}">{{ $user['createdAt'] ? \Carbon\Carbon::parse($user['createdAt'])->format('j M Y, H:i') : 'Unknown' }}</time></x-ui.table-cell>
+                    </x-ui.table-row>
+                @endforeach
+            </x-ui.table-body>
+        </x-ui.table>
+    @endif
     @include('inspection.pagination')
-</main>
+</x-page>
 @endsection

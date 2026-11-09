@@ -1,6 +1,7 @@
+{{-- Notice (default) or error banner. --}}
 @props(['type' => 'notice'])
 @if ($type === 'error')
-    <div {{ $attributes->merge(['class' => 'form-error', 'role' => 'alert']) }}>{{ $slot }}</div>
+    <x-ui.alert tone="danger" role="alert"><x-ui.alert-description>{{ $slot }}</x-ui.alert-description></x-ui.alert>
 @else
-    <p {{ $attributes->merge(['class' => 'notice', 'role' => 'status']) }}>{{ $slot }}</p>
+    <x-ui.alert tone="success" role="status"><x-ui.alert-description>{{ $slot }}</x-ui.alert-description></x-ui.alert>
 @endif

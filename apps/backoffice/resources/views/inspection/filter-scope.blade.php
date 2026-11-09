@@ -10,6 +10,6 @@
         ->map(fn ($value, $key) => $filterNames[$key].': '.(str_ends_with($key, 'Id') ? '…'.substr($value, -8) : ucwords(str_replace('_', ' ', $value))))
         ->values();
 @endphp
-<p class="inspection-filter-scope" aria-live="polite">
+<p class="text-muted-foreground text-sm" aria-live="polite">
     @if ($activeFilterScope->isEmpty()) Showing all records. @else Showing {{ $activeFilterScope->join(' · ') }}. @endif
 </p>

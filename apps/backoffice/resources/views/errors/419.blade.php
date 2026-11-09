@@ -3,10 +3,7 @@
 @section('title', 'Form expired | DWC Backoffice')
 
 @section('content')
-<main class="message-page" role="main">
-    <p class="eyebrow">Backoffice</p>
-    <h1>This form has expired</h1>
+<x-message eyebrow="Backoffice" title="This form has expired" :href="route('login')" link="Return to sign in">
     <p>Refresh the page and try again.</p>
-    <a class="text-link" href="{{ route('login') }}">Return to sign in</a>
-</main>
+</x-message>
 @endsection

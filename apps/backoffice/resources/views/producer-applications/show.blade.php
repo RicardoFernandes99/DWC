@@ -3,149 +3,108 @@
 @section('title', $application->application['farmName'].' | Producer review')
 
 @section('content')
-<main class="workspace producer-workspace">
+<x-page>
     <x-back-link :href="route('producer-applications.index')">← Producer applications</x-back-link>
 
     @if (session('notice'))
         <x-alert>{{ session('notice') }}</x-alert>
     @endif
     @if (session('decision_error'))
-        <div class="form-error decision-error" role="alert">
-            <p>{{ session('decision_conflict') ? 'This record changed while you were reviewing it.' : 'The API could not complete that action.' }} {{ session('decision_error') }}</p>
+        <x-alert type="error">
+            {{ session('decision_conflict') ? 'This record changed while you were reviewing it.' : 'The API could not complete that action.' }} {{ session('decision_error') }}
             @if (session('decision_conflict'))
-                <p>The current server status and revision are shown below. Review them before submitting another decision.</p>
+                The current server status and revision are shown below. Review them before submitting another decision.
             @endif
-        </div>
+        </x-alert>
     @endif
 
-    <header class="detail-heading">
-        <div>
-            <p class="eyebrow">Producer application</p>
-            <h1>{{ $application->application['farmName'] }}</h1>
-            <p class="detail-owner">{{ $application->name }} <span aria-hidden="true">·</span> <a href="mailto:{{ $application->email }}">{{ $application->email }}</a></p>
-        </div>
-        <div class="detail-status">
-            <span class="list-label">Current application status</span>
-            <x-status-pill :tone="$application->status->value">{{ $application->status->label() }}</x-status-pill>
-        </div>
-    </header>
+    <x-page-heading eyebrow="Producer application" :title="$application->application['farmName']">
+        {{ $application->name }} · <a class="underline underline-offset-4" href="mailto:{{ $application->email }}">{{ $application->email }}</a>
+        <x-slot:aside><x-status-pill :tone="$application->status->value">{{ $application->status->label() }}</x-status-pill></x-slot:aside>
+    </x-page-heading>
 
     @if ($decisionDraft)
-        <div class="draft-reason" role="status">
-            <strong>Your reason draft is saved from the previous attempt.</strong>
-            <p>{{ old('reason', $decisionDraft['reason']) }}</p>
-            <form method="post" action="{{ route('producer-applications.discard-draft', $application->id) }}">
+        <x-note title="Your reason draft is saved from the previous attempt.">
+            {{ old('reason', $decisionDraft['reason']) }}
+            <form method="post" action="{{ route('producer-applications.discard-draft', $application->id) }}" class="mt-2">
                 @csrf
-                <button class="draft-dismiss" type="submit">Discard saved reason</button>
+                <x-ui.button type="submit" variant="outline" size="sm">Discard saved reason</x-ui.button>
             </form>
-        </div>
+        </x-note>
     @endif
 
-    <section class="detail-section farm-section" aria-labelledby="farm-details-title">
-        <div class="section-heading">
-            <div>
-                <h2 id="farm-details-title">Farm and collection details</h2>
-            </div>
-            <time class="submitted-date" datetime="{{ $application->submittedAt }}">Submitted {{ \Illuminate\Support\Carbon::parse($application->submittedAt)->format('j F Y') }}</time>
-        </div>
-        <div class="farm-facts">
-            <div class="farm-fact">
-                <h3>Location</h3>
+    <x-section title="Farm and collection details">
+        <x-slot:aside>Submitted {{ \Illuminate\Support\Carbon::parse($application->submittedAt)->format('j F Y') }}</x-slot:aside>
+        <div class="grid gap-6 md:grid-cols-2">
+            <x-copy title="Location">
                 <p>{{ $application->application['city'] }}</p>
                 <p>{{ $application->application['collectionAddress'] }}</p>
-                <p class="coordinates">{{ number_format((float) $application->application['latitude'], 4) }}, {{ number_format((float) $application->application['longitude'], 4) }}</p>
-            </div>
-            <div class="farm-fact farm-description">
-                <h3>About this farm</h3>
-                <p>{{ $application->application['description'] }}</p>
-            </div>
+                <p class="text-xs">{{ number_format((float) $application->application['latitude'], 4) }}, {{ number_format((float) $application->application['longitude'], 4) }}</p>
+            </x-copy>
+            <x-copy title="About this farm">{{ $application->application['description'] }}</x-copy>
         </div>
-    </section>
+    </x-section>
 
     @if ($application->rejectionReason)
-        <section class="reason-note" aria-labelledby="rejection-reason-title">
-            <h2 id="rejection-reason-title">Previous review reason</h2>
-            <p>{{ $application->rejectionReason }}</p>
-        </section>
+        <x-note title="Previous review reason">{{ $application->rejectionReason }}</x-note>
     @endif
 
-    <section class="detail-section review-section" aria-labelledby="review-title">
-        <div class="section-heading">
-            <div>
-                <h2 id="review-title">Review for selling access</h2>
-            </div>
-            <span class="revision-label">Revision {{ $application->revision }}</span>
-        </div>
+    <x-section title="Review for selling access">
+        <x-slot:aside>Revision {{ $application->revision }}</x-slot:aside>
         @if ($application->status === \App\DTOs\ProducerApplicationStatus::Pending)
-            <p class="section-copy">Approval lets this producer publish and sell. Rejection sends the reason to the producer and allows them to correct and resubmit.</p>
-            <div class="review-actions">
+            <p class="text-muted-foreground text-sm">Approval lets this producer publish and sell. Rejection sends the reason to the producer and allows them to correct and resubmit.</p>
+            <div class="grid gap-6 md:grid-cols-2">
                 <form method="post" action="{{ route('producer-applications.approve', $application->id) }}">
                     @csrf
                     <input type="hidden" name="revision" value="{{ $application->revision }}">
-                    <button class="primary-button" type="submit">Approve application</button>
+                    <x-ui.button type="submit">Approve application</x-ui.button>
                 </form>
-                <form method="post" action="{{ route('producer-applications.reject', $application->id) }}" class="reason-form">
+                <x-reason-form
+                    :action="route('producer-applications.reject', $application->id)"
+                    :revision="$application->revision"
+                    id="rejection-reason"
+                    label="Reason for rejection"
+                    help="The producer can use this feedback to correct and resubmit. Maximum 500 characters."
+                    submit="Reject application"
+                    :danger="false"
+                    :value="$decisionDraft && $decisionDraft['action'] === 'reject' ? $decisionDraft['reason'] : ''" />
+            </div>
+        @else
+            <p class="text-muted-foreground text-sm">This application is {{ $application->status->value }}. Application decisions are separate from account standing.</p>
+        @endif
+    </x-section>
+
+    <x-section title="Producer selling access">
+        <x-slot:aside><x-status-pill :tone="$application->status->value">{{ $application->status->label() }}</x-status-pill></x-slot:aside>
+        @if ($application->status === \App\DTOs\ProducerApplicationStatus::Approved)
+            <p class="text-muted-foreground text-sm">Suspension hides normal-sale products and blocks new sales and auctions. Existing orders can still be fulfilled and active auctions continue.</p>
+            <x-confirm summary="Suspend this producer">
+                <p class="text-sm">Suspension blocks new sales and auction creation, and hides normal-sale products from buyers. Existing orders remain available and active auctions continue.</p>
+                <x-reason-form
+                    :action="route('producer-applications.suspend', $application->id)"
+                    :revision="$application->revision"
+                    id="suspension-reason"
+                    label="Reason for suspension"
+                    help="This reason is shown to the producer. Maximum 500 characters."
+                    submit="Confirm suspension"
+                    :value="$decisionDraft && $decisionDraft['action'] === 'suspend' ? $decisionDraft['reason'] : ''" />
+            </x-confirm>
+        @elseif ($application->status === \App\DTOs\ProducerApplicationStatus::Suspended)
+            <p class="text-muted-foreground text-sm">The producer cannot sell or create auctions while suspended. Reinstatement returns the account to approved; it does not change product publication or moderation decisions.</p>
+            @if ($application->suspensionReason)
+                <x-note title="Current suspension reason">{{ $application->suspensionReason }}</x-note>
+            @endif
+            <x-confirm summary="Reinstate this producer">
+                <p class="text-sm">Reinstatement returns the account to approved. Products become visible only if they are already published and not moderated or archived. Existing orders and auction records remain in place.</p>
+                <form method="post" action="{{ route('producer-applications.reinstate', $application->id) }}">
                     @csrf
                     <input type="hidden" name="revision" value="{{ $application->revision }}">
-                    <div class="field">
-                        <label for="rejection-reason">Reason for rejection</label>
-                        <textarea id="rejection-reason" name="reason" rows="4" maxlength="500" required aria-describedby="rejection-help rejection-error">{{ old('reason', $decisionDraft && $decisionDraft['action'] === 'reject' ? $decisionDraft['reason'] : '') }}</textarea>
-                        <span class="field-help" id="rejection-help">The producer can use this feedback to correct and resubmit. Maximum 500 characters.</span>
-                        @error('reason') <span class="field-error" id="rejection-error">{{ $message }}</span> @enderror
-                    </div>
-                    <button class="quiet-button reject-button" type="submit">Reject application</button>
+                    <x-ui.button type="submit">Confirm reinstatement</x-ui.button>
                 </form>
-            </div>
+            </x-confirm>
         @else
-            <p class="section-copy">This application is {{ $application->status->value }}. Application decisions are separate from account standing.</p>
+            <p class="text-muted-foreground text-sm">Suspension is available only for approved producers. It does not change an application that is pending or rejected.</p>
         @endif
-    </section>
-
-    <section class="detail-section standing-section" aria-labelledby="standing-title">
-        <div class="section-heading">
-            <div>
-                <h2 id="standing-title">Producer selling access</h2>
-            </div>
-            <x-status-pill :tone="$application->status->value">{{ $application->status->label() }}</x-status-pill>
-        </div>
-        @if ($application->status === \App\DTOs\ProducerApplicationStatus::Approved)
-            <p class="section-copy">Suspension hides normal-sale products and blocks new sales and auctions. Existing orders can still be fulfilled and active auctions continue.</p>
-            <details class="confirmation-disclosure">
-                <summary>Suspend this producer</summary>
-                <div class="confirmation-content">
-                    <p>Suspension blocks new sales and auction creation, and hides normal-sale products from buyers. Existing orders remain available and active auctions continue.</p>
-                    <form method="post" action="{{ route('producer-applications.suspend', $application->id) }}" class="reason-form">
-                        @csrf
-                        <input type="hidden" name="revision" value="{{ $application->revision }}">
-                        <div class="field">
-                            <label for="suspension-reason">Reason for suspension</label>
-                            <textarea id="suspension-reason" name="reason" rows="4" maxlength="500" required aria-describedby="suspension-help suspension-error">{{ old('reason', $decisionDraft && $decisionDraft['action'] === 'suspend' ? $decisionDraft['reason'] : '') }}</textarea>
-                            <span class="field-help" id="suspension-help">This reason is shown to the producer. Maximum 500 characters.</span>
-                            @error('reason') <span class="field-error" id="suspension-error">{{ $message }}</span> @enderror
-                        </div>
-                        <button class="danger-button" type="submit">Confirm suspension</button>
-                    </form>
-                </div>
-            </details>
-        @elseif ($application->status === \App\DTOs\ProducerApplicationStatus::Suspended)
-            <p class="section-copy">The producer cannot sell or create auctions while suspended. Reinstatement returns the account to approved; it does not change product publication or moderation decisions.</p>
-            @if ($application->suspensionReason)
-                <p class="standing-reason"><strong>Current suspension reason:</strong> {{ $application->suspensionReason }}</p>
-            @endif
-            <details class="confirmation-disclosure">
-                <summary>Reinstate this producer</summary>
-                <div class="confirmation-content">
-                    <p>Reinstatement returns the account to approved. Products become visible only if they are already published and not moderated or archived. Existing orders and auction records remain in place.</p>
-                    <form method="post" action="{{ route('producer-applications.reinstate', $application->id) }}">
-                        @csrf
-                        <input type="hidden" name="revision" value="{{ $application->revision }}">
-                        <button class="primary-button" type="submit">Confirm reinstatement</button>
-                    </form>
-                </div>
-            </details>
-        @else
-            <p class="section-copy">Suspension is available only for approved producers. It does not change an application that is pending or rejected.</p>
-        @endif
-    </section>
-</main>
+    </x-section>
+</x-page>
 @endsection

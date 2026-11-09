@@ -1,5 +1,8 @@
 node_modules/
 apps/backoffice/vendor/
+apps/backoffice/public/build/
+apps/backoffice/resources/css/blatui.css
+apps/backoffice/resources/js/blatui*.js
 apps/backoffice/bootstrap/cache/
 apps/backoffice/storage/framework/cache/
 apps/backoffice/storage/framework/sessions/

@@ -3,10 +3,7 @@
 @section('title', 'Service unavailable | DWC Backoffice')
 
 @section('content')
-<main class="message-page" role="main">
-    <p class="eyebrow">Backoffice</p>
-    <h1>Sign-in unavailable</h1>
+<x-message eyebrow="Backoffice" title="Sign-in unavailable" :href="route('login')" link="Return to sign in">
     <p>The administrator service could not be reached. Try again in a moment.</p>
-    <a class="text-link" href="{{ route('login') }}">Return to sign in</a>
-</main>
+</x-message>
 @endsection

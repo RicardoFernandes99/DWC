@@ -1,2 +1,2 @@
 @props(['active' => false])
-<a {{ $attributes->class(['filter-link', 'is-active' => $active]) }} @if ($active) aria-current="page" @endif>{{ $slot }}</a>
+<x-ui.button {{ $attributes }} size="sm" :variant="$active ? 'default' : 'outline'" class="rounded-full" :aria-current="$active ? 'page' : null">{{ $slot }}</x-ui.button>

@@ -64,6 +64,7 @@ services:
       - node-modules:/workspace/node_modules
       - api-node-modules:/workspace/apps/api/node_modules
       - web-node-modules:/workspace/apps/web/node_modules
+      - backoffice-node-modules:/workspace/apps/backoffice/node_modules
       - pnpm-store:/pnpm-store
 
   api:
@@ -130,6 +131,24 @@ services:
       api:
         condition: service_healthy
 
+  # Builds the backoffice CSS/JS (Tailwind + Alpine) into apps/backoffice/public/build.
+  backoffice-assets:
+    profiles: [backoffice, app]
+    image: *node-image
+    working_dir: /workspace
+    command:
+      [
+        'sh',
+        '-c',
+        'corepack enable && pnpm install --frozen-lockfile --filter @dwc/backoffice && pnpm --filter @dwc/backoffice dev',
+      ]
+    environment: *node-env
+    volumes: *node-volumes
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+        required: false
+
   backoffice:
     profiles: [backoffice, app]
     build:
@@ -150,11 +169,14 @@ services:
       api:
         condition: service_healthy
         required: false
+      backoffice-assets:
+        condition: service_started
 
 volumes:
   node-modules:
   api-node-modules:
   web-node-modules:
+  backoffice-node-modules:
   pnpm-store:
   mongodb-data:
   redis-data:

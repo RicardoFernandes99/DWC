@@ -29,6 +29,20 @@ port 8080. Stop that foreground command with Ctrl+C.
 The Laravel server uses `--no-reload` so Compose environment values reach PHP;
 restart `backoffice:dev` after changing `apps/backoffice/.env`.
 
+## Interface and assets
+
+Pages use [BlatUI](https://packagist.org/packages/anousss007/blatui) (Blade
+components, Tailwind CSS v4 and Alpine.js). The copied components are in
+`resources/views/components/ui`; add more with `php artisan blatui:add <name>`.
+DWC wrappers (`x-page`, `x-page-heading`, `x-section`, `x-tabs`, `x-status-pill`,
+`x-reason-form` and others) are in `resources/views/components`. The theme maps
+BlatUI's tokens to the web app's palette in `resources/css/app.css`.
+
+Vite builds `resources/css` and `resources/js` into `public/build` (ignored by
+Git). `pnpm backoffice:dev` starts the `backoffice-assets` Compose service, which
+rebuilds when a view, stylesheet or script changes. To build once, run
+`pnpm --filter @dwc/backoffice build` after `pnpm install`.
+
 ## Authentication boundary
 
 The browser has a separate HttpOnly `dwc_backoffice_session` cookie protected

@@ -3,38 +3,50 @@
 @section('title', 'Orders | DWC Backoffice')
 
 @section('content')
-<main class="workspace inspection-workspace">
+<x-page>
     <x-page-heading eyebrow="Administration / Inspection" title="Orders" />
-    @include('inspection.nav')
     @include('inspection.filter-errors')
     @include('inspection.filter-scope')
-    <form class="inspection-filter-form" method="get" action="{{ route('inspection.orders') }}">
-        <details id="inspection-filter-disclosure" class="inspection-filter-disclosure" open>
-            <summary>Filters</summary>
-            <div class="inspection-filters">
-        <label>Status<select name="status"><option value="">All statuses</option>@foreach (['pending', 'confirmed', 'shipped', 'delivered', 'ready_for_collection', 'collected', 'cancelled'] as $value)<option value="{{ $value }}" @selected(request('status') === $value)>{{ ucwords(str_replace('_', ' ', $value)) }}</option>@endforeach</select></label>
-        <label>Origin<select name="origin"><option value="">All origins</option>@foreach (['catalogue', 'auction'] as $value)<option value="{{ $value }}" @selected(request('origin') === $value)>{{ ucfirst($value) }}</option>@endforeach</select></label>
-        <label>Fulfilment<select name="fulfilmentMethod"><option value="">All methods</option>@foreach (['delivery', 'collection'] as $value)<option value="{{ $value }}" @selected(request('fulfilmentMethod') === $value)>{{ ucfirst($value) }}</option>@endforeach</select></label>
-        <label>Buyer ID<input name="buyerId" value="{{ request('buyerId') }}" inputmode="text" maxlength="24" pattern="[a-fA-F0-9]{24}" placeholder="24-character ID"></label>
-        <label>Producer ID<input name="producerId" value="{{ request('producerId') }}" inputmode="text" maxlength="24" pattern="[a-fA-F0-9]{24}" placeholder="24-character ID"></label>
-        <label>Page size<select name="limit"><option value="20" @selected((int) request('limit', 20) === 20)>20</option><option value="50" @selected((int) request('limit', 20) === 50)>50</option></select></label><button class="quiet-button" type="submit">Apply filters</button><a class="filter-reset" href="{{ route('inspection.orders') }}">Clear</a>
-            </div>
-        </details>
-    </form>
-    @include('inspection.filter-disclosure-script')
-    <ul class="inspection-list" aria-label="Orders">
-        @forelse ($items as $order)
-            <li class="inspection-row order-row">
-                <div class="inspection-primary"><a class="inspection-link" href="{{ route('inspection.order', $order['id']) }}">Order {{ substr($order['id'], -8) }}</a><span>{{ ucfirst($order['origin']) }} · {{ ucfirst($order['fulfilmentMethod']) }} · {{ ucwords(str_replace('_', ' ', $order['status'])) }}@if ($order['auctionId']) · <a class="inspection-related-link" href="{{ route('inspection.auction', $order['auctionId']) }}">Auction {{ substr($order['auctionId'], -8) }}</a>@endif</span></div>
-                <x-field label="Total / refunded"><span>€{{ number_format($order['totalCents'] / 100, 2) }} / €{{ number_format($order['refundedCents'] / 100, 2) }}</span></x-field>
-                <x-field label="Buyer"><a href="{{ route('inspection.user', $order['buyerId']) }}">{{ substr($order['buyerId'], -8) }}</a></x-field>
-                <x-field label="Producer"><a href="{{ route('inspection.user', $order['producerId']) }}">{{ substr($order['producerId'], -8) }}</a></x-field>
-                <x-field label="Created"><time datetime="{{ $order['createdAt'] }}">{{ $order['createdAt'] ? \Carbon\Carbon::parse($order['createdAt'])->format('j M Y, H:i') : 'Unknown' }}</time></x-field>
-            </li>
-        @empty
-            <li class="inspection-empty">No orders match these filters.</li>
-        @endforelse
-    </ul>
+    <x-filters :action="route('inspection.orders')">
+        <x-filter-select label="Status" name="status" :options="['' => 'All statuses'] + collect(['pending', 'confirmed', 'shipped', 'delivered', 'ready_for_collection', 'collected', 'cancelled'])->mapWithKeys(fn ($value) => [$value => ucwords(str_replace('_', ' ', $value))])->all()" />
+        <x-filter-select label="Origin" name="origin" :options="['' => 'All origins', 'catalogue' => 'Catalogue', 'auction' => 'Auction']" />
+        <x-filter-select label="Fulfilment" name="fulfilmentMethod" :options="['' => 'All methods', 'delivery' => 'Delivery', 'collection' => 'Collection']" />
+        <x-filter-input label="Buyer ID" name="buyerId" inputmode="text" maxlength="24" pattern="[a-fA-F0-9]{24}" placeholder="24-character ID" />
+        <x-filter-input label="Producer ID" name="producerId" inputmode="text" maxlength="24" pattern="[a-fA-F0-9]{24}" placeholder="24-character ID" />
+        <x-filter-select label="Page size" name="limit" :options="['20' => '20', '50' => '50']" />
+    </x-filters>
+
+    @if ($items === [])
+        <x-empty-state title="No orders match these filters" />
+    @else
+        <x-ui.table variant="card" aria-label="Orders">
+            <x-ui.table-header>
+                <x-ui.table-row class="hover:bg-transparent">
+                    <x-ui.table-head class="px-4">Order</x-ui.table-head>
+                    <x-ui.table-head>Status</x-ui.table-head>
+                    <x-ui.table-head>Total / refunded</x-ui.table-head>
+                    <x-ui.table-head>Buyer</x-ui.table-head>
+                    <x-ui.table-head>Producer</x-ui.table-head>
+                    <x-ui.table-head>Created</x-ui.table-head>
+                </x-ui.table-row>
+            </x-ui.table-header>
+            <x-ui.table-body>
+                @foreach ($items as $order)
+                    <x-ui.table-row>
+                        <x-ui.table-cell class="px-4 py-3 whitespace-normal">
+                            <a class="font-semibold underline-offset-4 hover:underline" href="{{ route('inspection.order', $order['id']) }}">Order {{ substr($order['id'], -8) }}</a>
+                            <div class="text-muted-foreground text-xs">{{ ucfirst($order['origin']) }} · {{ ucfirst($order['fulfilmentMethod']) }}@if ($order['auctionId']) · <a class="underline-offset-4 hover:underline" href="{{ route('inspection.auction', $order['auctionId']) }}">Auction {{ substr($order['auctionId'], -8) }}</a>@endif</div>
+                        </x-ui.table-cell>
+                        <x-ui.table-cell><x-status-pill :tone="$order['status']">{{ ucwords(str_replace('_', ' ', $order['status'])) }}</x-status-pill></x-ui.table-cell>
+                        <x-ui.table-cell>€{{ number_format($order['totalCents'] / 100, 2) }} / €{{ number_format($order['refundedCents'] / 100, 2) }}</x-ui.table-cell>
+                        <x-ui.table-cell><a class="underline-offset-4 hover:underline" href="{{ route('inspection.user', $order['buyerId']) }}">{{ substr($order['buyerId'], -8) }}</a></x-ui.table-cell>
+                        <x-ui.table-cell><a class="underline-offset-4 hover:underline" href="{{ route('inspection.user', $order['producerId']) }}">{{ substr($order['producerId'], -8) }}</a></x-ui.table-cell>
+                        <x-ui.table-cell><time datetime="{{ $order['createdAt'] }}">{{ $order['createdAt'] ? \Carbon\Carbon::parse($order['createdAt'])->format('j M Y, H:i') : 'Unknown' }}</time></x-ui.table-cell>
+                    </x-ui.table-row>
+                @endforeach
+            </x-ui.table-body>
+        </x-ui.table>
+    @endif
     @include('inspection.pagination')
-</main>
+</x-page>
 @endsection
