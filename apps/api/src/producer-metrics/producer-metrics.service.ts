@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Order, OrderOrigin, OrderStatus } from '../orders/order.schema.js';
+import {
+  Order,
+  OrderOrigin,
+  OrderStatus,
+  RefundRequestStatus,
+} from '../orders/order.schema.js';
 import { Product, ProductUnit } from '../products/product.schema.js';
 import type {
   MetricsPeriod,
@@ -61,7 +66,22 @@ export class ProducerMetricsService {
       ...(from ? { createdAt: { $gte: from, $lte: now } } : {}),
     };
 
-    const [salesGroups, bestGroups, lowStock] = await Promise.all([
+    const previousFrom =
+      from === null
+        ? null
+        : new Date(
+            from.getTime() -
+              PERIOD_DAYS[period as keyof typeof PERIOD_DAYS] * DAY_MS,
+          );
+    const [
+      salesGroups,
+      bestGroups,
+      lowStock,
+      dailyGroups,
+      previousGroups,
+      pendingOrders,
+      openRefunds,
+    ] = await Promise.all([
       this.orders.aggregate<SalesGroup>([
         { $match: match },
         {
@@ -96,7 +116,65 @@ export class ProducerMetricsService {
         { $limit: BEST_SELLER_LIMIT },
       ]),
       this.lowStock(producer),
+      from
+        ? this.orders.aggregate<{ _id: string; orderCount: number }>([
+            { $match: match },
+            {
+              $group: {
+                _id: {
+                  $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+                },
+                orderCount: { $sum: 1 },
+              },
+            },
+          ])
+        : Promise.resolve([]),
+      from && previousFrom
+        ? this.orders.aggregate<{
+            orderCount: number;
+            productRevenueCents: number;
+          }>([
+            {
+              $match: {
+                producerId: producer,
+                status: { $ne: OrderStatus.Cancelled },
+                createdAt: { $gte: previousFrom, $lt: from },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                orderCount: { $sum: 1 },
+                productRevenueCents: {
+                  $sum: { $sum: '$items.lineTotalCents' },
+                },
+              },
+            },
+          ])
+        : Promise.resolve(null),
+      this.orders.countDocuments({
+        producerId: producer,
+        status: OrderStatus.Pending,
+      }),
+      this.orders.countDocuments({
+        producerId: producer,
+        'refundRequest.status': RefundRequestStatus.Open,
+      }),
     ]);
+
+    // Zero-filled UTC days from the window start to today.
+    const daily: { date: string; orderCount: number }[] = [];
+    if (from) {
+      const counts = new Map(dailyGroups.map((g) => [g._id, g.orderCount]));
+      const day = new Date(
+        Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()),
+      );
+      while (day.getTime() <= now.getTime()) {
+        const key = day.toISOString().slice(0, 10);
+        daily.push({ date: key, orderCount: counts.get(key) ?? 0 });
+        day.setUTCDate(day.getUTCDate() + 1);
+      }
+    }
 
     const unitGroups = bestGroups.length
       ? await this.orders.aggregate<UnitGroup>([
@@ -152,6 +230,14 @@ export class ProducerMetricsService {
           .map((u) => ({ unit: u._id.unit, quantity: u.quantity })),
       })),
       lowStock,
+      daily,
+      previous: previousGroups
+        ? {
+            orderCount: previousGroups[0]?.orderCount ?? 0,
+            productRevenueCents: previousGroups[0]?.productRevenueCents ?? 0,
+          }
+        : null,
+      attention: { pendingOrders, openRefunds },
     };
   }
 

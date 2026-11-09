@@ -7405,6 +7405,65 @@
           "items"
         ]
       },
+      "DailyOrdersDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-11-08",
+            "description": "UTC calendar day."
+          },
+          "orderCount": {
+            "type": "number",
+            "example": 2,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "date",
+          "orderCount"
+        ]
+      },
+      "PreviousPeriodDto": {
+        "type": "object",
+        "properties": {
+          "orderCount": {
+            "type": "number",
+            "example": 4,
+            "minimum": 0
+          },
+          "productRevenueCents": {
+            "type": "number",
+            "example": 2850,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "orderCount",
+          "productRevenueCents"
+        ]
+      },
+      "AttentionDto": {
+        "type": "object",
+        "properties": {
+          "pendingOrders": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0,
+            "description": "Orders awaiting confirmation."
+          },
+          "openRefunds": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0,
+            "description": "Refund requests awaiting a decision."
+          }
+        },
+        "required": [
+          "pendingOrders",
+          "openRefunds"
+        ]
+      },
       "ProducerMetricsResponseDto": {
         "type": "object",
         "properties": {
@@ -7445,6 +7504,31 @@
           },
           "lowStock": {
             "$ref": "#/components/schemas/LowStockMetricsDto"
+          },
+          "daily": {
+            "description": "Non-cancelled orders per UTC day across the window, zero-filled. Empty for \"all\".",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyOrdersDto"
+            }
+          },
+          "previous": {
+            "nullable": true,
+            "description": "Same totals for the window just before; null for \"all\".",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreviousPeriodDto"
+              }
+            ]
+          },
+          "attention": {
+            "description": "Current open work, independent of the period.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttentionDto"
+              }
+            ]
           }
         },
         "required": [
@@ -7453,7 +7537,10 @@
           "to",
           "sales",
           "bestSellers",
-          "lowStock"
+          "lowStock",
+          "daily",
+          "previous",
+          "attention"
         ]
       },
       "AdminUserListItemDto": {

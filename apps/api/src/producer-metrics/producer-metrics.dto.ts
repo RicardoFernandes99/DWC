@@ -116,6 +116,38 @@ export class LowStockMetricsDto {
   items!: LowStockItemDto[];
 }
 
+export class DailyOrdersDto {
+  @ApiProperty({ example: '2026-11-08', description: 'UTC calendar day.' })
+  date!: string;
+
+  @ApiProperty({ example: 2, minimum: 0 })
+  orderCount!: number;
+}
+
+export class PreviousPeriodDto {
+  @ApiProperty({ example: 4, minimum: 0 })
+  orderCount!: number;
+
+  @ApiProperty({ example: 2850, minimum: 0 })
+  productRevenueCents!: number;
+}
+
+export class AttentionDto {
+  @ApiProperty({
+    example: 1,
+    minimum: 0,
+    description: 'Orders awaiting confirmation.',
+  })
+  pendingOrders!: number;
+
+  @ApiProperty({
+    example: 1,
+    minimum: 0,
+    description: 'Refund requests awaiting a decision.',
+  })
+  openRefunds!: number;
+}
+
 export class ProducerMetricsResponseDto {
   @ApiProperty({ enum: METRICS_PERIODS })
   period!: MetricsPeriod;
@@ -149,4 +181,24 @@ export class ProducerMetricsResponseDto {
 
   @ApiProperty({ type: LowStockMetricsDto })
   lowStock!: LowStockMetricsDto;
+
+  @ApiProperty({
+    type: [DailyOrdersDto],
+    description:
+      'Non-cancelled orders per UTC day across the window, zero-filled. Empty for "all".',
+  })
+  daily!: DailyOrdersDto[];
+
+  @ApiProperty({
+    type: PreviousPeriodDto,
+    nullable: true,
+    description: 'Same totals for the window just before; null for "all".',
+  })
+  previous!: PreviousPeriodDto | null;
+
+  @ApiProperty({
+    type: AttentionDto,
+    description: 'Current open work, independent of the period.',
+  })
+  attention!: AttentionDto;
 }

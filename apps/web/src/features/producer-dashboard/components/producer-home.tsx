@@ -1,11 +1,26 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from '@tanstack/react-router';
-import { Gavel, Plus, ReceiptText } from 'lucide-react';
+import { Gavel, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { sessionOptions } from '@/lib/session-query';
 import { ProducerOnboarding } from '@/features/producer-onboarding/components/producer-onboarding';
 import { ProducerProducts } from '@/features/producer-products/components/producer-products';
-import { ProducerDashboard } from './producer-dashboard';
+import { AttentionBanner, ProducerDashboard } from './producer-dashboard';
+
+const todayFormatter = new Intl.DateTimeFormat('en-GB', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+});
+
+function greeting() {
+  const hour = new Date().getHours();
+  return hour < 12
+    ? 'Good morning'
+    : hour < 18
+      ? 'Good afternoon'
+      : 'Good evening';
+}
 
 /** Producer home: dashboard for approved/suspended producers, onboarding otherwise. */
 export function ProducerHome() {
@@ -36,33 +51,33 @@ export function ProducerHome() {
         <ProducerProducts status={user.producerStatus} />
       ) : (
         <>
-          <header className="flex flex-wrap items-end justify-between gap-4">
+          <header className="flex flex-wrap items-end justify-between gap-4 border-b pb-5">
             <div>
-              <p className="text-sm text-muted-foreground">{user.name}</p>
-              <h1 className="text-3xl md:text-4xl">Dashboard</h1>
+              <p className="text-sm text-muted-foreground">
+                {todayFormatter.format(new Date())}
+              </p>
+              <h1 className="text-3xl md:text-4xl">
+                {greeting()}, {user.name}
+              </h1>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button asChild variant="outline">
-                <Link to="/producer/orders" search={{ page: 1 }}>
-                  <ReceiptText aria-hidden="true" /> Sales
-                </Link>
-              </Button>
-              {user.producerStatus === 'approved' && (
-                <>
-                  <Button asChild variant="outline">
-                    <Link to="/producer/auctions/new">
-                      <Gavel aria-hidden="true" /> Create auction
-                    </Link>
-                  </Button>
-                  <Button asChild>
-                    <Link to="/producer/products/new">
-                      <Plus aria-hidden="true" /> Add product
-                    </Link>
-                  </Button>
-                </>
-              )}
-            </div>
+            {user.producerStatus === 'approved' && (
+              <div className="flex flex-wrap gap-2">
+                <Button asChild variant="outline">
+                  <Link to="/producer/auctions/new">
+                    <Gavel aria-hidden="true" /> New auction
+                  </Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/producer/products/new">
+                    <Plus aria-hidden="true" /> Add product
+                  </Link>
+                </Button>
+              </div>
+            )}
           </header>
+          <div className="mt-5">
+            <AttentionBanner />
+          </div>
           {user.producerStatus === 'suspended' && (
             <p
               role="status"
