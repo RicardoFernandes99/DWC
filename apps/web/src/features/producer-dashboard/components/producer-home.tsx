@@ -27,12 +27,7 @@ export function ProducerHome() {
   const session = useQuery(sessionOptions);
   const pathname = useLocation({ select: (location) => location.pathname });
   const user = session.data;
-  if (!user)
-    return (
-      <main className="mx-auto max-w-5xl px-4 py-16" role="status">
-        Restoring your session…
-      </main>
-    );
+  if (!user) return null;
   const active =
     user.producerStatus === 'approved' || user.producerStatus === 'suspended';
   // Product create/edit pages show only the editor.

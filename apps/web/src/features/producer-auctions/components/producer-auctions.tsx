@@ -759,15 +759,7 @@ export function ProducerAuctions({
   rejectionReason,
 }: { status?: ProducerStatus; rejectionReason?: string | null } = {}) {
   const session = useQuery({ ...sessionOptions, staleTime: 0 });
-  if (session.isPending)
-    return (
-      <main
-        className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 xl:px-12"
-        role="status"
-      >
-        Restoring your session…
-      </main>
-    );
+  if (session.isPending) return null;
   if (!session.data || session.data.role !== 'producer')
     return (
       <main

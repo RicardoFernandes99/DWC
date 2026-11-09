@@ -94,11 +94,6 @@ function validateAuctionSearch(search: Record<string, unknown>) {
 }
 const root = createRootRoute({
   component: Shell,
-  pendingComponent: () => (
-    <main role="status" className="p-8">
-      Restoring your session…
-    </main>
-  ),
   errorComponent: ({ reset }) => (
     <main role="alert" className="p-8">
       <p>Could not restore your session. Please try again.</p>

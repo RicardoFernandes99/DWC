@@ -191,12 +191,7 @@ function OrderTrackingContent({
     mutation.mutate({ endpoint, method, body });
   }
 
-  if (session.isPending)
-    return (
-      <main className="mx-auto max-w-5xl px-4 py-12 md:px-6" role="status">
-        Restoring your session…
-      </main>
-    );
+  if (session.isPending) return null;
   if (session.error)
     return (
       <main className="mx-auto max-w-5xl px-4 py-12 md:px-6">

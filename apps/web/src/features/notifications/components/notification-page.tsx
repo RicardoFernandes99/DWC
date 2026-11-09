@@ -10,12 +10,7 @@ export function NotificationPage() {
     queryFn: currentUser,
     retry: false,
   });
-  if (session.isPending)
-    return (
-      <main className="notification-page" role="status">
-        Restoring your session…
-      </main>
-    );
+  if (session.isPending) return null;
   if (session.error || !session.data)
     return (
       <main className="notification-page">

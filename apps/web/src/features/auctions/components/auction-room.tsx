@@ -284,11 +284,7 @@ function AuctionRoom({ auctionId }: { auctionId: string }) {
           <p role="status" className="sr-only" aria-live="polite">
             {liveRoom.connectionMessage}
           </p>
-          {session.isPending ? (
-            <Card className="p-4 text-sm text-muted-foreground" role="status">
-              Restoring your session…
-            </Card>
-          ) : (
+          {session.isPending ? null : (
             <AuctionBidForm
               key={`${auctionId}:${user?.id ?? 'guest'}`}
               auctionId={auctionId}

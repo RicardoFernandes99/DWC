@@ -412,12 +412,7 @@ export function Account() {
       setBusy(false);
     }
   }
-  if (query.isPending)
-    return (
-      <main className="mx-auto max-w-5xl px-6 py-16" role="status">
-        Restoring your session…
-      </main>
-    );
+  if (query.isPending) return null;
   if (!query.data)
     return (
       <main className="mx-auto max-w-5xl px-6 py-16">
