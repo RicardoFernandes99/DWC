@@ -105,12 +105,6 @@ export function ProducerDashboard({ canEdit }: { canEdit: boolean }) {
             </div>
           )}
           <div className={switching ? 'opacity-60' : undefined}>
-            <p className="mt-4 text-xs text-muted-foreground">
-              {switching ? 'Showing the previous period. ' : ''}
-              Sales are all orders not cancelled or refunded. Product revenue is
-              the original line totals; delivery fees are shown separately.
-              Rolling periods count back from now.
-            </p>
             <SalesSummary sales={data.sales} />
             <div className="mt-8 grid gap-8 md:grid-cols-2">
               <BestSellers items={data.bestSellers} />

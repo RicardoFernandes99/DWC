@@ -34,13 +34,15 @@ export function SiteHeader({
 }) {
   const ordersPath = user?.role === 'producer' ? '/producer/orders' : '/orders';
   const showOrders = Boolean(user && user.role !== 'admin');
+  const isProducer = user?.role === 'producer';
+  const homePath = isProducer ? '/producer' : '/';
 
   return (
     <header className="site-header">
       <nav className="site-nav" aria-label="Main navigation">
         <div className="flex min-w-0 items-center gap-1">
           <MobileDrawer user={user} />
-          <Link to="/" className="brand-link">
+          <Link to={homePath} className="brand-link">
             <span className="brand-mark hidden! md:grid!">
               <Sprout aria-hidden="true" />
             </span>
@@ -50,9 +52,24 @@ export function SiteHeader({
           </Link>
         </div>
         <div className="site-nav-links">
-          <Link to="/" className="hidden md:inline">
+          <Link
+            to={homePath}
+            className="hidden md:inline"
+            activeOptions={{ exact: true }}
+            activeProps={activeLink}
+          >
             Home
           </Link>
+          {isProducer && (
+            <Link
+              to="/"
+              className="hidden md:inline"
+              activeOptions={{ exact: true }}
+              activeProps={activeLink}
+            >
+              Market
+            </Link>
+          )}
           <Link
             to="/auctions"
             search={{ page: 1 }}

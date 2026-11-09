@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
-import { Archive, Pencil, Plus, Sprout } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { Archive, Pencil, Sprout } from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import {
   formatLabel as label,
@@ -601,16 +600,9 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
           Product refresh failed. The saved list may be out of date.
         </p>
       )}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 id="products-heading" className="text-xl font-semibold">
-            Your products
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {query.data.total} active listing{query.data.total === 1 ? '' : 's'}
-          </p>
-        </div>
-      </div>
+      <p id="products-heading" className="text-sm text-muted-foreground">
+        {query.data.total} active listing{query.data.total === 1 ? '' : 's'}
+      </p>
       {archive.isError && (
         <p role="alert" className="mt-4 text-sm text-destructive">
           {errorCopy(archive.error, 'archive the product')}
@@ -1102,29 +1094,9 @@ export function ProducerProducts({
       className="mt-8 space-y-6"
       aria-labelledby="producer-products-title"
     >
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 id="producer-products-title" className="text-2xl font-semibold">
-            Products and profile
-          </h2>
-          <p className="mt-1 max-w-[65ch] text-sm text-muted-foreground">
-            Manage the products you sell and the producer details buyers use for
-            collection.
-          </p>
-        </div>
-        {!isCreate && !editId && (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" asChild>
-              <Link to="/producer/auctions">Manage auctions</Link>
-            </Button>
-            <Button
-              onClick={() => void navigate({ to: '/producer/products/new' })}
-            >
-              <Plus aria-hidden="true" /> Add product
-            </Button>
-          </div>
-        )}
-      </div>
+      <h2 id="producer-products-title" className="text-2xl font-semibold">
+        {isCreate ? 'Add product' : editId ? 'Edit product' : 'Products'}
+      </h2>
       {isCreate ? (
         <ProductEditor onSaved={() => void navigate({ to: '/producer' })} />
       ) : editId ? (

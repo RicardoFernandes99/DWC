@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { Link, useLocation } from '@tanstack/react-router';
 import { Gavel, Plus, ReceiptText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { sessionOptions } from '@/lib/session-query';
@@ -10,6 +10,7 @@ import { ProducerDashboard } from './producer-dashboard';
 /** Producer home: dashboard for approved/suspended producers, onboarding otherwise. */
 export function ProducerHome() {
   const session = useQuery(sessionOptions);
+  const pathname = useLocation({ select: (location) => location.pathname });
   const user = session.data;
   if (!user)
     return (
@@ -19,7 +20,8 @@ export function ProducerHome() {
     );
   const active =
     user.producerStatus === 'approved' || user.producerStatus === 'suspended';
-  const pathname = window.location.pathname;
+  // Product create/edit pages show only the editor.
+  const editing = /^\/producer\/products\/(new|[^/]+\/edit)\/?$/.test(pathname);
   return (
     <main className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 md:py-10 xl:px-12">
       {!active ? (
@@ -30,6 +32,8 @@ export function ProducerHome() {
             pathname.startsWith('/producer/') ? pathname : undefined
           }
         />
+      ) : editing ? (
+        <ProducerProducts status={user.producerStatus} />
       ) : (
         <>
           <header className="flex flex-wrap items-end justify-between gap-4">
