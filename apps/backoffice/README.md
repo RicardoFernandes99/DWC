@@ -26,8 +26,13 @@ After changing Composer dependencies, run `pnpm backoffice:setup` again.
 8.4 image if needed, checks actual platform requirements, then runs Pint and
 Larastan. `pnpm backoffice:dev` runs the Compose `backoffice` profile on loopback
 port 8080. Stop that foreground command with Ctrl+C.
-The Laravel server uses `--no-reload` so Compose environment values reach PHP;
-restart `backoffice:dev` after changing `apps/backoffice/.env`.
+The app runs on Laravel Octane (FrankenPHP), which keeps it in memory so a request
+does not re-read the project from the slow Windows bind mount (about 30-40 ms per
+page instead of 250-450 ms). `docker/dev.sh` polls for changed PHP, config, route
+and Blade files and reloads the workers, so edits show within a couple of seconds.
+Sessions, logs and compiled views live on the `backoffice-storage` Docker volume.
+Restart `backoffice:dev` after changing `apps/backoffice/.env` or Composer
+dependencies.
 
 ## Interface and assets
 

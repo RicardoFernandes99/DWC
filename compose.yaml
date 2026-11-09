@@ -160,14 +160,18 @@ services:
     environment:
       APP_DEBUG: 'false'
       NEST_API_URL: http://api:${API_PORT:-3000}/api
-      # Serve requests in parallel (the built-in server is otherwise one at a time).
-      PHP_CLI_SERVER_WORKERS: '4'
-      # Compiled Blade views stay inside the container: stat calls on the Windows
-      # bind mount are slow enough to dominate page time.
-      VIEW_COMPILED_PATH: /tmp/blade-views
+      # Octane/FrankenPHP serves plain HTTP on :8080.
+      SERVER_NAME: :8080
+      # Sessions, logs and compiled views live on a Docker volume: stat/read calls
+      # on the Windows bind mount dominate page time. Templates are not re-checked
+      # per request; docker/dev.sh clears them when a view changes.
+      LARAVEL_STORAGE_PATH: /var/lib/backoffice/storage
+      VIEW_COMPILED_PATH: /var/lib/backoffice/storage/framework/views
+      VIEW_CHECK_TIMESTAMPS: 'false'
     volumes:
       - ./apps/backoffice:/var/www/html
       - ./apps/backoffice/docker/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini:ro
+      - backoffice-storage:/var/lib/backoffice/storage
     depends_on:
       api:
         condition: service_healthy
@@ -180,6 +184,7 @@ volumes:
   api-node-modules:
   web-node-modules:
   backoffice-node-modules:
+  backoffice-storage:
   pnpm-store:
   mongodb-data:
   redis-data:

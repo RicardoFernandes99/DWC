@@ -40,5 +40,7 @@ The API environment must allow `BACKOFFICE_ORIGIN=http://localhost:8080`.
 
 Use `pnpm backoffice:format` for Pint and `pnpm backoffice:check` for Pint plus
 Larastan. The app has no local SQL database or migrations.
-Restart `pnpm backoffice:dev` after changing `apps/backoffice/.env`; the PHP
-server uses `--no-reload` so its process receives the Compose environment.
+Restart `pnpm backoffice:dev` after changing `apps/backoffice/.env` or Composer
+dependencies. The app runs on Laravel Octane (FrankenPHP) so it stays in memory:
+keep per-request state out of singletons and statics, and note `docker/dev.sh`
+reloads workers when PHP, config, route or Blade files change.
