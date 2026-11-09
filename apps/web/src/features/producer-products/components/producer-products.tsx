@@ -1,8 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
-import { Archive, ArchiveRestore, Pencil, Plus, Sprout } from 'lucide-react';
+import {
+  Archive,
+  ArchiveRestore,
+  ImagePlus,
+  Pencil,
+  Plus,
+  Sprout,
+} from 'lucide-react';
 import type { components } from '@/lib/api-schema';
 import {
   formatLabel as label,
@@ -84,7 +91,30 @@ function ProductEditor({
   const [thresholdError, setThresholdError] = useState('');
   const [reloadError, setReloadError] = useState('');
   const [imageUploadFailed, setImageUploadFailed] = useState(false);
+  const [preview, setPreview] = useState<string>();
+  // Release the object URL of a replaced or discarded photo preview.
+  useEffect(
+    () => () => {
+      if (preview) URL.revokeObjectURL(preview);
+    },
+    [preview],
+  );
   const client = useQueryClient();
+  const archiveFromEditor = useMutation({
+    mutationFn: () =>
+      authenticatedRequest<Product>(
+        `producer/products/${baseProduct!.id}/archive`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ revision: baseProduct!.revision }),
+        },
+      ),
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: productKey });
+      void client.invalidateQueries({ queryKey: producerMetricsKey });
+      onSaved();
+    },
+  });
   const save = useMutation({
     mutationFn: (input: ProductInput | UpdateInput) =>
       authenticatedRequest<Product>(
@@ -231,42 +261,52 @@ function ProductEditor({
       );
     }
   };
+  const pill =
+    'h-8 cursor-pointer rounded-full border-0 bg-white/90 px-3 text-xs font-medium text-foreground shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
+  const photo = preview ?? baseProduct?.imageUrl ?? undefined;
   return (
-    <Card className="p-5 md:p-6">
-      <h2 className="text-xl font-semibold">
-        {baseProduct ? 'Edit product' : 'New product'}
-      </h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Prices use euros and cents. Stock and warning levels use whole units.
-      </p>
-      <form
-        className="mt-6 space-y-5"
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          void form.handleSubmit();
-        }}
-      >
-        <div className="grid gap-4 md:grid-cols-2">
-          <form.Field name="name">
-            {(field) => (
-              <FormField id="product-name" label="Product name">
-                <Input
-                  id="product-name"
-                  required
-                  maxLength={120}
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              </FormField>
+    <form
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        void form.handleSubmit();
+      }}
+    >
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-5">
+        {/* Photo, name, category and method: mirrors the public product page. */}
+        <section className="relative min-w-0 overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/70">
+          <div className="aspect-[4/3] md:aspect-[16/10] lg:aspect-auto lg:h-full lg:min-h-[30rem]">
+            {photo ? (
+              <img src={photo} alt="" className="size-full object-cover" />
+            ) : (
+              <div className="grid size-full place-items-center text-primary-foreground/30">
+                <Sprout aria-hidden="true" className="size-16 stroke-[1.2]" />
+              </div>
             )}
-          </form.Field>
-          <form.Field name="category">
-            {(field) => (
-              <FormField id="product-category" label="Category">
+          </div>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/25" />
+          <div className="absolute inset-x-0 top-0 flex flex-wrap items-start gap-2 p-3 md:p-4">
+            <form.Field name="productionMethod">
+              {(field) => (
                 <select
-                  id="product-category"
-                  className="h-10 w-full rounded-md border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  aria-label="Production method"
+                  className={pill}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value as Method)}
+                >
+                  {methods.map((item) => (
+                    <option key={item} value={item}>
+                      {label(item)}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </form.Field>
+            <form.Field name="category">
+              {(field) => (
+                <select
+                  aria-label="Category"
+                  className={pill}
                   value={field.state.value}
                   onChange={(e) =>
                     field.handleChange(e.target.value as Category)
@@ -278,249 +318,340 @@ function ProductEditor({
                     </option>
                   ))}
                 </select>
-              </FormField>
-            )}
-          </form.Field>
-          <form.Field name="productionMethod">
-            {(field) => (
-              <FormField id="product-method" label="Production method">
-                <select
-                  id="product-method"
-                  className="h-10 w-full rounded-md border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value as Method)}
-                >
-                  {methods.map((item) => (
-                    <option key={item} value={item}>
-                      {label(item)}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            )}
-          </form.Field>
-          <form.Field name="unit">
-            {(field) => (
-              <FormField id="product-unit" label="Sold per">
-                <select
-                  id="product-unit"
-                  className="h-10 w-full rounded-md border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value as Unit)}
-                >
-                  {units.map((item) => (
-                    <option key={item} value={item}>
-                      {label(item)}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            )}
-          </form.Field>
-        </div>
-        <form.Field name="description">
-          {(field) => (
-            <FormField id="product-description" label="Description">
-              <Textarea
-                id="product-description"
-                required
-                rows={4}
-                maxLength={2000}
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
+              )}
+            </form.Field>
+            <label
+              htmlFor="product-image"
+              className="ml-auto inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-white/90 px-3 text-xs font-medium text-foreground shadow-xs focus-within:ring-[3px] focus-within:ring-ring/50"
+            >
+              <ImagePlus aria-hidden="true" className="size-3.5" />
+              {photo ? 'Replace photo' : 'Add photo'}
+              <input
+                id="product-image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  setSelectedFile(file);
+                  setPreview(file ? URL.createObjectURL(file) : undefined);
+                }}
               />
-            </FormField>
-          )}
-        </form.Field>
-        <fieldset>
-          <legend className="mb-2 text-sm font-medium">
-            Available seasons
-          </legend>
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
-            {seasons.map((season) => (
-              <form.Field key={season} name="seasons">
+            </label>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 p-4 md:p-6">
+            <p className="mb-1 text-xs text-white/80">
+              JPEG, PNG or WebP, up to 5 MB
+              {selectedFile ? ` · ${selectedFile.name}` : ''}
+            </p>
+            <form.Field name="name">
+              {(field) => (
+                <input
+                  id="product-name"
+                  aria-label="Product name"
+                  required
+                  maxLength={120}
+                  placeholder="Product name"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  className="w-full border-b border-white/40 bg-transparent pb-1 font-serif text-3xl leading-tight text-white outline-none placeholder:text-white/50 focus:border-white md:text-5xl"
+                />
+              )}
+            </form.Field>
+          </div>
+        </section>
+
+        {/* Price, stock and publishing: mirrors the buy card. */}
+        <aside className="flex flex-col overflow-hidden rounded-2xl border bg-card">
+          <div className="px-5 pt-5">
+            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              Price
+            </p>
+            <div className="mt-1 flex items-center gap-2">
+              <form.Field name="price">
                 {(field) => (
-                  <label className="inline-flex min-h-11 items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={field.state.value.includes(season)}
-                      onChange={(e) =>
-                        field.handleChange(
-                          e.target.checked
-                            ? [...field.state.value, season]
-                            : field.state.value.filter(
-                                (item) => item !== season,
-                              ),
-                        )
-                      }
+                  <div className="relative min-w-0 flex-1">
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-2xl text-muted-foreground"
+                    >
+                      €
+                    </span>
+                    <Input
+                      id="product-price"
+                      aria-label="Price in euros"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      inputMode="decimal"
+                      required
+                      placeholder="0.00"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className="h-14 pl-8 text-3xl font-semibold tabular-nums"
                     />
-                    {label(season)}
-                  </label>
+                  </div>
                 )}
               </form.Field>
-            ))}
+              <form.Field name="unit">
+                {(field) => (
+                  <select
+                    aria-label="Sold per"
+                    className="h-14 w-28 shrink-0 rounded-md border bg-background px-2 text-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value as Unit)}
+                  >
+                    {units.map((item) => (
+                      <option key={item} value={item}>
+                        / {label(item)}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </form.Field>
+            </div>
           </div>
-        </fieldset>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <form.Field name="price">
-            {(field) => (
-              <FormField id="product-price" label="Price (€)">
-                <Input
-                  id="product-price"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  inputMode="decimal"
-                  required
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              </FormField>
-            )}
-          </form.Field>
-          <form.Field name="stock">
-            {(field) => (
-              <FormField
-                id="product-stock"
-                label="Available stock"
-                error={stockError}
-              >
-                <Input
-                  id="product-stock"
-                  type="number"
-                  min="0"
-                  step="1"
-                  inputMode="numeric"
-                  required
-                  aria-invalid={Boolean(stockError)}
-                  aria-describedby={
-                    stockError ? 'product-stock-error' : undefined
-                  }
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              </FormField>
-            )}
-          </form.Field>
-          <form.Field name="threshold">
-            {(field) => (
-              <FormField
-                id="product-threshold"
-                label="Low-stock warning at"
-                error={thresholdError}
-              >
-                <Input
-                  id="product-threshold"
-                  type="number"
-                  min="0"
-                  step="1"
-                  inputMode="numeric"
-                  required
-                  aria-invalid={Boolean(thresholdError)}
-                  aria-describedby={
-                    thresholdError ? 'product-threshold-error' : undefined
-                  }
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              </FormField>
-            )}
-          </form.Field>
-        </div>
-        <form.Field name="published">
-          {(field) => (
-            <label className="inline-flex min-h-11 items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={field.state.value}
-                onChange={(e) => field.handleChange(e.target.checked)}
-              />
-              Published in the catalogue
-            </label>
-          )}
-        </form.Field>
-        <FormField
-          id="product-image"
-          label={
-            baseProduct?.hasImage ? 'Replace product image' : 'Product image'
-          }
-          description="JPEG, PNG, or WebP. Maximum 5 MB."
-        >
-          <Input
-            id="product-image"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={(e) => setSelectedFile(e.target.files?.[0])}
-          />
-        </FormField>
-        {selectedFile && (
-          <p className="text-sm text-muted-foreground">
-            Selected: {selectedFile.name} ({Math.ceil(selectedFile.size / 1024)}{' '}
-            KB)
-          </p>
-        )}
-        {fieldError && (
-          <p role="alert" className="text-sm text-destructive">
-            {fieldError}
-          </p>
-        )}
-        {save.isError && (
-          <div
-            role="alert"
-            className="space-y-2 rounded-lg border border-destructive/30 p-4 text-sm"
-          >
-            <p>
-              {imageUploadFailed && baseProduct
-                ? 'Product details were saved, but the image upload was refused. Reload the current product, then retry the image upload.'
-                : errorCopy(save.error, 'save the product')}
-            </p>
-            {save.error instanceof ApiError &&
-              save.error.status === 409 &&
-              baseProduct && (
-                <Button
+
+          <div className="space-y-4 px-5 pt-5">
+            <fieldset>
+              <legend className="mb-2 text-sm text-muted-foreground">
+                Season
+              </legend>
+              <form.Field name="seasons">
+                {(field) => (
+                  <div className="flex flex-wrap gap-1.5">
+                    {seasons.map((season) => {
+                      const selected = field.state.value.includes(season);
+                      return (
+                        <button
+                          key={season}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() =>
+                            field.handleChange(
+                              selected
+                                ? field.state.value.filter(
+                                    (item) => item !== season,
+                                  )
+                                : [...field.state.value, season],
+                            )
+                          }
+                          className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none ${selected ? 'border-primary bg-primary text-primary-foreground' : 'bg-background hover:border-primary/40 hover:bg-secondary'}`}
+                        >
+                          {label(season)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </form.Field>
+            </fieldset>
+            <div className="grid grid-cols-2 gap-3">
+              <form.Field name="stock">
+                {(field) => (
+                  <FormField
+                    id="product-stock"
+                    label="Available stock"
+                    error={stockError}
+                  >
+                    <Input
+                      id="product-stock"
+                      type="number"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                      required
+                      aria-invalid={Boolean(stockError)}
+                      aria-describedby={
+                        stockError ? 'product-stock-error' : undefined
+                      }
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+              <form.Field name="threshold">
+                {(field) => (
+                  <FormField
+                    id="product-threshold"
+                    label="Low-stock warning"
+                    error={thresholdError}
+                  >
+                    <Input
+                      id="product-threshold"
+                      type="number"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                      required
+                      aria-invalid={Boolean(thresholdError)}
+                      aria-describedby={
+                        thresholdError ? 'product-threshold-error' : undefined
+                      }
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+            </div>
+            <form.Field name="published">
+              {(field) => (
+                <button
                   type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setReloadError('');
-                    void reloadProduct();
-                  }}
+                  role="switch"
+                  aria-checked={field.state.value}
+                  onClick={() => field.handleChange(!field.state.value)}
+                  className="flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left text-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
-                  Reload current product
-                </Button>
+                  <span>
+                    <span className="block font-medium">
+                      {field.state.value ? 'Published' : 'Unpublished'}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {field.state.value
+                        ? 'Visible in the catalogue'
+                        : 'Hidden from buyers'}
+                    </span>
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className={`relative h-6 w-10 shrink-0 rounded-full transition-colors ${field.state.value ? 'bg-primary' : 'bg-muted-foreground/40'}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-[left] ${field.state.value ? 'left-[18px]' : 'left-0.5'}`}
+                    />
+                  </span>
+                </button>
               )}
-            {reloadError && (
-              <p role="alert" className="text-destructive">
-                {reloadError}
+            </form.Field>
+          </div>
+
+          <div className="mt-auto space-y-3 p-5">
+            {fieldError && (
+              <p role="alert" className="text-sm text-destructive">
+                {fieldError}
               </p>
             )}
+            {save.isError && (
+              <div
+                role="alert"
+                className="space-y-2 rounded-lg border border-destructive/30 p-3 text-sm"
+              >
+                <p>
+                  {imageUploadFailed && baseProduct
+                    ? 'Product details were saved, but the image upload was refused. Reload the current product, then retry the image upload.'
+                    : errorCopy(save.error, 'save the product')}
+                </p>
+                {save.error instanceof ApiError &&
+                  save.error.status === 409 &&
+                  baseProduct && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setReloadError('');
+                        void reloadProduct();
+                      }}
+                    >
+                      Reload current product
+                    </Button>
+                  )}
+                {reloadError && (
+                  <p role="alert" className="text-destructive">
+                    {reloadError}
+                  </p>
+                )}
+              </div>
+            )}
+            {archiveFromEditor.isError && (
+              <p role="alert" className="text-sm text-destructive">
+                {errorCopy(archiveFromEditor.error, 'archive the product')}
+              </p>
+            )}
+            {save.isPending && (
+              <div
+                role="status"
+                className="space-y-2 text-sm text-muted-foreground"
+              >
+                <p>Saving product and uploading image…</p>
+                <progress
+                  aria-label="Saving product and uploading image"
+                  className="h-1.5 w-full accent-primary"
+                />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button
+                type="submit"
+                size="lg"
+                className="h-12 flex-1 text-base"
+                disabled={save.isPending}
+              >
+                {save.isPending
+                  ? 'Saving…'
+                  : baseProduct
+                    ? 'Save changes'
+                    : 'Create product'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12"
+                onClick={onSaved}
+              >
+                Cancel
+              </Button>
+            </div>
+            {baseProduct && !baseProduct.archivedAt && (
+              <button
+                type="button"
+                disabled={archiveFromEditor.isPending}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      `Archive “${baseProduct.name}”? It will be unpublished. You can restore it from Archived.`,
+                    )
+                  )
+                    archiveFromEditor.mutate();
+                }}
+                className="mx-auto flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+              >
+                <Archive aria-hidden="true" className="size-4" />
+                {archiveFromEditor.isPending ? 'Archiving…' : 'Archive product'}
+              </button>
+            )}
           </div>
-        )}
-        {save.isPending && (
-          <div
-            role="status"
-            className="space-y-2 text-sm text-muted-foreground"
-          >
-            <p>Saving product and uploading image…</p>
-            <progress
-              aria-label="Saving product and uploading image"
-              className="h-1.5 w-full accent-primary"
-            />
-          </div>
-        )}
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending
-              ? 'Saving…'
-              : baseProduct
-                ? 'Save changes'
-                : 'Create product'}
-          </Button>
-          <Button type="button" variant="outline" onClick={onSaved}>
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </Card>
+        </aside>
+
+        <section className="min-w-0 rounded-xl border bg-card p-5 md:p-6 lg:col-span-2">
+          <form.Field name="description">
+            {(field) => (
+              <>
+                <label
+                  htmlFor="product-description"
+                  className="font-sans text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                >
+                  About this product
+                </label>
+                <Textarea
+                  id="product-description"
+                  required
+                  rows={4}
+                  maxLength={2000}
+                  placeholder="Describe the product: how it is grown or made, what it tastes like, how to use it."
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  className="mt-2"
+                />
+              </>
+            )}
+          </form.Field>
+        </section>
+      </div>
+    </form>
   );
 }
 
@@ -1167,9 +1298,13 @@ export function ProducerProducts({
     <section className="space-y-6" aria-labelledby="producer-products-title">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 id="producer-products-title" className="text-3xl md:text-4xl">
-          {isCreate ? 'Add product' : editId ? 'Edit product' : 'Products'}
+          {isCreate
+            ? 'Add product'
+            : editId || selectedProduct
+              ? 'Edit product'
+              : 'Products'}
         </h1>
-        {!isCreate && !editId && status === 'approved' && (
+        {!isCreate && !editId && !selectedProduct && status === 'approved' && (
           <Button
             onClick={() => void navigate({ to: '/producer/products/new' })}
           >
