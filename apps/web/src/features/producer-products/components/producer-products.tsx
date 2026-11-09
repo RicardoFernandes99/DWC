@@ -561,6 +561,7 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
     queryFn: () => fetchProducts(page),
     retry: false,
   });
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const archive = useMutation({
     mutationFn: (product: Product) =>
       authenticatedRequest<Product>(`producer/products/${product.id}/archive`, {
@@ -568,6 +569,7 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
         body: JSON.stringify({ revision: product.revision }),
       }),
     onSuccess: () => {
+      setConfirmingId(null);
       void client.invalidateQueries({ queryKey: producerMetricsKey });
       return client.invalidateQueries({ queryKey: productKey });
     },
@@ -648,29 +650,51 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
                   {product.availableStock} available
                   {product.isLowStock ? ' · Low stock' : ''}
                 </p>
+                {confirmingId === product.id && (
+                  <p className="mt-4 text-sm" role="status">
+                    Archive this product? It will be unpublished and can’t be
+                    restored from here.
+                  </p>
+                )}
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onEdit(product)}
-                  >
-                    <Pencil aria-hidden="true" /> Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={archive.isPending}
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          `Archive “${product.name}”? It will be unpublished and cannot be restored from this screen.`,
-                        )
-                      )
-                        archive.mutate(product);
-                    }}
-                  >
-                    <Archive aria-hidden="true" /> Archive
-                  </Button>
+                  {confirmingId !== product.id && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onEdit(product)}
+                    >
+                      <Pencil aria-hidden="true" /> Edit
+                    </Button>
+                  )}
+                  {confirmingId === product.id ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={archive.isPending}
+                        onClick={() => archive.mutate(product)}
+                      >
+                        {archive.isPending ? 'Archiving…' : 'Archive'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={archive.isPending}
+                        onClick={() => setConfirmingId(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={archive.isPending}
+                      onClick={() => setConfirmingId(product.id)}
+                    >
+                      <Archive aria-hidden="true" /> Archive
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>
