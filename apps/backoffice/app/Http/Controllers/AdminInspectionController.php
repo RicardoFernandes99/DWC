@@ -220,19 +220,6 @@ final class AdminInspectionController
         }
     }
 
-    public function health(Request $request): View|RedirectResponse|HttpResponse
-    {
-        try {
-            $health = $this->inspection->health($this->credentials($request));
-
-            return view('inspection.health', ['health' => $health, 'checkedAt' => now()->toIso8601String()]);
-        } catch (ApiSessionExpired|UnexpectedValueException) {
-            return $this->expired($request);
-        } catch (BackofficeUnavailable|ConnectionException) {
-            return $this->unavailable('inspection.health');
-        }
-    }
-
     private function query(Request $request, array $filters): array|RedirectResponse
     {
         $rules = ['page' => ['nullable', 'integer', 'min:1', 'max:500'], 'limit' => ['nullable', 'integer', 'min:1', 'max:50']];

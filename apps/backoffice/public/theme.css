@@ -243,37 +243,6 @@
     background: var(--cream);
 }
 
-/* ---- Home: simple tiles ---- */
-.empty-state {
-    margin-top: 16px;
-    padding: 0;
-}
-.empty-state > div {
-    width: 100%;
-}
-.home-tools {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 12px;
-    margin-top: 20px;
-}
-.home-action,
-.home-action.primary-button {
-    display: flex;
-    align-items: center;
-    min-height: 72px;
-    padding: 16px 20px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    color: var(--ink);
-    font-size: 15px;
-    font-weight: 650;
-}
-.home-action:hover {
-    border-color: var(--forest);
-    background: var(--surface);
-}
 @media (max-width: 720px) {
     .site-header {
         flex-wrap: wrap;
@@ -294,19 +263,6 @@
 }
 .inspection-filters {
     margin: 12px 0 8px;
-}
-.health-list {
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-}
-.health-list > li {
-    padding-right: 20px;
-    padding-left: 20px;
-}
-.health-list > li:last-child {
-    border-bottom: 0;
 }
 
 /* ---- Moderation lists ---- */

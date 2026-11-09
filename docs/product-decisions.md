@@ -246,10 +246,8 @@ replaced are not requirements.
 - The Laravel app has no SQL migrations, user model or local password store.
   Its shell remains empty until later admin tickets add real NestJS-backed tools.
 - Admin tools include producer approval/rejection, user suspension, hiding
-  products/reviews, read-only order/auction inspection and service health.
-- Laravel service health checks run when the page loads and only run again when
-  an administrator selects Refresh. The backoffice displays the time its
-  request completed because the API health response has no check timestamp.
+  products/reviews, read-only order/auction inspection. The backoffice has no service-health
+  page: if one dependency is down the whole stack is, so a check adds nothing.
 - Suspended producers see: "Your account is suspended until the issue is
   resolved. You cannot create new auctions or register new products."
 - A suspended producer cannot register products, create auctions or receive new

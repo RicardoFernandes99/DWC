@@ -76,5 +76,4 @@ Route::middleware('current-admin')->group(function (): void {
     Route::get('/auctions', [AdminInspectionController::class, 'auctions'])->name('inspection.auctions')->block(45, 10);
     Route::get('/auctions/{id}', [AdminInspectionController::class, 'auction'])
         ->where('id', '[a-fA-F0-9]{24}')->name('inspection.auction')->block(45, 10);
-    Route::get('/health', [AdminInspectionController::class, 'health'])->name('inspection.health')->block(45, 10);
 });

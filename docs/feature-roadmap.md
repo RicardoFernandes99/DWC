@@ -16,7 +16,7 @@ constraints and existing capabilities are in [project scope](project-scope.md).
 | M05 | Auctions                    | Scheduled lots, reserved stock, public live watching, eligible buyer bidding, deadline extensions, automatic payment and winner orders                 |
 | M06 | Notifications and reviews   | Persistent inbox, live toasts, unread state, one producer review per completed order, reports and moderation support                                   |
 | M07 | Producer dashboard          | Sales and order metrics, best sellers, per-product low-stock thresholds                                                                                |
-| M08 | Laravel administration      | Approvals, suspension, product/review moderation, order/auction inspection and service health                                                          |
+| M08 | Laravel administration      | Approvals, suspension, product/review moderation, order/auction inspection                                                                             |
 
 Macro IDs are distinct from numbered build-ticket IDs. A macro can
 contain several tickets, and one complete flow can touch both Web and API.

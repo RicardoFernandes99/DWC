@@ -39,7 +39,7 @@ reference material; explicit user decisions take precedence over its examples.
 - Producers: products, prices, stock, images and public profile; order handling;
   auction creation/monitoring; sales statistics and low-stock indicators.
 - Administrators (Laravel): approve/reject producers, moderate content/reviews,
-  inspect users/orders/auctions and service health.
+  inspect users/orders/auctions.
 - Delivery orders: pending, confirmed, shipped, delivered. Collection orders:
   pending, confirmed, ready for collection, collected. Producers advance one
   step at a time; pending orders support the agreed refund/cancellation flow.
@@ -65,6 +65,6 @@ Workspace tooling, the React frontend, NestJS authentication, catalogue,
 checkout/orders, auctions and administrator API features are implemented. The
 Laravel backoffice supports administrative sign-in, producer application
 review and suspension, product/reported-review moderation, read-only user,
-order and auction inspection, and dependency health checks.
+order and auction inspection.
 Redis infrastructure is configured and the API manages a required Redis connection
 for readiness. Authentication sessions use hashed refresh credentials, atomic rotation and absolute TTLs.

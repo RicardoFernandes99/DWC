@@ -105,11 +105,6 @@ final class NestInspectionService
         return $auction;
     }
 
-    public function health(array $credentials): array
-    {
-        return InspectionPayload::health($this->object($this->get($credentials, 'admin/health')));
-    }
-
     /** @param callable(array<string, mixed>): array<string, mixed> $convert
      * @return array{items: list<array<string, mixed>>, total: int, page: int, limit: int, totalPages: int}
      */

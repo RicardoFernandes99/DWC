@@ -106,9 +106,10 @@ shows an unknown outcome with a state-refresh link; an identity-check 503 before
 the controller says the mutation was not sent. Neither failure retries the hide
 request. List/detail API failures show a sanitized retry page.
 
-## Marketplace inspection and service health
+## Marketplace inspection
 
-The home screen links to read-only user, order, auction and service-health pages.
+The header links to read-only user, order and auction pages (the landing page is
+the producer applications queue).
 The lists use NestJS pagination with a default of 20 and a maximum page size of 50. Users can be filtered by role and producer status, orders by status, origin,
 fulfilment method, buyer ID and producer ID, and auctions by status and producer
 ID. Detail pages link to related users, orders and auctions. Auction bid history
@@ -120,11 +121,6 @@ refund records and status history. Auction pages show the product snapshot and
 settlement records returned by the API. The backoffice does not calculate domain
 totals from current product data and does not offer repair or export actions.
 
-The service-health page checks on page load. Select **Refresh checks** to run a
-new check. It shows dependency statuses and latency plus the time Laravel
-completed the request, since the API response has no check timestamp. Failed or
-malformed responses show a sanitized retry page. If Redis is unavailable, the
-API's admin guard can reject the request before health data is returned; the
-backoffice then shows its unavailable page. Protected pages continue to check
+Protected pages continue to check
 the current NestJS administrator session, and the browser session is cleared
 after an API 401 or 403.

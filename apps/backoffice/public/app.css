@@ -1251,7 +1251,6 @@ h2 {
     font-variant-numeric: tabular-nums;
 }
 .inspection-list,
-.health-list,
 .inspection-history {
     margin: 0;
     padding: 0;
@@ -1407,48 +1406,6 @@ h2 {
     background: #ecebe5;
     color: #485047;
 }
-.health-workspace .inspection-heading {
-    align-items: center;
-}
-.health-refresh {
-    min-height: 44px;
-    text-decoration: none;
-}
-.health-checked {
-    margin: 20px 0 10px;
-    color: var(--muted);
-    font-size: 14px;
-}
-.health-overall {
-    margin: 0 0 10px;
-}
-.health-list {
-    border-top: 1px solid var(--border);
-}
-.health-list li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    min-height: 78px;
-    padding: 14px 4px;
-    border-bottom: 1px solid var(--border);
-}
-.health-list li > div {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-}
-.health-list h2 {
-    min-width: 150px;
-    margin: 0;
-    font-size: 17px;
-}
-.health-list p {
-    margin: 0;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-}
 @media (min-width: 768px) and (max-width: 1279px) {
     .inspection-row {
         grid-template-columns: minmax(170px, 1.4fr) repeat(
@@ -1514,9 +1471,6 @@ h2 {
     .inspection-facts {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 15px 18px;
-    }
-    .health-list li {
-        min-height: 70px;
     }
 }
 

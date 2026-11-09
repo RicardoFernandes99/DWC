@@ -194,25 +194,6 @@ final class InspectionPayload
     }
 
     /** @return array<string, mixed> */
-    public static function health(array $data): array
-    {
-        if (($data['status'] ?? null) !== 'ok' && ($data['status'] ?? null) !== 'degraded') {
-            throw new BackofficeUnavailable;
-        }
-        if (($data['api'] ?? null) !== 'up') {
-            throw new BackofficeUnavailable;
-        }
-        foreach (['mongodb', 'redis', 'storage'] as $dependency) {
-            if (! in_array($data[$dependency] ?? null, ['up', 'down'], true)) {
-                throw new BackofficeUnavailable;
-            }
-            self::number($data, $dependency.'LatencyMs', 0, 2500);
-        }
-
-        return $data;
-    }
-
-    /** @return array<string, mixed> */
     private static function product(array $data): array
     {
         return [
