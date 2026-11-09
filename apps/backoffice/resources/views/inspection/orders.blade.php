@@ -2,14 +2,9 @@
 
 @section('title', 'Orders | DWC Backoffice')
 
-@section('header-action')
-    <form method="post" action="{{ route('logout') }}">@csrf<button class="quiet-button" type="submit">Sign out</button></form>
-@endsection
-
 @section('content')
 <main class="workspace inspection-workspace">
-    <p class="eyebrow">Administration / Inspection</p>
-    <div class="inspection-heading"><h1>Orders</h1><a class="back-link" href="{{ route('home') }}">Back to administration</a></div>
+    <x-page-heading eyebrow="Administration / Inspection" title="Orders" />
     @include('inspection.nav')
     @include('inspection.filter-errors')
     @include('inspection.filter-scope')
@@ -31,10 +26,10 @@
         @forelse ($items as $order)
             <li class="inspection-row order-row">
                 <div class="inspection-primary"><a class="inspection-link" href="{{ route('inspection.order', $order['id']) }}">Order {{ substr($order['id'], -8) }}</a><span>{{ ucfirst($order['origin']) }} · {{ ucfirst($order['fulfilmentMethod']) }} · {{ ucwords(str_replace('_', ' ', $order['status'])) }}@if ($order['auctionId']) · <a class="inspection-related-link" href="{{ route('inspection.auction', $order['auctionId']) }}">Auction {{ substr($order['auctionId'], -8) }}</a>@endif</span></div>
-                <div class="inspection-secondary"><span class="inspection-label">Total / refunded</span><span>€{{ number_format($order['totalCents'] / 100, 2) }} / €{{ number_format($order['refundedCents'] / 100, 2) }}</span></div>
-                <div class="inspection-secondary"><span class="inspection-label">Buyer</span><a href="{{ route('inspection.user', $order['buyerId']) }}">{{ substr($order['buyerId'], -8) }}</a></div>
-                <div class="inspection-secondary"><span class="inspection-label">Producer</span><a href="{{ route('inspection.user', $order['producerId']) }}">{{ substr($order['producerId'], -8) }}</a></div>
-                <div class="inspection-secondary"><span class="inspection-label">Created</span><time datetime="{{ $order['createdAt'] }}">{{ $order['createdAt'] ? \Carbon\Carbon::parse($order['createdAt'])->format('j M Y, H:i') : 'Unknown' }}</time></div>
+                <x-field label="Total / refunded"><span>€{{ number_format($order['totalCents'] / 100, 2) }} / €{{ number_format($order['refundedCents'] / 100, 2) }}</span></x-field>
+                <x-field label="Buyer"><a href="{{ route('inspection.user', $order['buyerId']) }}">{{ substr($order['buyerId'], -8) }}</a></x-field>
+                <x-field label="Producer"><a href="{{ route('inspection.user', $order['producerId']) }}">{{ substr($order['producerId'], -8) }}</a></x-field>
+                <x-field label="Created"><time datetime="{{ $order['createdAt'] }}">{{ $order['createdAt'] ? \Carbon\Carbon::parse($order['createdAt'])->format('j M Y, H:i') : 'Unknown' }}</time></x-field>
             </li>
         @empty
             <li class="inspection-empty">No orders match these filters.</li>

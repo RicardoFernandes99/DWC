@@ -272,23 +272,6 @@ h2 {
     padding-bottom: 24px;
     border-bottom: 1px solid var(--border);
 }
-.identity {
-    display: grid;
-    justify-items: end;
-    gap: 7px;
-    font-size: 14px;
-}
-.identity-name {
-    font-weight: 650;
-}
-.role-label {
-    padding: 4px 9px;
-    border-radius: 4px;
-    background: var(--sage);
-    color: var(--forest);
-    font-size: 11px;
-    font-weight: 650;
-}
 .empty-state {
     display: flex;
     align-items: start;
@@ -710,13 +693,6 @@ h2 {
 .moderation-workspace {
     margin-top: clamp(30px, 5vw, 56px);
 }
-.moderation-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    margin: 18px 0 0;
-    border-bottom: 1px solid var(--border);
-}
 .moderation-count {
     margin: 18px 0 12px;
     color: var(--muted);
@@ -996,9 +972,6 @@ h2 {
         align-items: start;
         flex-direction: column;
     }
-    .identity {
-        justify-items: start;
-    }
     .empty-state {
         gap: 13px;
     }
@@ -1095,15 +1068,6 @@ h2 {
     .moderation-facts {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 15px 18px;
-    }
-    .moderation-tabs {
-        flex-wrap: nowrap;
-        gap: 6px;
-        overflow-x: auto;
-        overscroll-behavior-x: contain;
-    }
-    .moderation-tabs .filter-link {
-        flex: 0 0 auto;
     }
 }
 @media (prefers-reduced-motion: reduce) {

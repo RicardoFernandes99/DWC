@@ -2,26 +2,19 @@
 
 @section('title', 'Reported reviews | DWC Backoffice')
 
-@section('header-action')
-    <form method="post" action="{{ route('logout') }}">@csrf<button class="quiet-button" type="submit">Sign out</button></form>
-@endsection
-
 @section('content')
 <main class="workspace producer-workspace moderation-workspace">
-    <div class="workspace-heading">
-        <div><p class="eyebrow">Administration / Content</p><h1>Reported reviews</h1><p class="page-intro">Reports are reviewed individually. The report count does not hide a review automatically.</p></div>
-        <div class="identity" aria-label="Signed-in administrator"><span class="identity-name">{{ session('admin_identity.name') }}</span><span class="role-label">Administrator</span></div>
-    </div>
+    <x-page-heading eyebrow="Administration / Content" title="Reported reviews">Reports are reviewed individually. The report count does not hide a review automatically.</x-page-heading>
 
-    <nav class="moderation-tabs" aria-label="Filter reported reviews by visibility">
+    <x-tabs aria-label="Filter reported reviews by visibility">
         @foreach ([\App\DTOs\ModerationState::All, \App\DTOs\ModerationState::Hidden] as $filter)
-            <a class="filter-link @if ($state === $filter) is-active @endif" href="{{ route('moderation.reviews', ['state' => $filter->value]) }}" @if ($state === $filter) aria-current="page" @endif>{{ $filter === \App\DTOs\ModerationState::All ? 'All' : 'Hidden' }}</a>
+            <x-tab :href="route('moderation.reviews', ['state' => $filter->value])" :active="$state === $filter">{{ $filter === \App\DTOs\ModerationState::All ? 'All' : 'Hidden' }}</x-tab>
         @endforeach
-    </nav>
+    </x-tabs>
 
     <p class="moderation-count">{{ $total }} {{ \Illuminate\Support\Str::plural('reported review', $total) }} · Page {{ $page }}</p>
     @if ($items === [])
-        <section class="empty-state moderation-empty"><div><h2>No reported reviews in this view</h2><p>Reported reviews appear here when a buyer or producer submits a report.</p></div></section>
+        <x-empty-state title="No reported reviews in this view">Reported reviews appear here when a buyer or producer submits a report.</x-empty-state>
     @else
         <section class="moderation-list" aria-label="Reported reviews">
             @foreach ($items as $item)
@@ -34,7 +27,7 @@
                     <div class="moderation-meta"><span class="list-label">Rating</span><span>{{ $item->rating }} / 5</span></div>
                     <div class="moderation-meta"><span class="list-label">Reports</span><span>{{ $item->reportCount }}</span></div>
                     <div class="moderation-meta"><span class="list-label">Latest report</span><time datetime="{{ $item->latestReportAt }}">{{ $item->latestReportAt ? \Illuminate\Support\Carbon::parse($item->latestReportAt)->format('j M Y') : '—' }}</time></div>
-                    <div class="moderation-state"><span class="list-label">Visibility</span><span @class(['status-pill', $item->visibility === 'visible' ? 'status-approved' : 'status-suspended'])>{{ ucfirst($item->visibility) }}</span></div>
+                    <div class="moderation-state"><span class="list-label">Visibility</span><x-status-pill :tone="$item->visibility === 'visible' ? 'approved' : 'suspended'">{{ ucfirst($item->visibility) }}</x-status-pill></div>
                     <a class="row-action" href="{{ route('moderation.review', $item->reviewId) }}">Inspect<span class="sr-only"> review by {{ $item->author['name'] }}</span><span aria-hidden="true"> →</span></a>
                 </article>
             @endforeach

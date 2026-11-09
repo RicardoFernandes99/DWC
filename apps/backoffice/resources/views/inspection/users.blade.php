@@ -2,14 +2,9 @@
 
 @section('title', 'Users | DWC Backoffice')
 
-@section('header-action')
-    <form method="post" action="{{ route('logout') }}">@csrf<button class="quiet-button" type="submit">Sign out</button></form>
-@endsection
-
 @section('content')
 <main class="workspace inspection-workspace">
-    <p class="eyebrow">Administration / Inspection</p>
-    <div class="inspection-heading"><h1>Users</h1><a class="back-link" href="{{ route('home') }}">Back to administration</a></div>
+    <x-page-heading eyebrow="Administration / Inspection" title="Users" />
     @include('inspection.nav')
     @include('inspection.filter-errors')
     @include('inspection.filter-scope')
@@ -30,11 +25,11 @@
         @forelse ($items as $user)
             <li class="inspection-row">
                 <div class="inspection-primary"><a class="inspection-link" href="{{ route('inspection.user', $user['id']) }}">{{ $user['name'] }}</a><span>{{ $user['email'] }}</span></div>
-                <div class="inspection-secondary"><span class="inspection-label">Role</span><span>{{ ucfirst($user['role']) }}</span></div>
-                <div class="inspection-secondary"><span class="inspection-label">Producer status</span><span>{{ $user['producerStatus'] ? ucfirst($user['producerStatus']) : 'Not applicable' }}</span></div>
-                <div class="inspection-secondary"><span class="inspection-label">Buyer standing</span><span>{{ $user['role'] === 'buyer' ? ucfirst($user['buyerStatus'] ?? 'active') : 'Not applicable' }}</span></div>
-                <div class="inspection-secondary"><span class="inspection-label">Farm / city</span><span>{{ collect([$user['farmName'], $user['city']])->filter()->join(' · ') ?: '—' }}</span></div>
-                <div class="inspection-secondary"><span class="inspection-label">Created</span><time datetime="{{ $user['createdAt'] }}">{{ $user['createdAt'] ? \Carbon\Carbon::parse($user['createdAt'])->format('j M Y, H:i') : 'Unknown' }}</time></div>
+                <x-field label="Role"><span>{{ ucfirst($user['role']) }}</span></x-field>
+                <x-field label="Producer status"><span>{{ $user['producerStatus'] ? ucfirst($user['producerStatus']) : 'Not applicable' }}</span></x-field>
+                <x-field label="Buyer standing"><span>{{ $user['role'] === 'buyer' ? ucfirst($user['buyerStatus'] ?? 'active') : 'Not applicable' }}</span></x-field>
+                <x-field label="Farm / city"><span>{{ collect([$user['farmName'], $user['city']])->filter()->join(' · ') ?: '—' }}</span></x-field>
+                <x-field label="Created"><time datetime="{{ $user['createdAt'] }}">{{ $user['createdAt'] ? \Carbon\Carbon::parse($user['createdAt'])->format('j M Y, H:i') : 'Unknown' }}</time></x-field>
             </li>
         @empty
             <li class="inspection-empty">No users match these filters.</li>

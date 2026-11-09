@@ -77,9 +77,6 @@
     width: min(1200px, calc(100% - 2 * clamp(16px, 3vw, 32px)));
     margin: 32px auto 64px;
 }
-.workspace-heading .identity {
-    display: none;
-}
 .workspace-heading {
     border-bottom: 0;
     padding-bottom: 8px;

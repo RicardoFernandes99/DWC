@@ -2,48 +2,23 @@
 
 @section('title', 'Producer applications | DWC Backoffice')
 
-@section('header-action')
-    <form method="post" action="{{ route('logout') }}">
-        @csrf
-        <button class="quiet-button" type="submit">Sign out</button>
-    </form>
-@endsection
-
 @section('content')
 <main class="workspace producer-workspace">
-    <div class="workspace-heading">
-        <div>
-            <p class="eyebrow">Administration / Producers</p>
-            <h1>Producer applications</h1>
-            <p class="page-intro">Review each submitted farm before it can sell through the marketplace.</p>
-        </div>
-        <div class="identity" aria-label="Signed-in administrator">
-            <span class="identity-name">{{ session('admin_identity.name') }}</span>
-            <span class="role-label">Administrator</span>
-        </div>
-    </div>
+    <x-page-heading eyebrow="Administration / Producers" title="Producer applications">Review each submitted farm before it can sell through the marketplace.</x-page-heading>
 
     @if (session('notice'))
-        <p class="notice" role="status">{{ session('notice') }}</p>
+        <x-alert>{{ session('notice') }}</x-alert>
     @endif
 
-    <nav class="status-filters" aria-label="Filter applications by status">
+    <x-tabs aria-label="Filter applications by status">
         @foreach ([null, ...\App\DTOs\ProducerApplicationStatus::cases()] as $status)
             @php($value = $status?->value ?? '')
-            @php($label = $status?->label() ?? 'All')
-            <a href="{{ route('producer-applications.index', array_filter(['status' => $value, 'page' => null], fn ($item) => $item !== null && $item !== '')) }}"
-                @class(['filter-link', 'is-active' => $statusFilter === $value])
-                @if ($statusFilter === $value) aria-current="page" @endif>{{ $label }}</a>
+            <x-tab :href="route('producer-applications.index', array_filter(['status' => $value, 'page' => null], fn ($item) => $item !== null && $item !== ''))" :active="$statusFilter === $value">{{ $status?->label() ?? 'All' }}</x-tab>
         @endforeach
-    </nav>
+    </x-tabs>
 
     @if ($items === [])
-        <section class="empty-state application-empty" aria-labelledby="empty-title">
-            <div>
-                <h2 id="empty-title">No applications here</h2>
-                <p>Try another status filter or check back when a producer submits their farm details.</p>
-            </div>
-        </section>
+        <x-empty-state class="application-empty" title="No applications here">Try another status filter or check back when a producer submits their farm details.</x-empty-state>
     @else
         <section class="application-list" aria-label="Producer applications">
             @foreach ($items as $item)
@@ -58,7 +33,7 @@
                     </div>
                     <div class="application-state">
                         <span class="list-label">Status</span>
-                        <span @class(['status-pill', 'status-'.$item->status->value])>{{ $item->status->label() }}</span>
+                        <x-status-pill :tone="$item->status->value">{{ $item->status->label() }}</x-status-pill>
                     </div>
                     <div class="application-submission">
                         <span class="list-label">Submitted</span>

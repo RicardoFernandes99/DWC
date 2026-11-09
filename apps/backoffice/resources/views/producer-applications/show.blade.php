@@ -2,19 +2,12 @@
 
 @section('title', $application->application['farmName'].' | Producer review')
 
-@section('header-action')
-    <form method="post" action="{{ route('logout') }}">
-        @csrf
-        <button class="quiet-button" type="submit">Sign out</button>
-    </form>
-@endsection
-
 @section('content')
 <main class="workspace producer-workspace">
-    <a class="back-link" href="{{ route('producer-applications.index') }}">← Producer applications</a>
+    <x-back-link :href="route('producer-applications.index')">← Producer applications</x-back-link>
 
     @if (session('notice'))
-        <p class="notice" role="status">{{ session('notice') }}</p>
+        <x-alert>{{ session('notice') }}</x-alert>
     @endif
     @if (session('decision_error'))
         <div class="form-error decision-error" role="alert">
@@ -33,7 +26,7 @@
         </div>
         <div class="detail-status">
             <span class="list-label">Current application status</span>
-            <span @class(['status-pill', 'status-'.$application->status->value])>{{ $application->status->label() }}</span>
+            <x-status-pill :tone="$application->status->value">{{ $application->status->label() }}</x-status-pill>
         </div>
     </header>
 
@@ -113,7 +106,7 @@
             <div>
                 <h2 id="standing-title">Producer selling access</h2>
             </div>
-            <span @class(['status-pill', 'status-'.$application->status->value])>{{ $application->status->label() }}</span>
+            <x-status-pill :tone="$application->status->value">{{ $application->status->label() }}</x-status-pill>
         </div>
         @if ($application->status === \App\DTOs\ProducerApplicationStatus::Approved)
             <p class="section-copy">Suspension hides normal-sale products and blocks new sales and auctions. Existing orders can still be fulfilled and active auctions continue.</p>

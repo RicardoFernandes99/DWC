@@ -15,13 +15,13 @@
 </head>
 <body>
     <header class="site-header">
-        <a class="brand" href="{{ $__env->hasSection('header-action') ? route('home') : route('login') }}" aria-label="DWC backoffice home">
+        <a class="brand" href="{{ session()->has('admin_identity') ? route('home') : route('login') }}" aria-label="DWC backoffice home">
             <span class="brand-mark" aria-hidden="true">
                 <svg viewBox="0 0 40 40" fill="none"><path d="M20 30V15m0 7c-5 0-8-3-8-8 5 0 8 3 8 8Zm0-4c0-5 3-8 8-8 0 5-3 8-8 8Zm-6 14h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
             <span>DWC <span class="brand-divider">/</span> Backoffice</span>
         </a>
-        @hasSection('header-action')
+        @if (session()->has('admin_identity'))
             <nav class="site-nav" aria-label="Sections">
                 <a href="{{ route('producer-applications.index') }}" @if (request()->routeIs('producer-applications.*')) aria-current="page" @endif>Applications</a>
                 <a href="{{ route('moderation.reviews') }}" @if (request()->routeIs('moderation.reviews', 'moderation.review')) aria-current="page" @endif>Reviews</a>
@@ -32,7 +32,10 @@
             </nav>
             <div class="header-user">
                 <span class="header-user-name">{{ session('admin_identity.name') }}</span>
-                @yield('header-action')
+                <form method="post" action="{{ route('logout') }}">
+                    @csrf
+                    <button class="quiet-button" type="submit">Sign out</button>
+                </form>
             </div>
         @endif
     </header>

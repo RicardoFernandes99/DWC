@@ -11,10 +11,10 @@
             <p class="auth-intro">Use your administrator account to continue.</p>
 
             @if (session('notice'))
-                <p class="notice" role="status">{{ session('notice') }}</p>
+                <x-alert>{{ session('notice') }}</x-alert>
             @endif
             @if ($errors->has('credentials'))
-                <p class="form-error" role="alert">{{ $errors->first('credentials') }}</p>
+                <x-alert type="error">{{ $errors->first('credentials') }}</x-alert>
             @endif
 
             <form class="auth-form" method="post" action="{{ route('login.submit') }}">

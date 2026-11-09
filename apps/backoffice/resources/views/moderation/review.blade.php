@@ -2,20 +2,16 @@
 
 @section('title', 'Reported review | Review moderation')
 
-@section('header-action')
-    <form method="post" action="{{ route('logout') }}">@csrf<button class="quiet-button" type="submit">Sign out</button></form>
-@endsection
-
 @section('content')
 <main class="workspace producer-workspace moderation-workspace">
-    <a class="back-link" href="{{ route('moderation.reviews') }}">← Reported reviews</a>
-    @if (session('notice'))<p class="notice" role="status">{{ session('notice') }}</p>@endif
+    <x-back-link :href="route('moderation.reviews')">← Reported reviews</x-back-link>
+    @if (session('notice'))<x-alert>{{ session('notice') }}</x-alert>@endif
     @if (isset($moderationError) || session('moderation_error'))
         <div class="form-error decision-error" role="alert"><p>{{ $conflict ?? false ? 'This review changed while you were reviewing it.' : 'The API could not complete that action.' }} {{ $moderationError ?? session('moderation_error') }}</p>@if ($conflict ?? false)<p>The current server state and revision are shown below. Review them before submitting another decision.</p>@endif</div>
     @endif
     <header class="detail-heading moderation-detail-heading">
         <div><p class="eyebrow">Review moderation</p><h1>Reported review</h1><p class="detail-owner">{{ $review->producer['farmName'] }}</p><p class="detail-owner">Written by {{ $review->author['name'] }} <span aria-hidden="true">·</span> Order {{ $review->orderId }}</p></div>
-        <div class="detail-status"><span class="list-label">Review visibility</span><span @class(['status-pill', $review->visibility === 'visible' ? 'status-approved' : 'status-suspended'])>{{ ucfirst($review->visibility) }}</span></div>
+        <div class="detail-status"><span class="list-label">Review visibility</span><x-status-pill :tone="$review->visibility === 'visible' ? 'approved' : 'suspended'">{{ ucfirst($review->visibility) }}</x-status-pill></div>
     </header>
 
     <section class="detail-section" aria-labelledby="review-content-title">
