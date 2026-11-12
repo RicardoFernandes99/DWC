@@ -485,15 +485,6 @@ export function Account() {
             </p>
           </div>
           <div className="-ml-2.5 flex basis-full items-center gap-1 sm:ml-0 sm:basis-auto">
-            {current.role === 'producer' && (
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/producer/auctions">
-                  {current.producerStatus === 'suspended'
-                    ? 'View auctions'
-                    : 'Manage auctions'}
-                </Link>
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="sm"

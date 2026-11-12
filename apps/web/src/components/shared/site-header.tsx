@@ -47,7 +47,8 @@ export function SiteHeader({
               <Sprout aria-hidden="true" />
             </span>
             <span>
-              From Farm <span className="brand-connector">to</span> Table
+              <span className="font-normal">From</span> Farm{' '}
+              <span className="brand-connector">to</span> Table
             </span>
           </Link>
         </div>
@@ -229,7 +230,8 @@ function MobileDrawer({ user }: { user: User | null | undefined }) {
         <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-[85vw] max-w-80 flex-col bg-background shadow-xl outline-none drawer-panel md:hidden">
           <div className="flex items-center justify-between px-4 pt-4 pb-3">
             <Dialog.Title className="text-base font-semibold tracking-tight">
-              From Farm <span className="brand-connector">to</span> Table
+              <span className="font-normal">From</span> Farm{' '}
+              <span className="brand-connector">to</span> Table
             </Dialog.Title>
             <Dialog.Close
               className="-mr-2 inline-flex size-10 items-center justify-center rounded-md hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"

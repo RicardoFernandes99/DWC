@@ -678,7 +678,10 @@ export function ProducerOnboarding({
           : 'Suspended';
 
   return (
-    <section className="mt-8 space-y-6" aria-label="Producer status">
+    <section
+      className="mt-8 space-y-6 empty:hidden"
+      aria-label="Producer status"
+    >
       {/* Approved and suspended accounts show their status as the header badge. */}
       {(status === 'pending' || status === 'rejected') && (
         <div>
@@ -942,18 +945,6 @@ export function ProducerOnboarding({
             onConflictRefresh={handleConflict}
             onSaved={handleSaved}
           />
-        </div>
-      )}
-
-      {status === 'approved' && applicationQuery.data && (
-        <div>
-          {application && (
-            <ApplicationSummaryCard
-              title="Approved farm profile"
-              submittedAt={submittedAt}
-              application={application}
-            />
-          )}
         </div>
       )}
     </section>

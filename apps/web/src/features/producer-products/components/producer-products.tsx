@@ -33,7 +33,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/shared/form-field';
 import { EmptyState } from '@/components/shared/empty-state';
-import { PackagePlus } from 'lucide-react';
+import { PackagePlus, Pencil } from 'lucide-react';
 
 type Product = components['schemas']['ProducerProductResponseDto'];
 type ProductListResponse =
@@ -1088,6 +1088,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
   const [reloadError, setReloadError] = useState('');
   const client = useQueryClient();
   const [notice, setNotice] = useState('');
+  const [editing, setEditing] = useState(false);
   const mutation = useMutation({
     mutationFn: ({
       profile,
@@ -1104,7 +1105,8 @@ function ProfileForm({ profile }: { profile: Profile }) {
       await client.cancelQueries({ queryKey: profileKey });
       client.setQueryData(profileKey, profile);
       setBaseProfile(profile);
-      setNotice('Profile changes saved.');
+      setNotice('Producer details saved.');
+      setEditing(false);
     },
   });
   const form = useForm({
@@ -1189,165 +1191,234 @@ function ProfileForm({ profile }: { profile: Profile }) {
     }
   };
   return (
-    <details className="mt-8 border-t pt-6">
-      <summary className="cursor-pointer text-lg font-semibold focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-        Producer profile
-      </summary>
-      <p className="mt-2 max-w-[65ch] text-sm text-muted-foreground">
-        These details appear on your producer profile and support collection
-        arrangements.
+    <section className="mt-6" aria-labelledby="producer-details-heading">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="producer-details-heading" className="text-xl font-semibold">
+          Producer details
+        </h2>
+        {!editing && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setNotice('');
+              setEditing(true);
+            }}
+          >
+            <Pencil aria-hidden="true" /> Edit
+          </Button>
+        )}
+      </div>
+      <p className="mt-1 max-w-[65ch] text-sm text-muted-foreground">
+        Shown on your farm page and used for collection arrangements.
       </p>
-      <form
-        className="mt-5 space-y-4"
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          void form.handleSubmit();
-        }}
-      >
-        <div className="grid gap-4 md:grid-cols-2">
-          <form.Field name="farmName">
-            {(field) => (
-              <FormField id="profile-farm-name" label="Farm or enterprise name">
-                <Input
+      {!editing && notice && (
+        <p role="status" className="mt-4 text-sm text-primary">
+          {notice}
+        </p>
+      )}
+      {!editing && (
+        <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
+          <div className="min-w-0">
+            <dt className="text-muted-foreground">Farm name</dt>
+            <dd className="mt-1 font-medium break-words">
+              {baseProfile.farmName}
+            </dd>
+          </div>
+          <div className="min-w-0">
+            <dt className="text-muted-foreground">City</dt>
+            <dd className="mt-1 break-words">{baseProfile.city}</dd>
+          </div>
+          <div className="min-w-0 sm:col-span-2">
+            <dt className="text-muted-foreground">Collection address</dt>
+            <dd className="mt-1 break-words">
+              {baseProfile.collectionAddress}
+            </dd>
+          </div>
+          <div className="min-w-0 sm:col-span-2">
+            <dt className="text-muted-foreground">Farm practices and story</dt>
+            <dd className="mt-1 max-w-[70ch] leading-relaxed whitespace-pre-line break-words">
+              {baseProfile.description}
+            </dd>
+          </div>
+        </dl>
+      )}
+      {editing && (
+        <form
+          className="mt-5 space-y-4"
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            void form.handleSubmit();
+          }}
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <form.Field name="farmName">
+              {(field) => (
+                <FormField
                   id="profile-farm-name"
-                  maxLength={120}
-                  required
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              </FormField>
-            )}
-          </form.Field>
-          <form.Field name="city">
-            {(field) => (
-              <FormField id="profile-city" label="City or locality">
-                <Input
-                  id="profile-city"
-                  maxLength={120}
-                  required
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              </FormField>
-            )}
-          </form.Field>
-          <form.Field name="collectionAddress">
-            {(field) => (
-              <FormField id="profile-address" label="Collection address">
-                <Input
-                  id="profile-address"
-                  maxLength={240}
-                  required
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              </FormField>
-            )}
-          </form.Field>
-          <div className="grid grid-cols-2 gap-4">
-            <form.Field name="latitude">
-              {(field) => (
-                <FormField
-                  id="profile-latitude"
-                  label="Latitude"
-                  error={latitudeError}
+                  label="Farm or enterprise name"
                 >
                   <Input
+                    id="profile-farm-name"
+                    maxLength={120}
+                    required
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                </FormField>
+              )}
+            </form.Field>
+            <form.Field name="city">
+              {(field) => (
+                <FormField id="profile-city" label="City or locality">
+                  <Input
+                    id="profile-city"
+                    maxLength={120}
+                    required
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                </FormField>
+              )}
+            </form.Field>
+            <form.Field name="collectionAddress">
+              {(field) => (
+                <FormField id="profile-address" label="Collection address">
+                  <Input
+                    id="profile-address"
+                    maxLength={240}
+                    required
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                </FormField>
+              )}
+            </form.Field>
+            <div className="grid grid-cols-2 gap-4">
+              <form.Field name="latitude">
+                {(field) => (
+                  <FormField
                     id="profile-latitude"
-                    type="number"
-                    min="-90"
-                    max="90"
-                    step="any"
-                    required
-                    aria-invalid={Boolean(latitudeError)}
-                    aria-describedby={
-                      latitudeError ? 'profile-latitude-error' : undefined
-                    }
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                  />
-                </FormField>
-              )}
-            </form.Field>
-            <form.Field name="longitude">
-              {(field) => (
-                <FormField
-                  id="profile-longitude"
-                  label="Longitude"
-                  error={longitudeError}
-                >
-                  <Input
+                    label="Latitude"
+                    error={latitudeError}
+                  >
+                    <Input
+                      id="profile-latitude"
+                      type="number"
+                      min="-90"
+                      max="90"
+                      step="any"
+                      required
+                      aria-invalid={Boolean(latitudeError)}
+                      aria-describedby={
+                        latitudeError ? 'profile-latitude-error' : undefined
+                      }
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+              <form.Field name="longitude">
+                {(field) => (
+                  <FormField
                     id="profile-longitude"
-                    type="number"
-                    min="-180"
-                    max="180"
-                    step="any"
-                    required
-                    aria-invalid={Boolean(longitudeError)}
-                    aria-describedby={
-                      longitudeError ? 'profile-longitude-error' : undefined
-                    }
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                  />
-                </FormField>
-              )}
-            </form.Field>
+                    label="Longitude"
+                    error={longitudeError}
+                  >
+                    <Input
+                      id="profile-longitude"
+                      type="number"
+                      min="-180"
+                      max="180"
+                      step="any"
+                      required
+                      aria-invalid={Boolean(longitudeError)}
+                      aria-describedby={
+                        longitudeError ? 'profile-longitude-error' : undefined
+                      }
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+            </div>
           </div>
-        </div>
-        <form.Field name="description">
-          {(field) => (
-            <FormField
-              id="profile-description"
-              label="Farm practices and story"
-            >
-              <Textarea
+          <form.Field name="description">
+            {(field) => (
+              <FormField
                 id="profile-description"
-                rows={4}
-                maxLength={2000}
-                required
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-            </FormField>
+                label="Farm practices and story"
+              >
+                <Textarea
+                  id="profile-description"
+                  rows={4}
+                  maxLength={2000}
+                  required
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+              </FormField>
+            )}
+          </form.Field>
+          {fieldError && (
+            <p role="alert" className="text-sm text-destructive">
+              {fieldError}
+            </p>
           )}
-        </form.Field>
-        {fieldError && (
-          <p role="alert" className="text-sm text-destructive">
-            {fieldError}
-          </p>
-        )}
-        {mutation.isError && (
-          <div role="alert" className="space-y-2 text-sm text-destructive">
-            <p>{errorCopy(mutation.error, 'save your profile')}</p>
-            {mutation.error instanceof ApiError &&
-              mutation.error.status === 409 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void reloadProfile()}
-                >
-                  Reload current profile
-                </Button>
-              )}
+          {mutation.isError && (
+            <div role="alert" className="space-y-2 text-sm text-destructive">
+              <p>{errorCopy(mutation.error, 'save your profile')}</p>
+              {mutation.error instanceof ApiError &&
+                mutation.error.status === 409 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void reloadProfile()}
+                  >
+                    Reload current profile
+                  </Button>
+                )}
+            </div>
+          )}
+          {reloadError && (
+            <p role="alert" className="text-sm text-destructive">
+              {reloadError}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? 'Saving…' : 'Save changes'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={mutation.isPending}
+              onClick={() => {
+                form.reset({
+                  farmName: baseProfile.farmName,
+                  description: baseProfile.description,
+                  city: baseProfile.city,
+                  collectionAddress: baseProfile.collectionAddress,
+                  latitude: String(baseProfile.latitude),
+                  longitude: String(baseProfile.longitude),
+                });
+                mutation.reset();
+                setFieldError('');
+                setLatitudeError('');
+                setLongitudeError('');
+                setEditing(false);
+              }}
+            >
+              Cancel
+            </Button>
           </div>
-        )}
-        {reloadError && (
-          <p role="alert" className="text-sm text-destructive">
-            {reloadError}
-          </p>
-        )}
-        {notice && (
-          <p role="status" className="text-sm text-primary">
-            {notice}
-          </p>
-        )}
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Saving…' : 'Save profile'}
-        </Button>
-      </form>
-    </details>
+        </form>
+      )}
+    </section>
   );
 }
 

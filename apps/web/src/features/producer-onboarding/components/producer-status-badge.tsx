@@ -7,7 +7,7 @@ type ProducerStatus = NonNullable<
 
 const LABELS: Record<ProducerStatus, string> = {
   pending: 'Pending approval',
-  approved: 'Approved producer',
+  approved: 'Approved',
   rejected: 'Application rejected',
   suspended: 'Suspended',
 };
