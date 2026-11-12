@@ -562,7 +562,7 @@ function ProductAddToCart({
 
       <div className="mt-auto space-y-3 px-5 pt-5 pb-3">
         {!purchasable ? (
-          <p className="rounded-lg bg-secondary/50 p-3 text-sm text-muted-foreground">
+          <p className="rounded-lg bg-secondary/50 p-3 text-center text-sm text-muted-foreground">
             To buy, use your personal buyer account.
           </p>
         ) : (

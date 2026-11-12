@@ -437,14 +437,14 @@ function StatTile({
 }
 
 function shortTime(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value));
 }
 
 function shortDay(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat('en-GB', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',

@@ -84,7 +84,7 @@ export function auctionStatusLabel(
 }
 
 export function localDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat('en-GB', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value));

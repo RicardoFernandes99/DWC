@@ -29,9 +29,7 @@ function timeAgo(value: string) {
   if (hours < 24) return `${hours} h ago`;
   const days = Math.round(hours / 24);
   if (days < 7) return `${days} d ago`;
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(
-    then,
-  );
+  return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(then);
 }
 
 /** Header bell that opens the latest notifications. */

@@ -11,7 +11,7 @@ type CatalogueProduct = components['schemas']['CatalogueProductDto'];
 export type Auction = AuctionList['items'][number];
 
 function localDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat('en-GB', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value));

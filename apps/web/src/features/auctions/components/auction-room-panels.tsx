@@ -98,13 +98,11 @@ export function AuctionCountdown({
       >
         {text}
       </p>
-      <p className="mt-1 text-xs opacity-75">
-        {remaining === null
-          ? 'Syncing with the server clock…'
-          : hours > 0
-            ? 'hrs : mins : secs'
-            : 'mins : secs'}
-      </p>
+      {remaining === null && (
+        <p className="mt-1 text-xs opacity-75">
+          Syncing with the server clock…
+        </p>
+      )}
       {progress !== null && (
         <div
           className="mt-4 h-1.5 overflow-hidden rounded-full bg-primary-foreground/20"
