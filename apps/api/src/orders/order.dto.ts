@@ -31,6 +31,25 @@ export class OrderIdParamDto {
   orderId!: string;
 }
 
+/** Groups of fulfilment statuses used by the order list tabs. */
+export enum OrderStage {
+  Open = 'open',
+  Completed = 'completed',
+  Cancelled = 'cancelled',
+}
+
+export const ORDER_STAGE_STATUSES: Record<OrderStage, readonly OrderStatus[]> =
+  {
+    [OrderStage.Open]: [
+      OrderStatus.Pending,
+      OrderStatus.Confirmed,
+      OrderStatus.Shipped,
+      OrderStatus.ReadyForCollection,
+    ],
+    [OrderStage.Completed]: [OrderStatus.Delivered, OrderStatus.Collected],
+    [OrderStage.Cancelled]: [OrderStatus.Cancelled],
+  };
+
 export class ListOrdersQueryDto {
   @ApiPropertyOptional({
     minimum: 1,
@@ -65,6 +84,15 @@ export class ListOrdersQueryDto {
   @IsOptional()
   @IsEnum(OrderStatus)
   status?: OrderStatus;
+
+  @ApiPropertyOptional({
+    enum: OrderStage,
+    description:
+      'Filter by status group: open (pending, confirmed, shipped, ready_for_collection), completed (delivered, collected) or cancelled. Combined with status, only orders matching both are returned.',
+  })
+  @IsOptional()
+  @IsEnum(OrderStage)
+  stage?: OrderStage;
 }
 
 export class OrderLineItemDto {

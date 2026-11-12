@@ -19,6 +19,7 @@ import { UserResponseDto } from '../users/user-response.dto.js';
 import { User, type UserDocument, UserRole } from '../users/user.schema.js';
 import {
   ListOrdersQueryDto,
+  ORDER_STAGE_STATUSES,
   OrderListResponseDto,
   OrderPaymentSummaryDto,
   OrderResponseDto,
@@ -517,7 +518,13 @@ export class OrdersService {
       );
     }
 
-    if (query.status) {
+    if (query.stage) {
+      const statuses = ORDER_STAGE_STATUSES[query.stage];
+      // A status outside the requested stage matches nothing.
+      filter.status = query.status
+        ? { $in: statuses.includes(query.status) ? [query.status] : [] }
+        : { $in: statuses };
+    } else if (query.status) {
       filter.status = query.status;
     }
 

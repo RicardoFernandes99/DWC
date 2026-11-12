@@ -228,6 +228,15 @@ published, unarchived, unmoderated products belonging to currently approved
 producers with a producer application. Responses expose allowlisted profile and
 product fields; stored product images receive short-lived signed URLs.
 
+## Order lists
+
+`GET /api/orders` lists the signed-in buyer's or producer's own orders, newest
+first, with `page` and `limit`. `status` filters by one fulfilment status;
+`stage` filters by group: `open` (pending, confirmed, shipped,
+ready_for_collection), `completed` (delivered, collected) or `cancelled`. With
+both, only orders matching both are returned. The web orders pages use `stage`
+for their Open / Completed / Cancelled tabs.
+
 ## Purchase receipts
 
 `GET /api/orders/:orderId/receipt.pdf` downloads a PDF receipt for a catalogue

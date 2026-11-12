@@ -1916,6 +1916,20 @@
                 "cancelled"
               ]
             }
+          },
+          {
+            "name": "stage",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status group: open (pending, confirmed, shipped, ready_for_collection), completed (delivered, collected) or cancelled. Combined with status, only orders matching both are returned.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "completed",
+                "cancelled"
+              ]
+            }
           }
         ],
         "responses": {

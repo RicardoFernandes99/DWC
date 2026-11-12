@@ -4554,6 +4554,8 @@ export interface operations {
                 limit?: number;
                 /** @description Filter orders by fulfilment status. */
                 status?: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+                /** @description Filter by status group: open (pending, confirmed, shipped, ready_for_collection), completed (delivered, collected) or cancelled. Combined with status, only orders matching both are returned. */
+                stage?: "open" | "completed" | "cancelled";
             };
             header?: never;
             path?: never;
