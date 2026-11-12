@@ -185,7 +185,6 @@ const producerOrderDetailRoute = createRoute({
 const publicProducerRoute = createRoute({
   getParentRoute: () => root,
   path: '/farm/$producerId',
-  validateSearch: validateCatalogueSearch,
   component: ProducerDetailRoute,
 });
 const auctionsRoute = createRoute({

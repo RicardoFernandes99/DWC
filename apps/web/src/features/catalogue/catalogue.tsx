@@ -26,10 +26,8 @@ import { formatLabel, formatMoney, formatUnit } from '@/lib/format';
 import { ApiError, publicRequest } from '@/lib/session';
 import { useCart } from '@/features/cart/use-cart';
 import { ProducerReviews } from '@/features/reviews/components/producer-reviews';
-import {
-  CatalogueFilters,
-  SearchControl,
-} from './components/catalogue-filters';
+import { SearchControl } from './components/catalogue-filters';
+import { FarmProducts } from './components/farm-products';
 import { CatalogueSidebar } from './components/catalogue-sidebar';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { activeFilterCount, clearedFilters } from './filters';
@@ -197,27 +195,6 @@ function ListingResults({
         </Button>
       </nav>
     </>
-  );
-}
-
-/** Filters plus the results panel; shared by the market and farm pages. */
-function ProductListing({
-  scope,
-  title,
-  showFilters = true,
-}: {
-  scope: string;
-  title: string;
-  showFilters?: boolean;
-}) {
-  return (
-    <section className="space-y-5" aria-label={title}>
-      {showFilters && <CatalogueFilters scope={scope} />}
-      <div className="rounded-xl border bg-card/60 p-3 md:p-5">
-        <h2 className="mb-4 text-xl md:text-2xl">{title}</h2>
-        <ListingResults scope={scope} />
-      </div>
-    </section>
   );
 }
 
@@ -586,8 +563,7 @@ function ProductAddToCart({
       <div className="mt-auto space-y-3 px-5 pt-5 pb-3">
         {!purchasable ? (
           <p className="rounded-lg bg-secondary/50 p-3 text-sm text-muted-foreground">
-            To buy, use your personal buyer account. Producer and admin accounts
-            are for browsing only.
+            To buy, use your personal buyer account.
           </p>
         ) : (
           <>
@@ -654,16 +630,6 @@ function ProductAddToCart({
 }
 
 export function ProducerPage({ producerId }: { producerId: string }) {
-  // Same unfiltered query as the farm hero; hides filters for a farm with no products.
-  const farmProducts = useQuery({
-    queryKey: ['catalogue', 'farm-hero', producerId],
-    queryFn: () =>
-      publicRequest<ProductList>(
-        `producers/${encodeURIComponent(producerId)}/products?sort=newest&page=1`,
-      ),
-    retry: false,
-  });
-  const farmIsEmpty = farmProducts.data?.total === 0;
   const producerQuery = useQuery({
     queryKey: producerKey(producerId),
     queryFn: () =>
@@ -711,11 +677,7 @@ export function ProducerPage({ producerId }: { producerId: string }) {
         <FarmHero producerId={producerId} producer={producer} />
       </div>
       <div className="mt-12">
-        <ProductListing
-          scope={producerId}
-          title="Products"
-          showFilters={!farmIsEmpty}
-        />
+        <FarmProducts producerId={producerId} />
       </div>
       <ProducerAuctionsSection
         producerId={producerId}
