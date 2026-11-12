@@ -1,3 +1,4 @@
+import { productGridColumns } from '@/lib/product-grid';
 import { useQuery } from '@tanstack/react-query';
 import { sessionOptions } from '@/lib/session-query';
 import { canPurchase } from '@/route-access';
@@ -99,10 +100,16 @@ export function ProductCard({ product }: { product: CatalogueProduct }) {
   );
 }
 
-export function ProductGrid({ items }: { items: CatalogueProduct[] }) {
+export function ProductGrid({
+  items,
+  columns = 'default',
+}: {
+  items: CatalogueProduct[];
+  columns?: keyof typeof productGridColumns;
+}) {
   return (
     <div
-      className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4"
+      className={`grid gap-3 md:gap-4 ${productGridColumns[columns]}`}
       data-catalogue-grid
     >
       {items.map((product) => (

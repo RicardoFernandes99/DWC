@@ -13,7 +13,7 @@
 :root {
   --background: #f7f5ee;
   --foreground: #253329;
-  --card: oklch(1 0 0);
+  --card: #faf8f2;
   --card-foreground: var(--foreground);
   --primary: #24563d;
   --primary-foreground: #f7f5ee;
@@ -382,6 +382,7 @@
   text-underline-offset: 4px;
 }
 .auth-form-footer {
+  margin-top: 40px;
   display: flex;
   justify-content: center;
   align-items: center;

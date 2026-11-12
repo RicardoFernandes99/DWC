@@ -517,7 +517,7 @@ export function CheckoutPage() {
 
           <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
             <Button asChild variant="outline" className="rounded-md">
-              <Link to="/">Continue shopping</Link>
+              <Link to="/products">Continue shopping</Link>
             </Button>
             <Button asChild className="rounded-md">
               <Link to="/account">View order history</Link>
@@ -543,7 +543,7 @@ export function CheckoutPage() {
           description="Browse fresh, seasonal produce from local farmers to begin your order."
           action={
             <Button asChild>
-              <Link to="/">Explore the market</Link>
+              <Link to="/products">Explore the market</Link>
             </Button>
           }
         />

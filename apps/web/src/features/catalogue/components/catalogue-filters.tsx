@@ -78,7 +78,7 @@ export function CatalogueFilters({ scope }: { scope: string }) {
     search.minPriceCents,
     search.maxPriceCents,
   ].some((value) => value !== undefined && value !== '');
-  const from = isMarket ? '/' : '/farm/$producerId';
+  const from = isMarket ? '/products' : '/farm/$producerId';
 
   return (
     <section aria-label="Catalogue filters" className="space-y-3">
@@ -184,7 +184,7 @@ export function CatalogueFilters({ scope }: { scope: string }) {
               <span className="sr-only">Location</span>
               <SearchControl
                 initialValue={search.location ?? ''}
-                from="/"
+                from="/products"
                 field="location"
                 placeholder="City or region"
                 className="h-10 w-36 rounded-lg bg-card px-3 text-sm"
@@ -318,28 +318,60 @@ export function CatalogueFilters({ scope }: { scope: string }) {
 const PRICE_CEILING_CENTS = 3000;
 const PRICE_STEP_CENTS = 50;
 
-function PriceRange({
-  minCents,
-  maxCents,
-  onCommit,
-}: {
+const euros = (cents: number) =>
+  `€${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
+const describe = (from: number, to: number) =>
+  from === 0 && to === PRICE_CEILING_CENTS
+    ? 'Any price'
+    : to === PRICE_CEILING_CENTS
+      ? `${euros(from)}+`
+      : `${euros(from)} – ${euros(to)}`;
+
+type PriceProps = {
   minCents: number | undefined;
   maxCents: number | undefined;
   onCommit: (min: number | undefined, max: number | undefined) => void;
-}) {
+};
+
+/**
+ * Two-thumb price slider; the top position means "no maximum". Remount it
+ * (via `key`) when the URL range changes so the draft follows.
+ */
+export function PriceSlider({ minCents, maxCents, onCommit }: PriceProps) {
   const [range, setRange] = useState([
     Math.min(minCents ?? 0, PRICE_CEILING_CENTS),
     Math.min(maxCents ?? PRICE_CEILING_CENTS, PRICE_CEILING_CENTS),
   ]);
   const [low, high] = range as [number, number];
-  const euros = (cents: number) =>
-    `€${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
-  const describe = (from: number, to: number) =>
-    from === 0 && to === PRICE_CEILING_CENTS
-      ? 'Any price'
-      : to === PRICE_CEILING_CENTS
-        ? `${euros(from)}+`
-        : `${euros(from)} – ${euros(to)}`;
+  return (
+    <div>
+      <p className="mb-4 text-right text-sm tabular-nums text-muted-foreground">
+        {describe(low, high)}
+      </p>
+      <Slider
+        min={0}
+        max={PRICE_CEILING_CENTS}
+        step={PRICE_STEP_CENTS}
+        minStepsBetweenThumbs={1}
+        value={range}
+        thumbLabels={['Minimum price', 'Maximum price']}
+        onValueChange={setRange}
+        onValueCommit={([from, to]) =>
+          onCommit(
+            from ? from : undefined,
+            to === undefined || to >= PRICE_CEILING_CENTS ? undefined : to,
+          )
+        }
+      />
+      <div className="mt-2 flex justify-between text-xs tabular-nums text-muted-foreground">
+        <span>€0</span>
+        <span>{euros(PRICE_CEILING_CENTS)}+</span>
+      </div>
+    </div>
+  );
+}
+
+function PriceRange({ minCents, maxCents, onCommit }: PriceProps) {
   const active = minCents !== undefined || maxCents !== undefined;
   return (
     <Popover>
@@ -361,37 +393,18 @@ function PriceRange({
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72">
-        <div className="mb-4 flex items-baseline justify-between">
-          <p className="text-sm font-medium">Price</p>
-          <p className="text-sm tabular-nums text-muted-foreground">
-            {describe(low, high)}
-          </p>
-        </div>
-        <Slider
-          min={0}
-          max={PRICE_CEILING_CENTS}
-          step={PRICE_STEP_CENTS}
-          minStepsBetweenThumbs={1}
-          value={range}
-          thumbLabels={['Minimum price', 'Maximum price']}
-          onValueChange={setRange}
-          onValueCommit={([from, to]) =>
-            onCommit(
-              from ? from : undefined,
-              to === undefined || to >= PRICE_CEILING_CENTS ? undefined : to,
-            )
-          }
+        <p className="-mb-6 text-sm font-medium">Price</p>
+        <PriceSlider
+          minCents={minCents}
+          maxCents={maxCents}
+          onCommit={onCommit}
         />
-        <div className="mt-2 flex justify-between text-xs tabular-nums text-muted-foreground">
-          <span>€0</span>
-          <span>{euros(PRICE_CEILING_CENTS)}+</span>
-        </div>
       </PopoverContent>
     </Popover>
   );
 }
 
-function SearchControl({
+export function SearchControl({
   initialValue,
   from,
   field = 'q',
@@ -399,7 +412,7 @@ function SearchControl({
   className,
 }: {
   initialValue: string;
-  from: '/' | '/farm/$producerId';
+  from: '/products' | '/farm/$producerId';
   field?: 'q' | 'location';
   placeholder: string;
   className: string;

@@ -118,7 +118,7 @@ export function CartPage() {
     <main className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 md:py-10 xl:px-12">
       <div className="mb-6">
         <Link
-          to="/"
+          to="/products"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
         >
           <ArrowLeft aria-hidden="true" className="size-4" /> Continue shopping
@@ -138,7 +138,7 @@ export function CartPage() {
             description="Explore freshly harvested fruits, vegetables, dairy and artisanal goods directly from regional producers."
             action={
               <Button asChild>
-                <Link to="/">
+                <Link to="/products">
                   Explore the market{' '}
                   <ArrowRight aria-hidden="true" className="size-4" />
                 </Link>

@@ -13,6 +13,7 @@ export function EmptyState({
   action,
   size = 'section',
   headingLevel = 'h2',
+  tone = 'default',
   className,
   titleId,
 }: {
@@ -22,6 +23,8 @@ export function EmptyState({
   action?: ReactNode;
   size?: 'page' | 'section';
   headingLevel?: 'h1' | 'h2' | 'h3';
+  /** `error` tints the icon circle for failed-to-load states. */
+  tone?: 'default' | 'error';
   className?: string;
   titleId?: string;
 }) {
@@ -39,7 +42,10 @@ export function EmptyState({
       <div
         aria-hidden="true"
         className={cn(
-          'grid place-items-center rounded-full bg-secondary text-primary [&_svg]:stroke-[1.5]',
+          'grid place-items-center rounded-full [&_svg]:stroke-[1.5]',
+          tone === 'error'
+            ? 'bg-destructive/10 text-destructive'
+            : 'bg-secondary text-primary',
           page ? 'size-16 [&_svg]:size-8' : 'size-12 [&_svg]:size-6',
         )}
       >

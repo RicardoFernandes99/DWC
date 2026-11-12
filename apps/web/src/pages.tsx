@@ -29,6 +29,7 @@ import {
 import { sessionOptions } from './lib/session-query';
 import { useCart } from '@/features/cart/use-cart';
 import { SiteHeader } from '@/components/shared/site-header';
+import { SiteFooter } from '@/components/shared/site-footer';
 import './pages.css';
 
 const sessionKey = ['session'] as const;
@@ -36,10 +37,12 @@ export function Shell() {
   const { totalItemCount } = useCart();
   const query = useQuery(sessionOptions);
   const location = useLocation();
+  // A failed session lookup counts as signed out, so protected routes redirect
+  // to sign-in rather than leaving a "could not restore" placeholder.
   const access =
-    query.data === undefined
+    query.data === undefined && !query.isError
       ? 'allow'
-      : routeAccess(location.pathname, query.data);
+      : routeAccess(location.pathname, query.data ?? null);
   const changingAuth =
     location.pathname === '/login' || location.pathname === '/register';
   return (
@@ -73,6 +76,7 @@ export function Shell() {
       ) : (
         <Outlet />
       )}
+      {!changingAuth && <SiteFooter />}
     </>
   );
 }
@@ -372,10 +376,10 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
               </>
             )}
           </p>
+          <p className="auth-form-footer">
+            <Sprout aria-hidden="true" /> Rooted in community.
+          </p>
         </div>
-        <p className="auth-form-footer">
-          <Sprout aria-hidden="true" /> Rooted in community.
-        </p>
       </section>
     </main>
   );

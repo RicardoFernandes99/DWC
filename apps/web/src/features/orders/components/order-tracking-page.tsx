@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/shared/error-state';
 import { useState } from 'react';
 import {
   useMutation,
@@ -18,7 +19,6 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 
 import {
   ApiError,
@@ -299,19 +299,12 @@ function OrderTrackingContent({
         </div>
       )}
       {orders.isError && (
-        <Card className="mt-6 p-6 shadow-none" role="alert">
-          <p className="text-sm text-destructive">
-            Could not load orders. Please try again.
-          </p>
-          <Button
-            className="mt-4"
-            variant="outline"
-            disabled={orders.isFetching}
-            onClick={() => void orders.refetch()}
-          >
-            Retry
-          </Button>
-        </Card>
+        <ErrorState
+          className="mt-6"
+          title="Orders could not load"
+          retrying={orders.isFetching}
+          onRetry={() => void orders.refetch()}
+        />
       )}
       {!id && orders.data && isOrderList(orders.data) && (
         <section className="orders-ledger" aria-label="Order history">
@@ -331,7 +324,7 @@ function OrderTrackingContent({
               action={
                 audience === 'buyer' ? (
                   <Button asChild variant="outline">
-                    <Link to="/">Explore the market</Link>
+                    <Link to="/products">Explore the market</Link>
                   </Button>
                 ) : undefined
               }

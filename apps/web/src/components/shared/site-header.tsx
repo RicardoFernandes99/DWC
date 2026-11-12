@@ -60,16 +60,13 @@ export function SiteHeader({
           >
             Home
           </Link>
-          {isProducer && (
-            <Link
-              to="/"
-              className="hidden md:inline"
-              activeOptions={{ exact: true }}
-              activeProps={activeLink}
-            >
-              Market
-            </Link>
-          )}
+          <Link
+            to="/products"
+            className="hidden md:inline"
+            activeProps={activeLink}
+          >
+            {isProducer ? 'Market' : 'Shop'}
+          </Link>
           {isProducer && (
             <Link
               to="/producer/products"
@@ -159,7 +156,7 @@ interface DrawerItem {
 
 function itemsFor(user: User | null | undefined): DrawerItem[] {
   const marketplace: DrawerItem[] = [
-    { label: 'Shop', to: '/' },
+    { label: 'Shop', to: '/products' },
     { label: 'Auctions', to: '/auctions', search: { page: 1 }, prefix: true },
   ];
   if (user?.role === 'producer')
@@ -173,7 +170,7 @@ function itemsFor(user: User | null | undefined): DrawerItem[] {
       },
       { label: 'Products', to: '/producer/products', prefix: true },
       { label: 'Auctions', to: '/producer/auctions', prefix: true },
-      { label: 'Market', to: '/' },
+      { label: 'Market', to: '/products' },
       { label: 'Account', to: '/account' },
     ];
   if (user?.role === 'buyer')

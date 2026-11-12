@@ -4,6 +4,7 @@ import { queryClient, sessionOptions } from './lib/session-query';
 import { routeAccess } from './route-access';
 import {
   redirect,
+  stripSearchParams,
   createRootRoute,
   createRoute,
   createRouter,
@@ -17,8 +18,9 @@ import { OrderTrackingPage } from './features/orders/components/order-tracking-p
 import { ProducerAuctions } from './features/producer-auctions/components/producer-auctions';
 import { AuctionsPage } from './features/auctions/components/auction-list';
 import { AuctionRoomRoute } from './features/auctions/components/auction-room';
+import { HomePage } from './features/catalogue/components/home-page';
 import {
-  CataloguePage,
+  ProductsPage,
   ProductDetailRoute,
   ProducerDetailRoute,
   type SearchState,
@@ -96,7 +98,7 @@ const root = createRootRoute({
   component: Shell,
   errorComponent: ({ reset }) => (
     <main role="alert" className="p-8">
-      <p>Could not restore your session. Please try again.</p>
+      <p>Something went wrong. Please try again.</p>
       <button
         onClick={() => {
           void router.invalidate();
@@ -108,7 +110,9 @@ const root = createRootRoute({
     </main>
   ),
   beforeLoad: async ({ location }) => {
-    const user = await queryClient.fetchQuery(sessionOptions);
+    // An unreachable or failing session endpoint means "no session": render
+    // as a guest (protected routes go to sign-in) instead of a dead-end page.
+    const user = await queryClient.fetchQuery(sessionOptions).catch(() => null);
     const access = routeAccess(location.pathname, user);
     if (access === 'home') throw redirect({ to: '/', replace: true });
     if (access === 'login')
@@ -122,8 +126,17 @@ const root = createRootRoute({
 const index = createRoute({
   getParentRoute: () => root,
   path: '/',
+  component: HomePage,
+});
+const productsRoute = createRoute({
+  getParentRoute: () => root,
+  path: '/products',
   validateSearch: validateCatalogueSearch,
-  component: CataloguePage,
+  // Keep the default view's URL clean: drop values that match the defaults.
+  search: {
+    middlewares: [stripSearchParams({ sort: 'newest', page: 1 })],
+  },
+  component: ProductsPage,
 });
 const productRoute = createRoute({
   getParentRoute: () => root,
@@ -263,6 +276,7 @@ export const router = createRouter({
   defaultPendingMs: 0,
   routeTree: root.addChildren([
     index,
+    productsRoute,
     productRoute,
     cartRoute,
     checkoutRoute,

@@ -35,7 +35,7 @@ export function useListingSearch(scope: string) {
     page: rawSearch.page ?? 1,
   };
   const navigate = useNavigate({
-    from: scope === 'all' ? '/' : '/farm/$producerId',
+    from: scope === 'all' ? '/products' : '/farm/$producerId',
   });
   function update(values: Partial<SearchState>) {
     void navigate({

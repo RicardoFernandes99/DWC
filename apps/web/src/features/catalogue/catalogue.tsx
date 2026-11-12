@@ -20,12 +20,26 @@ import { cn } from '@/lib/utils';
 import { QuantityStepper } from '@/components/shared/quantity-stepper';
 import type { components } from '@/lib/api-schema';
 import { ProductGrid } from '@/components/shared/product-card';
+import { productGridColumns } from '@/lib/product-grid';
 import { Button } from '@/components/ui/button';
 import { formatLabel, formatMoney, formatUnit } from '@/lib/format';
 import { ApiError, publicRequest } from '@/lib/session';
 import { useCart } from '@/features/cart/use-cart';
 import { ProducerReviews } from '@/features/reviews/components/producer-reviews';
-import { CatalogueFilters } from './components/catalogue-filters';
+import {
+  CatalogueFilters,
+  SearchControl,
+} from './components/catalogue-filters';
+import { CatalogueSidebar } from './components/catalogue-sidebar';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { activeFilterCount, clearedFilters } from './filters';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { FarmHero } from './components/farm-hero';
 import { ProducerAuctionsSection } from '@/features/auctions/components/producer-auctions-section';
 import {
@@ -35,7 +49,8 @@ import {
   type SearchState,
 } from './use-listing-search';
 import { EmptyState } from '@/components/shared/empty-state';
-import { SearchX } from 'lucide-react';
+import { ErrorState } from '@/components/shared/error-state';
+import { Search, SearchX, SlidersHorizontal } from 'lucide-react';
 
 export type { SearchState };
 
@@ -46,7 +61,13 @@ const productKey = (id: string) => ['catalogue', 'product', id] as const;
 const listingKey = (scope: string, search: SearchState) =>
   ['catalogue', scope, search] as const;
 
-function ListingResults({ scope }: { scope: string }) {
+function ListingResults({
+  scope,
+  columns = 'default',
+}: {
+  scope: string;
+  columns?: keyof typeof productGridColumns;
+}) {
   const { search, update } = useListingSearch(scope);
   const invalidRange =
     search.minPriceCents !== undefined &&
@@ -77,7 +98,7 @@ function ListingResults({ scope }: { scope: string }) {
   if (query.isPending)
     return (
       <div
-        className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4"
+        className={cn('grid gap-3 md:gap-4', productGridColumns[columns])}
         aria-label="Loading products"
         data-catalogue-grid
       >
@@ -91,19 +112,11 @@ function ListingResults({ scope }: { scope: string }) {
     );
   if (query.isError && !query.data)
     return (
-      <section role="alert" className="rounded-lg border bg-card p-6">
-        <h2 className="text-xl">Products could not load</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Check your connection and try again.
-        </p>
-        <Button
-          className="mt-4"
-          variant="outline"
-          onClick={() => void query.refetch()}
-        >
-          Try again
-        </Button>
-      </section>
+      <ErrorState
+        title="Products could not load"
+        retrying={query.isFetching}
+        onRetry={() => void query.refetch()}
+      />
     );
   if (!query.data.items.length) {
     const filtered = Boolean(
@@ -122,21 +135,7 @@ function ListingResults({ scope }: { scope: string }) {
         title="No products match these filters"
         description="Try a different search or clear the filters to see everything available."
         action={
-          <Button
-            variant="outline"
-            onClick={() =>
-              update({
-                q: undefined,
-                category: undefined,
-                producerId: undefined,
-                location: undefined,
-                season: undefined,
-                productionMethod: undefined,
-                minPriceCents: undefined,
-                maxPriceCents: undefined,
-              })
-            }
-          >
+          <Button variant="outline" onClick={() => update(clearedFilters)}>
             Clear filters
           </Button>
         }
@@ -153,7 +152,7 @@ function ListingResults({ scope }: { scope: string }) {
         action={
           scope === 'all' ? undefined : (
             <Button asChild variant="outline">
-              <Link to="/">Browse the market</Link>
+              <Link to="/products">Browse the market</Link>
             </Button>
           )
         }
@@ -170,7 +169,7 @@ function ListingResults({ scope }: { scope: string }) {
           Could not refresh products. Showing the last results.
         </p>
       )}
-      <ProductGrid items={query.data.items} />
+      <ProductGrid items={query.data.items} columns={columns} />
       <nav
         aria-label="Product pages"
         className="mt-8 flex flex-wrap items-center gap-3"
@@ -222,30 +221,81 @@ function ProductListing({
   );
 }
 
-export function CataloguePage() {
+const sortLabels = {
+  newest: 'Newest first',
+  price_asc: 'Price: low to high',
+  price_desc: 'Price: high to low',
+  name_asc: 'Name: A to Z',
+} as const;
+
+/** The full market: filter sidebar beside search, sort and results. */
+export function ProductsPage() {
+  const { search, update } = useListingSearch('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const active = activeFilterCount(search);
   return (
-    <main className="pb-12">
-      <section className="relative isolate overflow-hidden bg-secondary">
-        <img
-          src="/design/orchard-landscape.png"
-          alt=""
-          width="1536"
-          height="512"
-          fetchPriority="high"
-          className="absolute inset-0 -z-10 h-full w-full object-cover object-center"
-        />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-background/95 via-background/70 to-background/0 md:via-background/50" />
-        <div className="mx-auto flex min-h-40 max-w-[1440px] flex-col justify-center px-4 py-8 md:min-h-56 md:px-8 xl:min-h-64 xl:px-12">
-          <h1 className="max-w-[14ch] text-3xl leading-tight md:max-w-none md:text-5xl xl:text-6xl">
-            Fresh from your region
-          </h1>
-          <p className="mt-2 max-w-[28ch] text-sm text-foreground/80 md:max-w-none md:text-lg">
-            Local farmers. Real food. Stronger communities.
-          </p>
+    <main className="mx-auto max-w-[1440px] px-4 pt-6 pb-12 md:px-8 md:pt-8 xl:px-12">
+      <h1 className="text-3xl md:text-4xl">All products</h1>
+      {/* md+: the filter sidebar spans both rows beside toolbar and results. */}
+      <div className="mt-5 grid gap-4 md:grid-cols-[13rem_minmax(0,1fr)] md:grid-rows-[auto_1fr] md:gap-x-8 md:gap-y-5 xl:grid-cols-[16rem_minmax(0,1fr)] xl:gap-x-10">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 md:col-start-2 md:row-start-1">
+          <label className="relative block min-w-0 flex-1 basis-full sm:basis-64">
+            <span className="sr-only">Search products</span>
+            <Search
+              aria-hidden="true"
+              className="absolute top-3 left-3.5 size-4 text-muted-foreground"
+            />
+            <SearchControl
+              initialValue={search.q ?? ''}
+              from="/products"
+              placeholder="Search produce, farmers, or keywords…"
+              className="h-10 rounded-lg bg-card pl-9.5 text-sm"
+            />
+          </label>
+          {/* Phones: filters open as a full-screen sheet; changes apply live. */}
+          <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="h-10 md:hidden">
+                <SlidersHorizontal aria-hidden="true" />
+                Filters
+                {active > 0 && (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular-nums">
+                    {active}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent title="Filters" className="md:hidden">
+              <CatalogueSidebar onDone={() => setFiltersOpen(false)} />
+            </SheetContent>
+          </Sheet>
+          <Select
+            value={search.sort}
+            onValueChange={(value) =>
+              update({ sort: value as SearchState['sort'] })
+            }
+          >
+            <SelectTrigger
+              aria-label="Sort by"
+              className="h-10 w-44 rounded-lg bg-card"
+            >
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(sortLabels).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </section>
-      <div className="mx-auto max-w-[1440px] px-4 pt-5 md:px-8 md:pt-6 xl:px-12">
-        <ProductListing scope="all" title="Fresh produce" />
+        <aside className="hidden md:col-start-1 md:row-span-2 md:row-start-1 md:block md:self-start">
+          <CatalogueSidebar />
+        </aside>
+        <section aria-label="Products" className="min-w-0 md:col-start-2">
+          <ListingResults scope="all" columns="sidebar" />
+        </section>
       </div>
     </main>
   );
@@ -291,7 +341,7 @@ export function ProductPage({ productId }: { productId: string }) {
         </p>
       )}
       <Link
-        to="/"
+        to="/products"
         className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft aria-hidden="true" className="size-4" /> Back to the market
@@ -651,7 +701,7 @@ export function ProducerPage({ producerId }: { producerId: string }) {
         </p>
       )}
       <Link
-        to="/"
+        to="/products"
         className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft aria-hidden="true" className="size-4" /> Back to the market
@@ -693,7 +743,7 @@ function Unavailable({ title }: { title: string }) {
         This page may have been removed or is no longer public.
       </p>
       <Button asChild className="mt-6">
-        <Link to="/">Return to the market</Link>
+        <Link to="/products">Return to the market</Link>
       </Button>
     </main>
   );
