@@ -338,9 +338,8 @@ function OrderTrackingContent({
         />
       )}
       {!id && orders.data && isOrderList(orders.data) && (
-        <section className="orders-ledger" aria-label="Order history">
-          <div className="orders-list-heading">
-            <h2 className="sr-only">Order history</h2>
+        <>
+          <div className="orders-tabs-row">
             <SegmentedTabs
               label="Order status"
               value={stage}
@@ -358,82 +357,94 @@ function OrderTrackingContent({
               {orders.data.total === 1 ? 'order' : 'orders'}
             </p>
           </div>
-          {orders.data.items.length === 0 ? (
-            <EmptyState
-              icon={<ReceiptText />}
-              title={emptyCopy(stage, audience).title}
-              description={emptyCopy(stage, audience).description}
-              action={
-                audience === 'buyer' && stage === 'open' ? (
-                  <Button asChild variant="outline">
-                    <Link to="/products">Explore the market</Link>
+          <section
+            className="orders-ledger"
+            aria-labelledby="orders-history-heading"
+          >
+            <h2 id="orders-history-heading" className="sr-only">
+              Order history
+            </h2>
+            {orders.data.items.length === 0 ? (
+              <EmptyState
+                icon={<ReceiptText />}
+                title={emptyCopy(stage, audience).title}
+                description={emptyCopy(stage, audience).description}
+                action={
+                  audience === 'buyer' && stage === 'open' ? (
+                    <Button asChild variant="outline">
+                      <Link to="/products">Explore the market</Link>
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : (
+              <>
+                <div className="orders-column-labels" aria-hidden="true">
+                  <span>
+                    {audience === 'buyer'
+                      ? 'Order / producer'
+                      : 'Order / customer'}
+                  </span>
+                  <span>Placed / fulfilment</span>
+                  <span>Status</span>
+                  <span>Total</span>
+                  <span />
+                </div>
+                <ul className="orders-list" aria-label="Orders">
+                  {orders.data.items.map((item) => (
+                    <OrderRow
+                      key={item.id}
+                      order={item}
+                      audience={audience}
+                      page={page}
+                      stage={stage === 'open' ? undefined : stage}
+                    />
+                  ))}
+                </ul>
+              </>
+            )}
+            {orders.data.totalPages > 1 && (
+              <nav className="orders-pagination" aria-label="Order pages">
+                <p>
+                  Page <strong>{orders.data.page}</strong> of{' '}
+                  {orders.data.totalPages}
+                </p>
+                <div>
+                  <Button
+                    variant="ghost"
+                    disabled={page <= 1 || orders.isFetching}
+                    onClick={() =>
+                      void navigate({
+                        to:
+                          audience === 'buyer' ? '/orders' : '/producer/orders',
+                        search: { page: Math.max(1, page - 1), ...stageSearch },
+                      })
+                    }
+                  >
+                    <ChevronLeft aria-hidden="true" />
+                    Previous
                   </Button>
-                ) : undefined
-              }
-            />
-          ) : (
-            <>
-              <div className="orders-column-labels" aria-hidden="true">
-                <span>
-                  {audience === 'buyer'
-                    ? 'Order / producer'
-                    : 'Order / customer'}
-                </span>
-                <span>Placed / fulfilment</span>
-                <span>Status</span>
-                <span>Total</span>
-                <span />
-              </div>
-              <ul className="orders-list" aria-label="Orders">
-                {orders.data.items.map((item) => (
-                  <OrderRow
-                    key={item.id}
-                    order={item}
-                    audience={audience}
-                    page={page}
-                    stage={stage === 'open' ? undefined : stage}
-                  />
-                ))}
-              </ul>
-            </>
-          )}
-          {orders.data.totalPages > 1 && (
-            <nav className="orders-pagination" aria-label="Order pages">
-              <p>
-                Page <strong>{orders.data.page}</strong> of{' '}
-                {orders.data.totalPages}
-              </p>
-              <div>
-                <Button
-                  variant="ghost"
-                  disabled={page <= 1 || orders.isFetching}
-                  onClick={() =>
-                    void navigate({
-                      to: audience === 'buyer' ? '/orders' : '/producer/orders',
-                      search: { page: Math.max(1, page - 1), ...stageSearch },
-                    })
-                  }
-                >
-                  <ChevronLeft aria-hidden="true" />
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={page >= orders.data.totalPages || orders.isFetching}
-                  onClick={() =>
-                    void navigate({
-                      to: audience === 'buyer' ? '/orders' : '/producer/orders',
-                      search: { page: page + 1, ...stageSearch },
-                    })
-                  }
-                >
-                  Next
-                  <ChevronRight aria-hidden="true" />
-                </Button>
-              </div>
-            </nav>
-          )}
-        </section>
+                  <Button
+                    variant="outline"
+                    disabled={
+                      page >= orders.data.totalPages || orders.isFetching
+                    }
+                    onClick={() =>
+                      void navigate({
+                        to:
+                          audience === 'buyer' ? '/orders' : '/producer/orders',
+                        search: { page: page + 1, ...stageSearch },
+                      })
+                    }
+                  >
+                    Next
+                    <ChevronRight aria-hidden="true" />
+                  </Button>
+                </div>
+              </nav>
+            )}
+          </section>
+        </>
       )}
       {id && order && (
         <OrderDetail
