@@ -33,9 +33,13 @@ import {
 } from './lib/format';
 
 const sorts = ['newest', 'price_asc', 'price_desc', 'name_asc'] as const;
+const orderStages = ['open', 'completed', 'cancelled'] as const;
 function validateOrdersSearch(search: Record<string, unknown>) {
+  const stage = enumValue(search.stage, orderStages);
   return {
     page: numberValue(search.page, 1, 10_000) ?? 1,
+    // "open" is the default tab, so it stays out of the URL.
+    ...(stage && stage !== 'open' ? { stage } : {}),
   };
 }
 function enumValue<T extends readonly string[]>(

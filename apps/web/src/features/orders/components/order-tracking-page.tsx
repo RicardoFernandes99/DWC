@@ -33,11 +33,43 @@ import { orderSteps } from './order-format';
 import { OrderDetail } from './order-detail';
 import './orders.css';
 import { EmptyState } from '@/components/shared/empty-state';
+import { SegmentedTabs } from '@/components/shared/segmented-tabs';
 import { ReceiptText } from 'lucide-react';
 type Audience = 'buyer' | 'producer';
 type Order = components['schemas']['OrderResponseDto'];
 type OrderList = components['schemas']['OrderListResponseDto'];
 type OrderStatus = Order['status'];
+
+type OrderStage = 'open' | 'completed' | 'cancelled';
+
+const STAGE_TABS = [
+  { value: 'open', label: 'Open' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+] as const satisfies readonly { value: OrderStage; label: string }[];
+
+function emptyCopy(stage: OrderStage, audience: Audience) {
+  if (stage === 'completed')
+    return {
+      title: 'No completed orders',
+      description:
+        audience === 'buyer'
+          ? 'Delivered and collected orders will appear here.'
+          : 'Orders you have delivered or handed over will appear here.',
+    };
+  if (stage === 'cancelled')
+    return {
+      title: 'No cancelled orders',
+      description: 'Cancelled orders and refunds will appear here.',
+    };
+  return {
+    title: 'No open orders',
+    description:
+      audience === 'buyer'
+        ? 'Orders in progress will appear here after checkout.'
+        : 'New customer orders will appear here, ready to prepare and fulfil.',
+  };
+}
 
 function isOrderList(value: Order | OrderList): value is OrderList {
   return 'totalPages' in value;
@@ -115,18 +147,23 @@ function OrderTrackingContent({
     typeof search.page === 'number' && Number.isInteger(search.page)
       ? search.page
       : 1;
+  const stage: OrderStage =
+    search.stage === 'completed' || search.stage === 'cancelled'
+      ? search.stage
+      : 'open';
+  const stageSearch = stage === 'open' ? {} : { stage };
   const [reason, setReason] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const userId = session.data?.id ?? 'anonymous';
   const orders = useQuery({
     queryKey: id
       ? [...queryRoot, audience, userId, id]
-      : [...queryRoot, audience, userId, 'list', page],
+      : [...queryRoot, audience, userId, 'list', stage, page],
     queryFn: async (): Promise<Order | OrderList> => {
       if (id)
         return authenticatedRequest<Order>(`orders/${encodeURIComponent(id)}`);
       return authenticatedRequest<OrderList>(
-        `orders?page=${page}&limit=${pageSize}`,
+        `orders?page=${page}&limit=${pageSize}&stage=${stage}`,
       );
     },
     enabled: Boolean(
@@ -224,7 +261,7 @@ function OrderTrackingContent({
           onClick={() =>
             void navigate({
               to: audience === 'buyer' ? '/orders' : '/producer/orders',
-              search: { page },
+              search: { page, ...stageSearch },
             })
           }
         >
@@ -237,7 +274,7 @@ function OrderTrackingContent({
   const backToList = () => {
     void navigate({
       to: audience === 'buyer' ? '/orders' : '/producer/orders',
-      search: { page },
+      search: { page, ...stageSearch },
     });
   };
   const next = order && nextStatus(order);
@@ -261,12 +298,6 @@ function OrderTrackingContent({
                 : 'From your farm to their table.'}
           </p>
         </div>
-        {!id && orders.data && isOrderList(orders.data) && (
-          <span className="orders-count">
-            <strong>{orders.data.total}</strong>{' '}
-            {orders.data.total === 1 ? 'order' : 'orders'}
-          </span>
-        )}
       </header>
       {audience === 'producer' && user.producerStatus === 'suspended' && (
         <div className="order-account-notice" role="status">
@@ -309,20 +340,31 @@ function OrderTrackingContent({
       {!id && orders.data && isOrderList(orders.data) && (
         <section className="orders-ledger" aria-label="Order history">
           <div className="orders-list-heading">
-            <h2>Order history</h2>
-            <span>Most recent first</span>
+            <h2 className="sr-only">Order history</h2>
+            <SegmentedTabs
+              label="Order status"
+              value={stage}
+              options={STAGE_TABS}
+              onChange={(value) =>
+                void navigate({
+                  to: audience === 'buyer' ? '/orders' : '/producer/orders',
+                  search:
+                    value === 'open' ? { page: 1 } : { page: 1, stage: value },
+                })
+              }
+            />
+            <p className="orders-count">
+              <strong>{orders.data.total}</strong> {stage}{' '}
+              {orders.data.total === 1 ? 'order' : 'orders'}
+            </p>
           </div>
           {orders.data.items.length === 0 ? (
             <EmptyState
               icon={<ReceiptText />}
-              title="No orders yet"
-              description={
-                audience === 'buyer'
-                  ? 'Orders from local producers will appear here after checkout.'
-                  : 'Your customer orders will appear here, ready to prepare and fulfil.'
-              }
+              title={emptyCopy(stage, audience).title}
+              description={emptyCopy(stage, audience).description}
               action={
-                audience === 'buyer' ? (
+                audience === 'buyer' && stage === 'open' ? (
                   <Button asChild variant="outline">
                     <Link to="/products">Explore the market</Link>
                   </Button>
@@ -349,6 +391,7 @@ function OrderTrackingContent({
                     order={item}
                     audience={audience}
                     page={page}
+                    stage={stage === 'open' ? undefined : stage}
                   />
                 ))}
               </ul>
@@ -367,7 +410,7 @@ function OrderTrackingContent({
                   onClick={() =>
                     void navigate({
                       to: audience === 'buyer' ? '/orders' : '/producer/orders',
-                      search: { page: Math.max(1, page - 1) },
+                      search: { page: Math.max(1, page - 1), ...stageSearch },
                     })
                   }
                 >
@@ -380,7 +423,7 @@ function OrderTrackingContent({
                   onClick={() =>
                     void navigate({
                       to: audience === 'buyer' ? '/orders' : '/producer/orders',
-                      search: { page: page + 1 },
+                      search: { page: page + 1, ...stageSearch },
                     })
                   }
                 >

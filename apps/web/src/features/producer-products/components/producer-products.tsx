@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { SegmentedTabs } from '@/components/shared/segmented-tabs';
 import { useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -808,27 +809,18 @@ function ProductList({ onEdit }: { onEdit: (product: Product) => void }) {
         </p>
       )}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div
-          role="tablist"
-          aria-label="Product status"
-          className="inline-flex rounded-lg border bg-muted p-0.5"
-        >
-          {(['active', 'archived'] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={view === value}
-              onClick={() => {
-                setView(value);
-                setPage(1);
-              }}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${view === value ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              {value === 'active' ? 'Active' : 'Archived'}
-            </button>
-          ))}
-        </div>
+        <SegmentedTabs
+          label="Product status"
+          value={view}
+          options={[
+            { value: 'active', label: 'Active' },
+            { value: 'archived', label: 'Archived' },
+          ]}
+          onChange={(value) => {
+            setView(value);
+            setPage(1);
+          }}
+        />
         <p id="products-heading" className="text-sm text-muted-foreground">
           {items.length} {view === 'active' ? 'active' : 'archived'}{' '}
           {items.length === 1 ? 'listing' : 'listings'}
