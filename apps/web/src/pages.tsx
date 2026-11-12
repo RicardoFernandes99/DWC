@@ -175,10 +175,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             A place for local produce and the people
             <br className="hidden xl:block" /> who make it possible.
           </p>
-          <div className="auth-story-footer">
-            <span>From the land. To your table.</span>
-            <Sprout aria-hidden="true" />
-          </div>
+          <div className="auth-story-footer" aria-hidden="true" />
         </div>
       </aside>
       <section className="auth-form-side" aria-labelledby="auth-title">
