@@ -469,14 +469,14 @@ function ProducerApplicationForm({
           }
         >
           {([latitude, longitude, address]) => (
-            <FormField
-              id="producer-location"
-              label="Map location"
-              description="Search for the address, then pick the right match."
-            >
+            <FormField id="producer-location" label="Find on the map">
               <AddressSearch
                 id="producer-location"
-                initialQuery={address}
+                value={address}
+                onValueChange={(next) => {
+                  clearFieldError('collectionAddress');
+                  form.setFieldValue('collectionAddress', next);
+                }}
                 latitude={
                   latitude.trim() === '' || !Number.isFinite(Number(latitude))
                     ? null

@@ -18,21 +18,26 @@ const MIN_QUERY = 3;
  */
 export function AddressSearch({
   id,
-  initialQuery,
+  value,
+  onValueChange,
   latitude,
   longitude,
   onPick,
   error,
+  describedBy,
 }: {
   id: string;
-  initialQuery: string;
+  /** The address text; typing changes it and starts a search. */
+  value: string;
+  onValueChange: (value: string) => void;
   latitude: number | null;
   longitude: number | null;
   onPick: (result: GeocodeResult) => void;
   error?: string;
+  describedBy?: string;
 }) {
   const listId = useId();
-  const [draft, setDraft] = useState(initialQuery);
+  const draft = value;
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -70,11 +75,14 @@ export function AddressSearch({
           aria-controls={listId}
           aria-autocomplete="list"
           aria-invalid={Boolean(error)}
+          aria-describedby={describedBy}
+          autoComplete="street-address"
+          maxLength={240}
           value={draft}
           placeholder="Search your farm or collection address"
           className="pl-9"
           onChange={(event) => {
-            setDraft(event.target.value);
+            onValueChange(event.target.value);
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
@@ -110,7 +118,7 @@ export function AddressSearch({
                       className="flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                       onClick={() => {
                         onPick(item);
-                        setDraft(item.label);
+                        onValueChange(item.label);
                         setOpen(false);
                       }}
                     >
@@ -153,11 +161,6 @@ export function AddressSearch({
           </p>
         )}
       </div>
-      {hasPin && (
-        <p className="text-xs text-muted-foreground tabular-nums">
-          Pinned at {latitude!.toFixed(5)}, {longitude!.toFixed(5)}
-        </p>
-      )}
     </div>
   );
 }

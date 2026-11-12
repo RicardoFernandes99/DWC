@@ -1239,7 +1239,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
             </dd>
           </div>
           <div className="min-w-0 sm:col-span-2">
-            <dt className="text-muted-foreground">Farm practices and story</dt>
+            <dt className="text-muted-foreground">Description</dt>
             <dd className="mt-1 max-w-[70ch] leading-relaxed whitespace-pre-line break-words">
               {baseProfile.description}
             </dd>
@@ -1285,19 +1285,6 @@ function ProfileForm({ profile }: { profile: Profile }) {
                 </FormField>
               )}
             </form.Field>
-            <form.Field name="collectionAddress">
-              {(field) => (
-                <FormField id="profile-address" label="Collection address">
-                  <Input
-                    id="profile-address"
-                    maxLength={240}
-                    required
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                  />
-                </FormField>
-              )}
-            </form.Field>
             <div className="md:col-span-2">
               <form.Subscribe
                 selector={(state) =>
@@ -1309,14 +1296,16 @@ function ProfileForm({ profile }: { profile: Profile }) {
                 }
               >
                 {([latitude, longitude, address]) => (
-                  <FormField
-                    id="profile-location"
-                    label="Map location"
-                    description="Search for the address, then pick the right match."
-                  >
+                  <FormField id="profile-location" label="Collection address">
                     <AddressSearch
                       id="profile-location"
-                      initialQuery={address}
+                      value={address}
+                      onValueChange={(next) => {
+                        form.setFieldValue('collectionAddress', next);
+                        // A typed change needs a new pick to move the pin.
+                        form.setFieldValue('latitude', '');
+                        form.setFieldValue('longitude', '');
+                      }}
                       latitude={
                         latitude.trim() === '' ? null : Number(latitude)
                       }
@@ -1347,10 +1336,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
           </div>
           <form.Field name="description">
             {(field) => (
-              <FormField
-                id="profile-description"
-                label="Farm practices and story"
-              >
+              <FormField id="profile-description" label="Description">
                 <Textarea
                   id="profile-description"
                   rows={4}
