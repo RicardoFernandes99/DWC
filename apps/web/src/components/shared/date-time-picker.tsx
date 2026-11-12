@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CalendarDays, ChevronDown } from 'lucide-react';
+import { NativeSelect } from '@/components/ui/native-select';
+import { CalendarDays } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import {
@@ -141,8 +142,8 @@ export function DateTimePicker({
 }
 
 /**
- * Native select styled like the app's inputs. A portal-based dropdown inside
- * the popover would be treated as an outside click and lose the selection.
+ * Native select: a portal-based dropdown inside the popover would be treated
+ * as an outside click and lose the selection.
  */
 function TimeSelect({
   label,
@@ -156,23 +157,18 @@ function TimeSelect({
   onChange: (value: string) => void;
 }) {
   return (
-    <span className="relative inline-flex">
-      <select
-        aria-label={label}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-[4.5rem] cursor-pointer appearance-none rounded-md border border-input bg-background pr-7 pl-3 text-sm tabular-nums shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 right-2 size-4 -translate-y-1/2 opacity-50"
-      />
-    </span>
+    <NativeSelect
+      aria-label={label}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      wrapperClassName="w-[4.5rem]"
+      className="h-9 tabular-nums"
+    >
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </NativeSelect>
   );
 }

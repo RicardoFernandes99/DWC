@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { NativeSelect } from '@/components/ui/native-select';
 import type { FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type {
@@ -433,12 +434,13 @@ export function AuctionBidForm({
               >
                 Pay with
               </label>
-              <select
+              <NativeSelect
                 id="auction-payment-method"
                 value={pending?.paymentMethodId ?? selectedMethod?.id ?? ''}
                 disabled={Boolean(pending) || submitting}
                 onChange={(event) => setSelectedMethodId(event.target.value)}
-                className="mt-1 block h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                wrapperClassName="mt-1 flex w-full"
+                className="bg-card"
               >
                 {pending &&
                   !eligibleMethods.some(
@@ -455,7 +457,7 @@ export function AuctionBidForm({
                     {method.expiryYear}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <Button
               type="submit"

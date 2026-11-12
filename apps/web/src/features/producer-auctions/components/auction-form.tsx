@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { NativeSelect } from '@/components/ui/native-select';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -22,12 +23,7 @@ import {
 } from './auction-data';
 import { useAuctionBeforeStart } from './use-auction-before-start';
 import { EmptyState } from '@/components/shared/empty-state';
-import {
-  ArrowLeft,
-  CalendarClock,
-  ChevronDown,
-  PackagePlus,
-} from 'lucide-react';
+import { ArrowLeft, CalendarClock, PackagePlus } from 'lucide-react';
 
 type CreateAuction = components['schemas']['CreateAuctionDto'];
 type UpdateAuction = components['schemas']['UpdateAuctionDto'];
@@ -501,33 +497,27 @@ export function AuctionForm({
             <div className="absolute inset-x-0 top-0 p-3 md:p-4">
               <form.Field name="productId">
                 {(field) => (
-                  <span className="relative inline-flex max-w-full">
-                    <select
-                      id="auction-product"
-                      name={field.name}
-                      aria-label="Product"
-                      required
-                      value={field.state.value}
-                      aria-invalid={Boolean(fieldErrors.productId)}
-                      onChange={(event) => {
-                        clearFieldError('productId');
-                        field.handleChange(event.target.value);
-                        setChosenProductId(event.target.value);
-                      }}
-                      className="h-9 max-w-full cursor-pointer appearance-none truncate rounded-full border-0 bg-white/90 pr-9 pl-4 text-sm font-medium text-foreground shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                    >
-                      <option value="">Choose a product</option>
-                      {publishedProducts.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      aria-hidden="true"
-                      className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-foreground/60"
-                    />
-                  </span>
+                  <NativeSelect
+                    variant="pill"
+                    id="auction-product"
+                    name={field.name}
+                    aria-label="Product"
+                    required
+                    value={field.state.value}
+                    aria-invalid={Boolean(fieldErrors.productId)}
+                    onChange={(event) => {
+                      clearFieldError('productId');
+                      field.handleChange(event.target.value);
+                      setChosenProductId(event.target.value);
+                    }}
+                  >
+                    <option value="">Choose a product</option>
+                    {publishedProducts.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </NativeSelect>
                 )}
               </form.Field>
             </div>

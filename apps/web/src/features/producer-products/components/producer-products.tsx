@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { NativeSelect } from '@/components/ui/native-select';
 import { SegmentedTabs } from '@/components/shared/segmented-tabs';
 import { useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -313,8 +314,8 @@ function ProductEditor({
     leaving.current = true;
     onSaved();
   };
-  const pill =
-    'h-8 cursor-pointer rounded-full border-0 bg-white/90 px-3 text-xs font-medium text-foreground shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
+  // Compact overlay pills on the product photo.
+  const pill = 'h-8 text-xs';
   const photo = preview ?? baseProduct?.imageUrl ?? undefined;
   return (
     <form
@@ -349,7 +350,8 @@ function ProductEditor({
           <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-wrap items-start gap-2 p-3 *:pointer-events-auto md:p-4">
             <form.Field name="productionMethod">
               {(field) => (
-                <select
+                <NativeSelect
+                  variant="pill"
                   aria-label="Production method"
                   className={pill}
                   value={field.state.value}
@@ -360,12 +362,13 @@ function ProductEditor({
                       {label(item)}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               )}
             </form.Field>
             <form.Field name="category">
               {(field) => (
-                <select
+                <NativeSelect
+                  variant="pill"
                   aria-label="Category"
                   className={pill}
                   value={field.state.value}
@@ -378,7 +381,7 @@ function ProductEditor({
                       {label(item)}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               )}
             </form.Field>
             <label
@@ -456,9 +459,10 @@ function ProductEditor({
               </form.Field>
               <form.Field name="unit">
                 {(field) => (
-                  <select
+                  <NativeSelect
                     aria-label="Sold per"
-                    className="h-14 w-28 shrink-0 rounded-md border bg-background px-2 text-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                    wrapperClassName="w-28 shrink-0"
+                    className="h-14"
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value as Unit)}
                   >
@@ -467,7 +471,7 @@ function ProductEditor({
                         / {label(item)}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 )}
               </form.Field>
             </div>
