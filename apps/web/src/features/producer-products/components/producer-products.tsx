@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { AddressSearch } from '@/components/shared/address-search';
 import { NativeSelect } from '@/components/ui/native-select';
 import { SegmentedTabs } from '@/components/shared/segmented-tabs';
 import { useForm, useStore } from '@tanstack/react-form';
@@ -1146,16 +1147,17 @@ function ProfileForm({ profile }: { profile: Profile }) {
         longitude > 180
       ) {
         setFieldError(
-          'Enter all profile details and valid coordinates before saving.',
+          'Fill in every detail and pick your address on the map before saving.',
         );
-        if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90)
-          document.getElementById('profile-latitude')?.focus();
-        else if (
+        if (
+          !Number.isFinite(latitude) ||
+          latitude < -90 ||
+          latitude > 90 ||
           !Number.isFinite(longitude) ||
           longitude < -180 ||
           longitude > 180
         )
-          document.getElementById('profile-longitude')?.focus();
+          document.getElementById('profile-location')?.focus();
         return;
       }
       setFieldError('');
@@ -1296,55 +1298,51 @@ function ProfileForm({ profile }: { profile: Profile }) {
                 </FormField>
               )}
             </form.Field>
-            <div className="grid grid-cols-2 gap-4">
-              <form.Field name="latitude">
-                {(field) => (
+            <div className="md:col-span-2">
+              <form.Subscribe
+                selector={(state) =>
+                  [
+                    state.values.latitude,
+                    state.values.longitude,
+                    state.values.collectionAddress,
+                  ] as const
+                }
+              >
+                {([latitude, longitude, address]) => (
                   <FormField
-                    id="profile-latitude"
-                    label="Latitude"
-                    error={latitudeError}
+                    id="profile-location"
+                    label="Map location"
+                    description="Search for the address, then pick the right match."
                   >
-                    <Input
-                      id="profile-latitude"
-                      type="number"
-                      min="-90"
-                      max="90"
-                      step="any"
-                      required
-                      aria-invalid={Boolean(latitudeError)}
-                      aria-describedby={
-                        latitudeError ? 'profile-latitude-error' : undefined
+                    <AddressSearch
+                      id="profile-location"
+                      initialQuery={address}
+                      latitude={
+                        latitude.trim() === '' ? null : Number(latitude)
                       }
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      longitude={
+                        longitude.trim() === '' ? null : Number(longitude)
+                      }
+                      error={
+                        latitudeError || longitudeError
+                          ? 'Pick your address from the search results to place it on the map.'
+                          : undefined
+                      }
+                      onPick={(match) => {
+                        form.setFieldValue('latitude', String(match.latitude));
+                        form.setFieldValue(
+                          'longitude',
+                          String(match.longitude),
+                        );
+                        if (!form.getFieldValue('city').trim() && match.city)
+                          form.setFieldValue('city', match.city);
+                        setLatitudeError('');
+                        setLongitudeError('');
+                      }}
                     />
                   </FormField>
                 )}
-              </form.Field>
-              <form.Field name="longitude">
-                {(field) => (
-                  <FormField
-                    id="profile-longitude"
-                    label="Longitude"
-                    error={longitudeError}
-                  >
-                    <Input
-                      id="profile-longitude"
-                      type="number"
-                      min="-180"
-                      max="180"
-                      step="any"
-                      required
-                      aria-invalid={Boolean(longitudeError)}
-                      aria-describedby={
-                        longitudeError ? 'profile-longitude-error' : undefined
-                      }
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                    />
-                  </FormField>
-                )}
-              </form.Field>
+              </form.Subscribe>
             </div>
           </div>
           <form.Field name="description">

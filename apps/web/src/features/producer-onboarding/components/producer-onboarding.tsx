@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AddressSearch } from '@/components/shared/address-search';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { components } from '@/lib/api-schema';
@@ -458,75 +459,126 @@ function ProducerApplicationForm({
           )}
         </form.Field>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <form.Field name="latitude">
-            {(field) => (
-              <FormField
-                id="producer-latitude"
-                label="Latitude"
-                description="Decimal degrees between -90 and 90."
-                error={fieldErrors.latitude}
-              >
-                <Input
-                  id="producer-latitude"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="38.8029"
-                  className="tabular-nums"
-                  value={field.state.value}
-                  aria-invalid={!!fieldErrors.latitude}
-                  aria-describedby={
-                    [
-                      'producer-latitude-description',
-                      fieldErrors.latitude ? 'producer-latitude-error' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ') || undefined
-                  }
-                  onBlur={field.handleBlur}
-                  onChange={(event) => {
-                    clearFieldError('latitude');
-                    field.handleChange(event.target.value);
-                  }}
-                />
-              </FormField>
-            )}
-          </form.Field>
+        <form.Subscribe
+          selector={(state) =>
+            [
+              state.values.latitude,
+              state.values.longitude,
+              state.values.collectionAddress,
+            ] as const
+          }
+        >
+          {([latitude, longitude, address]) => (
+            <FormField
+              id="producer-location"
+              label="Map location"
+              description="Search for the address, then pick the right match."
+            >
+              <AddressSearch
+                id="producer-location"
+                initialQuery={address}
+                latitude={
+                  latitude.trim() === '' || !Number.isFinite(Number(latitude))
+                    ? null
+                    : Number(latitude)
+                }
+                longitude={
+                  longitude.trim() === '' || !Number.isFinite(Number(longitude))
+                    ? null
+                    : Number(longitude)
+                }
+                onPick={(match) => {
+                  form.setFieldValue('latitude', String(match.latitude));
+                  form.setFieldValue('longitude', String(match.longitude));
+                  if (!form.getFieldValue('city').trim() && match.city)
+                    form.setFieldValue('city', match.city);
+                  clearFieldError('latitude');
+                  clearFieldError('longitude');
+                }}
+              />
+            </FormField>
+          )}
+        </form.Subscribe>
 
-          <form.Field name="longitude">
-            {(field) => (
-              <FormField
-                id="producer-longitude"
-                label="Longitude"
-                description="Decimal degrees between -180 and 180."
-                error={fieldErrors.longitude}
-              >
-                <Input
+        <details
+          className="rounded-lg border px-4 py-3"
+          open={
+            Boolean(fieldErrors.latitude || fieldErrors.longitude) || undefined
+          }
+        >
+          <summary className="cursor-pointer text-sm font-medium">
+            Enter coordinates manually
+          </summary>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <form.Field name="latitude">
+              {(field) => (
+                <FormField
+                  id="producer-latitude"
+                  label="Latitude"
+                  description="Decimal degrees between -90 and 90."
+                  error={fieldErrors.latitude}
+                >
+                  <Input
+                    id="producer-latitude"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="38.8029"
+                    className="tabular-nums"
+                    value={field.state.value}
+                    aria-invalid={!!fieldErrors.latitude}
+                    aria-describedby={
+                      [
+                        'producer-latitude-description',
+                        fieldErrors.latitude ? 'producer-latitude-error' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ') || undefined
+                    }
+                    onBlur={field.handleBlur}
+                    onChange={(event) => {
+                      clearFieldError('latitude');
+                      field.handleChange(event.target.value);
+                    }}
+                  />
+                </FormField>
+              )}
+            </form.Field>
+
+            <form.Field name="longitude">
+              {(field) => (
+                <FormField
                   id="producer-longitude"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="-9.3817"
-                  className="tabular-nums"
-                  value={field.state.value}
-                  aria-invalid={!!fieldErrors.longitude}
-                  aria-describedby={
-                    [
-                      'producer-longitude-description',
-                      fieldErrors.longitude ? 'producer-longitude-error' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ') || undefined
-                  }
-                  onBlur={field.handleBlur}
-                  onChange={(event) => {
-                    clearFieldError('longitude');
-                    field.handleChange(event.target.value);
-                  }}
-                />
-              </FormField>
-            )}
-          </form.Field>
-        </div>
+                  label="Longitude"
+                  description="Decimal degrees between -180 and 180."
+                  error={fieldErrors.longitude}
+                >
+                  <Input
+                    id="producer-longitude"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="-9.3817"
+                    className="tabular-nums"
+                    value={field.state.value}
+                    aria-invalid={!!fieldErrors.longitude}
+                    aria-describedby={
+                      [
+                        'producer-longitude-description',
+                        fieldErrors.longitude ? 'producer-longitude-error' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ') || undefined
+                    }
+                    onBlur={field.handleBlur}
+                    onChange={(event) => {
+                      clearFieldError('longitude');
+                      field.handleChange(event.target.value);
+                    }}
+                  />
+                </FormField>
+              )}
+            </form.Field>
+          </div>
+        </details>
 
         <form.Field name="description">
           {(field) => (

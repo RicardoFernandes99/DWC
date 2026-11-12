@@ -62,6 +62,10 @@ export class User {
   @Prop({ required: true, select: false })
   passwordHash!: string;
 
+  /** Private S3 key of the profile picture; null shows initials. */
+  @Prop({ type: String, default: null })
+  avatarKey!: string | null;
+
   @Prop({ required: true, enum: Object.values(UserRole) })
   role!: UserRole;
 

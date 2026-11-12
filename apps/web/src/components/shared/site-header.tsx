@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { UserAvatar } from '@/components/shared/user-avatar';
 import {
   ArrowUpRight,
   ChevronDown,
@@ -185,15 +186,6 @@ function itemsFor(user: User | null | undefined): DrawerItem[] {
   return marketplace;
 }
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]!.toUpperCase())
-    .join('');
-}
-
 function MobileDrawer({ user }: { user: User | null | undefined }) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -246,12 +238,11 @@ function MobileDrawer({ user }: { user: User | null | undefined }) {
 
           {user && (
             <div className="mx-3 mb-2 flex items-center gap-3 rounded-lg border bg-card p-3">
-              <span
-                aria-hidden="true"
-                className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary"
-              >
-                {initials(user.name)}
-              </span>
+              <UserAvatar
+                name={user.name}
+                src={user.avatarUrl}
+                className="size-11 text-sm"
+              />
               <p className="min-w-0 truncate font-semibold">{user.name}</p>
             </div>
           )}
@@ -311,12 +302,11 @@ function UserMenu({ user }: { user: User }) {
           type="button"
           className="hidden items-center gap-2 rounded-lg py-1 pr-2 pl-1 text-[13px] font-medium hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:bg-accent md:inline-flex"
         >
-          <span
-            aria-hidden="true"
-            className="grid size-8 place-items-center rounded-full bg-secondary text-xs font-semibold text-primary"
-          >
-            {initials(user.name)}
-          </span>
+          <UserAvatar
+            name={user.name}
+            src={user.avatarUrl}
+            className="size-8 text-xs"
+          />
           <span className="max-w-40 truncate">{user.name}</span>
           <ChevronDown aria-hidden="true" className="size-4 opacity-60" />
         </button>

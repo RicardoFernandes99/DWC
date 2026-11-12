@@ -43,12 +43,30 @@ function normalizeDeclaredMimeType(mimetype: string | undefined): string {
   return mimetype.split(';')[0]?.trim().toLowerCase() ?? '';
 }
 
+function hasRasterSignature(buffer: Buffer): boolean {
+  return (
+    (buffer.length >= 8 && buffer.subarray(0, 8).equals(PNG_SIGNATURE)) ||
+    (buffer.length >= 3 &&
+      buffer[0] === 0xff &&
+      buffer[1] === 0xd8 &&
+      buffer[2] === 0xff) ||
+    (buffer.length >= 12 &&
+      buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.subarray(8, 12).toString('ascii') === 'WEBP')
+  );
+}
+
 function looksLikeSvgContent(
   buffer: Buffer,
   declaredMimeType: string,
 ): boolean {
   if (declaredMimeType.includes('svg')) {
     return true;
+  }
+  // Raster files can carry "<svg" text in embedded metadata (XMP); a file
+  // with a PNG, JPEG or WebP signature is decoded as raster, never as SVG.
+  if (hasRasterSignature(buffer)) {
+    return false;
   }
   const head = buffer
     .subarray(0, Math.min(buffer.length, 512))
@@ -199,18 +217,18 @@ function parseWebpDimensions(
 
 export function validateProductImage(
   file: UploadedImageFileInput | undefined,
+  subject = 'product image',
 ): ValidatedProductImage {
+  const Subject = subject[0]!.toUpperCase() + subject.slice(1);
   if (!file || !Buffer.isBuffer(file.buffer) || file.buffer.byteLength === 0) {
-    throw new BadRequestException(
-      'A non-empty product image file is required.',
-    );
+    throw new BadRequestException(`A non-empty ${subject} file is required.`);
   }
 
   const buffer = file.buffer;
   const sizeBytes = buffer.byteLength;
   if (sizeBytes > MAX_PRODUCT_IMAGE_BYTES) {
     throw new BadRequestException(
-      `Product image must not exceed ${MAX_PRODUCT_IMAGE_BYTES} bytes (5 MB).`,
+      `${Subject} must not exceed ${MAX_PRODUCT_IMAGE_BYTES} bytes (5 MB).`,
     );
   }
 
@@ -286,7 +304,7 @@ export function validateProductImage(
     detected.width * detected.height > MAX_PRODUCT_IMAGE_PIXELS
   ) {
     throw new BadRequestException(
-      `Product image dimensions must be between ${MIN_PRODUCT_IMAGE_DIMENSION}x${MIN_PRODUCT_IMAGE_DIMENSION} and ${MAX_PRODUCT_IMAGE_DIMENSION}x${MAX_PRODUCT_IMAGE_DIMENSION} pixels (maximum ${MAX_PRODUCT_IMAGE_PIXELS} total pixels).`,
+      `${Subject} dimensions must be between ${MIN_PRODUCT_IMAGE_DIMENSION}x${MIN_PRODUCT_IMAGE_DIMENSION} and ${MAX_PRODUCT_IMAGE_DIMENSION}x${MAX_PRODUCT_IMAGE_DIMENSION} pixels (maximum ${MAX_PRODUCT_IMAGE_PIXELS} total pixels).`,
     );
   }
 

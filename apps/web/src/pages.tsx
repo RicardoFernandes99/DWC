@@ -31,6 +31,7 @@ import { sessionOptions } from './lib/session-query';
 import { useCart } from '@/features/cart/use-cart';
 import { SiteHeader } from '@/components/shared/site-header';
 import { SiteFooter } from '@/components/shared/site-footer';
+import { AvatarPicker } from '@/components/shared/avatar-picker';
 import './pages.css';
 
 const sessionKey = ['session'] as const;
@@ -47,7 +48,8 @@ export function Shell() {
   const changingAuth =
     location.pathname === '/login' || location.pathname === '/register';
   return (
-    <>
+    // Column layout keeps the footer at the bottom on short pages.
+    <div className="flex min-h-svh flex-col">
       <SiteHeader user={query.data} cartCount={totalItemCount} />
       {query.data?.role === 'buyer' &&
         query.data.buyerStatus === 'suspended' && (
@@ -70,15 +72,17 @@ export function Shell() {
             </div>
           </section>
         )}
-      {!changingAuth && access === 'home' ? (
-        <Navigate to="/" replace />
-      ) : access === 'login' ? (
-        <Navigate to="/login" search={{ returnTo: location.href }} replace />
-      ) : (
-        <Outlet />
-      )}
+      <div className="flex-1">
+        {!changingAuth && access === 'home' ? (
+          <Navigate to="/" replace />
+        ) : access === 'login' ? (
+          <Navigate to="/login" search={{ returnTo: location.href }} replace />
+        ) : (
+          <Outlet />
+        )}
+      </div>
       {!changingAuth && <SiteFooter />}
-    </>
+    </div>
   );
 }
 export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
@@ -454,17 +458,7 @@ export function Account() {
     <main className="mx-auto max-w-3xl px-4 py-8 md:px-8 md:py-12">
       <div className="rounded-2xl border bg-card p-4 sm:p-5 md:p-8">
         <header className="flex flex-wrap items-center gap-4 border-b pb-6">
-          <span
-            aria-hidden="true"
-            className="grid size-14 shrink-0 place-items-center rounded-full bg-secondary text-lg font-semibold text-primary"
-          >
-            {current.name
-              .split(/\s+/)
-              .filter(Boolean)
-              .slice(0, 2)
-              .map((part) => part[0]!.toUpperCase())
-              .join('')}
-          </span>
+          <AvatarPicker user={current} />
           <div className="min-w-0 flex-1">
             {current.role === 'producer' ? (
               <ProducerStatusBadge

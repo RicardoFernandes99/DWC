@@ -33,4 +33,13 @@ export class UserResponseDto {
 
   @ApiProperty({ type: String, nullable: true, example: null })
   buyerSuspensionReason!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description:
+      'Short-lived signed URL of the profile picture, or null when none is set.',
+  })
+  avatarUrl!: string | null;
 }

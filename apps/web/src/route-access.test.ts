@@ -12,6 +12,7 @@ const buyer: User = {
   buyerStatus: 'active' as const,
   buyerSuspensionReason: null,
   producerRejectionReason: null,
+  avatarUrl: null,
 };
 const producer: User = {
   ...buyer,

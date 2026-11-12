@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { AccountModule } from './account/account.module.js';
+import { GeocodingModule } from './geocoding/geocoding.module.js';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { fileURLToPath } from 'node:url';
@@ -42,6 +44,8 @@ import { BuyerStandingModule } from './users/buyer-standing.module.js';
     BuyerStandingModule,
     ModerationModule,
     UsersModule,
+    AccountModule,
+    GeocodingModule,
     RedisModule,
     StorageModule,
     ConfigModule.forRoot({
