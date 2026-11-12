@@ -1,4 +1,5 @@
 import { safeReturn } from './safe-return';
+import { ProducerStatusBadge } from '@/features/producer-onboarding/components/producer-status-badge';
 import { routeAccess } from './route-access';
 import { useState } from 'react';
 import { ArrowRight, Leaf, LogOut, ShoppingBasket, Sprout } from 'lucide-react';
@@ -465,7 +466,14 @@ export function Account() {
               .join('')}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm text-muted-foreground">Your account</p>
+            {current.role === 'producer' ? (
+              <ProducerStatusBadge
+                status={current.producerStatus ?? 'pending'}
+                className="mb-1"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">Your account</p>
+            )}
             <h1 className="text-2xl leading-tight break-words md:text-3xl">
               {current.name}
             </h1>
