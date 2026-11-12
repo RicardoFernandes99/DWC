@@ -85,13 +85,13 @@ export class CatalogueQueryDto {
   @Min(1)
   @Max(1000)
   page = 1;
-  @ApiPropertyOptional({ minimum: 1, maximum: 50, default: 20 })
+  @ApiPropertyOptional({ minimum: 1, maximum: 50, default: 12 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(50)
-  limit = 20;
+  limit = 12;
 }
 
 export class CatalogueProductDto {

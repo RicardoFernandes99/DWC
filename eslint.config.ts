@@ -10,6 +10,7 @@ export default [
       '**/dist/**',
       '**/node_modules/**',
       '**/coverage/**',
+      'apps/backoffice/**',
       '.agents/skills/**/*.mjs',
       '.agents/skills/record-demo/assets/overlay.js',
       '.agents/skills/impeccable/**',

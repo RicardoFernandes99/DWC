@@ -222,6 +222,40 @@ export class ProducerProductsController {
     return this.products.archiveForProducer(user.id, params.id, input);
   }
 
+  @Post(':id/restore')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    type: ProducerProductResponseDto,
+    description:
+      'Archived product restored. It stays unpublished until the producer publishes it.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid product identifier or revision payload.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid, expired or revoked access JWT.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Only approved producers may manage products.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Product not found.',
+  })
+  @ApiConflictResponse({
+    description:
+      'Product is not archived or its revision changed concurrently.',
+  })
+  async restore(
+    @Headers('authorization') authorization: string | undefined,
+    @Param() params: ProductIdParamDto,
+    @Body() input: ArchiveProducerProductDto,
+    @Res({ passthrough: true }) response: HeaderResponse,
+  ): Promise<ProducerProductResponseDto> {
+    response.setHeader('Cache-Control', 'no-store');
+    const user = await this.approvedProducer(authorization);
+    return this.products.restoreForProducer(user.id, params.id, input);
+  }
+
   @Post(':id/image')
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(

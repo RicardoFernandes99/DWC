@@ -8,8 +8,9 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import type { Connection } from 'mongoose';
 import {
   StorageService,
   type SignedGetUrlResult,
@@ -57,12 +58,9 @@ function toProducerProductImageMetadata(
   };
 }
 
+/** Producers still see their own archived products' photos; moderated ones stay hidden. */
 function canMintProductImageUrl(product: ProductDocument): boolean {
-  return (
-    Boolean(product.image?.objectKey) &&
-    product.archivedAt === null &&
-    product.moderatedAt === null
-  );
+  return Boolean(product.image?.objectKey) && product.moderatedAt === null;
 }
 
 function toProducerProductResponse(
@@ -111,6 +109,7 @@ export class ProductsService {
     private readonly products: Model<Product>,
     @InjectModel(User.name)
     private readonly users: Model<User>,
+    @InjectConnection() private readonly connection: Connection,
     private readonly storage: StorageService,
   ) {}
 
@@ -181,26 +180,60 @@ export class ProductsService {
     userId: string,
     input: CreateProducerProductDto,
   ): Promise<ProducerProductResponseDto> {
-    await this.requireApprovedProducer(userId);
-    const product = await this.products.create({
-      producerId: new Types.ObjectId(userId),
-      name: input.name,
-      description: input.description,
-      category: input.category,
-      productionMethod: input.productionMethod,
-      seasons: input.seasons,
-      priceCents: input.priceCents,
-      unit: input.unit,
-      availableStock: input.availableStock,
-      reservedStock: 0,
-      lowStockThreshold: input.lowStockThreshold,
-      published: input.published ?? true,
-      archivedAt: null,
-      moderatedAt: null,
-      moderationReason: null,
-      image: null,
-      revision: 1,
-    });
+    const producerId = new Types.ObjectId(userId);
+    const session = await this.connection.startSession();
+    let product: ProductDocument | null = null;
+    try {
+      await session.withTransaction(async () => {
+        product = null;
+        // Real write on the producer: a concurrent suspension conflicts with
+        // it, so the insert either commits first or the producer is refused.
+        const fenced = await this.users.findOneAndUpdate(
+          {
+            _id: producerId,
+            role: UserRole.Producer,
+            producerStatus: ProducerStatus.Approved,
+          },
+          { $inc: { auctionEligibilityRevision: 1 } },
+          { session },
+        );
+        if (!fenced) {
+          throw new ForbiddenException(
+            'Only approved producers may manage products.',
+          );
+        }
+        const [created] = await this.products.create(
+          [
+            {
+              producerId,
+              name: input.name,
+              description: input.description,
+              category: input.category,
+              productionMethod: input.productionMethod,
+              seasons: input.seasons,
+              priceCents: input.priceCents,
+              unit: input.unit,
+              availableStock: input.availableStock,
+              reservedStock: 0,
+              lowStockThreshold: input.lowStockThreshold,
+              published: input.published ?? true,
+              archivedAt: null,
+              moderatedAt: null,
+              moderationReason: null,
+              image: null,
+              revision: 1,
+            },
+          ],
+          { session },
+        );
+        product = created ?? null;
+      });
+    } finally {
+      await session.endSession();
+    }
+    if (!product) {
+      throw new ServiceUnavailableException('Product could not be created.');
+    }
     return toProducerProductResponse(product, this.storage);
   }
 
@@ -329,6 +362,46 @@ export class ProductsService {
       }
       if (existing.archivedAt !== null) {
         throw new ConflictException('Product is already archived.');
+      }
+      throw new ConflictException(
+        'Product was modified concurrently. Refresh and try again.',
+      );
+    }
+
+    return toProducerProductResponse(updated, this.storage);
+  }
+
+  /** Un-archives a product; it stays unpublished until the producer publishes it. */
+  async restoreForProducer(
+    userId: string,
+    id: string,
+    input: ArchiveProducerProductDto,
+  ): Promise<ProducerProductResponseDto> {
+    await this.requireApprovedProducer(userId);
+    const updated = await this.products.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(id),
+        producerId: new Types.ObjectId(userId),
+        archivedAt: { $ne: null },
+        revision: input.revision,
+      },
+      {
+        $set: { archivedAt: null, published: false },
+        $inc: { revision: 1 },
+      },
+      { returnDocument: 'after', runValidators: true },
+    );
+
+    if (!updated) {
+      const existing = await this.products.findOne({
+        _id: new Types.ObjectId(id),
+        producerId: new Types.ObjectId(userId),
+      });
+      if (!existing) {
+        throw new NotFoundException('Product not found.');
+      }
+      if (existing.archivedAt === null) {
+        throw new ConflictException('Product is not archived.');
       }
       throw new ConflictException(
         'Product was modified concurrently. Refresh and try again.',

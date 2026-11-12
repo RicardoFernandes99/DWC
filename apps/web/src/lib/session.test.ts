@@ -5,6 +5,8 @@ const person = {
   email: 'one@example.com',
   role: 'buyer',
   producerStatus: null,
+  buyerStatus: 'active' as const,
+  buyerSuspensionReason: null,
   producerRejectionReason: null,
 };
 const session = (accessToken: string) => ({

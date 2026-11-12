@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Patch,
+  Post,
   Query,
   Res,
   UseGuards,
@@ -17,6 +18,7 @@ import {
   ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
+  ApiProduces,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -29,11 +31,13 @@ import {
   OrderListResponseDto,
   OrderResponseDto,
   UpdateOrderStatusDto,
+  RefundReasonDto,
 } from './order.dto.js';
 import { OrdersService } from './orders.service.js';
 
 interface HeaderResponse {
   setHeader(name: string, value: string): void;
+  send(body: Buffer): void;
 }
 
 @ApiTags('Orders')
@@ -93,6 +97,40 @@ export class OrdersController {
     return this.ordersService.getOrderById(user, orderId);
   }
 
+  @Get(':orderId/receipt.pdf')
+  @ApiProduces('application/pdf')
+  @ApiOkResponse({
+    description: 'A bounded PDF purchase receipt for this order.',
+    content: {
+      'application/pdf': { schema: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Invalid order ID format.' })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid, expired or revoked access token.',
+  })
+  @ApiForbiddenResponse({ description: 'Role does not allow receipt access.' })
+  @ApiNotFoundResponse({
+    description:
+      'Order not found or does not belong to the authenticated user.',
+  })
+  async downloadReceipt(
+    @CurrentUser() user: UserResponseDto,
+    @Param() { orderId }: OrderIdParamDto,
+    @Res() response: HeaderResponse,
+  ): Promise<void> {
+    response.setHeader('Cache-Control', 'private, no-store');
+    response.setHeader('X-Content-Type-Options', 'nosniff');
+    const pdf = await this.ordersService.purchaseReceipt(user, orderId);
+    response.setHeader('Content-Type', 'application/pdf');
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename="purchase-receipt-${orderId}.pdf"`,
+    );
+    response.setHeader('Content-Length', String(pdf.byteLength));
+    response.send(pdf);
+  }
+
   @Patch(':orderId/status')
   @HttpCode(HttpStatus.OK)
   @Roles(UserRole.Producer)
@@ -123,5 +161,119 @@ export class OrdersController {
     @Body() body: UpdateOrderStatusDto,
   ): Promise<OrderResponseDto> {
     return this.ordersService.advanceOrderStatus(user, orderId, body);
+  }
+
+  @Post(':orderId/refund-requests')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.Buyer)
+  @ApiOkResponse({
+    type: OrderResponseDto,
+    description:
+      'Creates or returns the open refund request for this Pending catalogue order.',
+  })
+  @ApiConflictResponse({
+    description: 'Order is not eligible for a refund request.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Malformed order ID or invalid refund reason.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid, expired or revoked access token.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Only the order buyer may request a refund.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Order not found or does not belong to the buyer.',
+  })
+  async requestRefund(
+    @CurrentUser() user: UserResponseDto,
+    @Param() { orderId }: OrderIdParamDto,
+    @Body() body: RefundReasonDto,
+  ): Promise<OrderResponseDto> {
+    return this.ordersService.requestRefund(user, orderId, body);
+  }
+
+  @Post(':orderId/refund-requests/accept')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.Producer)
+  @ApiOkResponse({
+    type: OrderResponseDto,
+    description: 'Accepts the open request and refunds the exact order total.',
+  })
+  @ApiConflictResponse({
+    description:
+      'No eligible open refund request or payment allocation is unavailable.',
+  })
+  @ApiBadRequestResponse({ description: 'Malformed order ID.' })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid, expired or revoked access token.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Only the order producer may accept a refund.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Order not found or does not belong to the producer.',
+  })
+  async acceptRefund(
+    @CurrentUser() user: UserResponseDto,
+    @Param() { orderId }: OrderIdParamDto,
+  ): Promise<OrderResponseDto> {
+    return this.ordersService.decideRefund(user, orderId, true);
+  }
+
+  @Post(':orderId/refund-requests/decline')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.Producer)
+  @ApiOkResponse({
+    type: OrderResponseDto,
+    description: 'Declines the request with a required producer reason.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Malformed order ID or blank/invalid decline reason.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid, expired or revoked access token.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Only the order producer may decline a refund.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Order not found or does not belong to the producer.',
+  })
+  @ApiConflictResponse({ description: 'No eligible open refund request.' })
+  async declineRefund(
+    @CurrentUser() user: UserResponseDto,
+    @Param() { orderId }: OrderIdParamDto,
+    @Body() body: RefundReasonDto,
+  ): Promise<OrderResponseDto> {
+    return this.ordersService.decideRefund(user, orderId, false, body);
+  }
+
+  @Post(':orderId/cancel-refund')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.Producer)
+  @ApiOkResponse({
+    type: OrderResponseDto,
+    description: 'Cancels a Pending catalogue order and refunds it once.',
+  })
+  @ApiConflictResponse({
+    description: 'Order is not eligible for cancellation and refund.',
+  })
+  @ApiBadRequestResponse({ description: 'Malformed order ID.' })
+  @ApiUnauthorizedResponse({
+    description: 'Missing, invalid, expired or revoked access token.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Only the order producer may cancel and refund it.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Order not found or does not belong to the producer.',
+  })
+  async cancelAndRefund(
+    @CurrentUser() user: UserResponseDto,
+    @Param() { orderId }: OrderIdParamDto,
+  ): Promise<OrderResponseDto> {
+    return this.ordersService.cancelAndRefundOrder(user, orderId);
   }
 }

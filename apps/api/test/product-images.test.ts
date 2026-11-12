@@ -172,6 +172,7 @@ test('StorageService.createSignedGetUrl produces bounded SigV4 URL without leaki
   };
   const config = {
     getOrThrow: (key: string) => configValues[key],
+    get: (key: string) => configValues[key],
   } as unknown as ConfigService;
 
   const storage = new StorageService(config);
@@ -191,6 +192,33 @@ test('StorageService.createSignedGetUrl produces bounded SigV4 URL without leaki
     assert.ok(signed.url.includes('X-Amz-Expires=300'));
     assert.ok(signed.url.includes('X-Amz-Signature='));
     assert.equal(signed.url.includes(secretKey), false);
+  } finally {
+    storage.onModuleDestroy();
+  }
+});
+
+test('StorageService signs browser URLs for S3_PUBLIC_ENDPOINT when the API uses an internal endpoint', () => {
+  const configValues: Record<string, string> = {
+    S3_BUCKET: 'product-images',
+    S3_ENDPOINT: 'http://storage:4566',
+    S3_PUBLIC_ENDPOINT: 'http://127.0.0.1:4566',
+    S3_REGION: 'us-east-1',
+    S3_ACCESS_KEY_ID: 'dwc-local-access',
+    S3_SECRET_ACCESS_KEY: 'local-secret',
+  };
+  const config = {
+    getOrThrow: (key: string) => configValues[key],
+    get: (key: string) => configValues[key],
+  } as unknown as ConfigService;
+
+  const storage = new StorageService(config);
+  try {
+    const { url } = storage.createSignedGetUrl('products/u1/p1/sample.png');
+    assert.ok(
+      url.startsWith('http://127.0.0.1:4566/product-images/'),
+      'signed URL must use the browser-reachable endpoint',
+    );
+    assert.equal(url.includes('storage:4566'), false);
   } finally {
     storage.onModuleDestroy();
   }
@@ -265,6 +293,8 @@ test('ProductsService refuses image URL minting for archived, moderated or ineli
   const service = new ProductsService(
     fakeProductsModel as never,
     fakeUsersModel as never,
+    // Signed URL minting does not open MongoDB transactions.
+    {} as never,
     fakeStorage,
   );
 

@@ -51,7 +51,7 @@
           {
             "name": "Origin",
             "in": "header",
-            "description": "Must equal configured WEB_ORIGIN, including non-browser clients.",
+            "description": "Must equal configured WEB_ORIGIN or BACKOFFICE_ORIGIN, including non-browser clients.",
             "required": true,
             "schema": {
               "type": "string"
@@ -96,7 +96,7 @@
           {
             "name": "Origin",
             "in": "header",
-            "description": "Must equal configured WEB_ORIGIN.",
+            "description": "Must equal configured WEB_ORIGIN or BACKOFFICE_ORIGIN.",
             "required": true,
             "schema": {
               "type": "string"
@@ -1099,6 +1099,71 @@
         ]
       }
     },
+    "/api/producer/products/{id}/restore": {
+      "post": {
+        "operationId": "ProducerProductsController_restore",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Product identifier.",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveProducerProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Archived product restored. It stays unpublished until the producer publishes it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerProductResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid product identifier or revision payload."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved producers may manage products."
+          },
+          "404": {
+            "description": "Product not found."
+          },
+          "409": {
+            "description": "Product is not archived or its revision changed concurrently."
+          },
+          "503": {
+            "description": "Authentication or product image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer products"
+        ]
+      }
+    },
     "/api/producer/products/{id}/image": {
       "post": {
         "operationId": "ProducerProductsController_uploadImage",
@@ -1359,7 +1424,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 50,
-              "default": 20,
+              "default": 12,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -1670,7 +1735,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 50,
-              "default": 20,
+              "default": 12,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -1930,6 +1995,56 @@
         ]
       }
     },
+    "/api/orders/{orderId}/receipt.pdf": {
+      "get": {
+        "operationId": "OrdersController_downloadReceipt",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Unique 24-character hexadecimal MongoDB ObjectId of the order.",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A bounded PDF purchase receipt for this order.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid order ID format."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Role does not allow receipt access."
+          },
+          "404": {
+            "description": "Order not found or does not belong to the authenticated user."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
     "/api/orders/{orderId}/status": {
       "patch": {
         "operationId": "OrdersController_advanceOrderStatus",
@@ -1989,6 +2104,1892 @@
         ],
         "tags": [
           "Orders"
+        ]
+      }
+    },
+    "/api/orders/{orderId}/refund-requests": {
+      "post": {
+        "operationId": "OrdersController_requestRefund",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Unique 24-character hexadecimal MongoDB ObjectId of the order.",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b01",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundReasonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Creates or returns the open refund request for this Pending catalogue order.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed order ID or invalid refund reason."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Only the order buyer may request a refund."
+          },
+          "404": {
+            "description": "Order not found or does not belong to the buyer."
+          },
+          "409": {
+            "description": "Order is not eligible for a refund request."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/orders/{orderId}/refund-requests/accept": {
+      "post": {
+        "operationId": "OrdersController_acceptRefund",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Unique 24-character hexadecimal MongoDB ObjectId of the order.",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accepts the open request and refunds the exact order total.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed order ID."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Only the order producer may accept a refund."
+          },
+          "404": {
+            "description": "Order not found or does not belong to the producer."
+          },
+          "409": {
+            "description": "No eligible open refund request or payment allocation is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/orders/{orderId}/refund-requests/decline": {
+      "post": {
+        "operationId": "OrdersController_declineRefund",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Unique 24-character hexadecimal MongoDB ObjectId of the order.",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b01",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundReasonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Declines the request with a required producer reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed order ID or blank/invalid decline reason."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Only the order producer may decline a refund."
+          },
+          "404": {
+            "description": "Order not found or does not belong to the producer."
+          },
+          "409": {
+            "description": "No eligible open refund request."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/orders/{orderId}/cancel-refund": {
+      "post": {
+        "operationId": "OrdersController_cancelAndRefund",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Unique 24-character hexadecimal MongoDB ObjectId of the order.",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancels a Pending catalogue order and refunds it once.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed order ID."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Only the order producer may cancel and refund it."
+          },
+          "404": {
+            "description": "Order not found or does not belong to the producer."
+          },
+          "409": {
+            "description": "Order is not eligible for cancellation and refund."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "operationId": "NotificationsController_list",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor returned by the previous page.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "unreadOnly",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination or cursor."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "403": {
+            "description": "Account is not permitted."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/notifications/unread-count": {
+      "get": {
+        "operationId": "NotificationsController_unreadCount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "403": {
+            "description": "Account is not permitted."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/notifications/{notificationId}/read": {
+      "patch": {
+        "operationId": "NotificationsController_markRead",
+        "parameters": [
+          {
+            "name": "notificationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid notification ID."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "403": {
+            "description": "Account is not permitted."
+          },
+          "404": {
+            "description": "Notification not found or does not belong to the account."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/producer/auctions": {
+      "get": {
+        "operationId": "ProducerAuctionsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request input is invalid."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "403": {
+            "description": "Producer access is required."
+          },
+          "503": {
+            "description": "Authentication service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the authenticated producer’s auctions.",
+        "tags": [
+          "Producer auctions"
+        ]
+      },
+      "post": {
+        "operationId": "ProducerAuctionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAuctionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request input is invalid."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "403": {
+            "description": "Only an approved producer may create auctions."
+          },
+          "409": {
+            "description": "Product stock or eligibility changed."
+          },
+          "503": {
+            "description": "Authentication service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a scheduled auction and reserve its lot.",
+        "tags": [
+          "Producer auctions"
+        ]
+      }
+    },
+    "/api/producer/auctions/{id}": {
+      "get": {
+        "operationId": "ProducerAuctionsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request input is invalid."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "404": {
+            "description": "Auction not found."
+          },
+          "503": {
+            "description": "Authentication service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read one of the authenticated producer’s auctions.",
+        "tags": [
+          "Producer auctions"
+        ]
+      },
+      "patch": {
+        "operationId": "ProducerAuctionsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAuctionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request input is invalid."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "404": {
+            "description": "Auction not found."
+          },
+          "409": {
+            "description": "Auction started, revision is stale, or stock changed."
+          },
+          "503": {
+            "description": "Authentication service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit a scheduled auction before its start.",
+        "tags": [
+          "Producer auctions"
+        ]
+      }
+    },
+    "/api/producer/auctions/{id}/cancel": {
+      "post": {
+        "operationId": "ProducerAuctionsController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelAuctionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request input is invalid."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "404": {
+            "description": "Auction not found."
+          },
+          "409": {
+            "description": "Auction started, revision is stale, or stock could not be released."
+          },
+          "503": {
+            "description": "Authentication service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a scheduled auction and release its reserved lot.",
+        "tags": [
+          "Producer auctions"
+        ]
+      }
+    },
+    "/api/auctions": {
+      "get": {
+        "operationId": "PublicAuctionsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 12,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "upcoming",
+                "active",
+                "finished"
+              ]
+            }
+          },
+          {
+            "name": "producerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination or state filter."
+          }
+        },
+        "summary": "Browse upcoming, active and time-ended auctions.",
+        "tags": [
+          "Auctions"
+        ]
+      }
+    },
+    "/api/auctions/{id}": {
+      "get": {
+        "operationId": "PublicAuctionsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid auction identifier."
+          },
+          "404": {
+            "description": "Auction not found or not publicly visible."
+          }
+        },
+        "summary": "Read a public auction and its immutable product snapshot.",
+        "tags": [
+          "Auctions"
+        ]
+      }
+    },
+    "/api/auctions/{id}/live": {
+      "get": {
+        "operationId": "PublicAuctionsController_live",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionLiveStateDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid auction identifier."
+          },
+          "404": {
+            "description": "Auction not found."
+          }
+        },
+        "summary": "Read the current server auction state and time.",
+        "tags": [
+          "Auctions"
+        ]
+      }
+    },
+    "/api/auctions/{id}/result": {
+      "get": {
+        "operationId": "PublicAuctionsController_result",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionBuyerResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid auction identifier."
+          },
+          "401": {
+            "description": "Buyer session is unavailable."
+          },
+          "403": {
+            "description": "Only buyers may read this result."
+          },
+          "404": {
+            "description": "Auction not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the authenticated buyer’s persisted auction result.",
+        "tags": [
+          "Auctions"
+        ]
+      }
+    },
+    "/api/auctions/{id}/bids": {
+      "get": {
+        "operationId": "PublicAuctionsController_history",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuctionHistoryResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid auction identifier or pagination."
+          },
+          "404": {
+            "description": "Auction not found."
+          }
+        },
+        "summary": "Read public, paginated auction bid history.",
+        "tags": [
+          "Auctions"
+        ]
+      }
+    },
+    "/api/reviews": {
+      "post": {
+        "operationId": "ReviewsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Review created for the producer of a delivered or collected order owned by the buyer (auction orders included).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnReviewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid order ID, rating (integer 1-5) or comment (max 1000 characters)."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Only buyers may create reviews."
+          },
+          "404": {
+            "description": "Order not found or not owned by the buyer."
+          },
+          "409": {
+            "description": "order_not_reviewable (order not delivered/collected) or review_exists (order already reviewed)."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Reviews"
+        ]
+      }
+    },
+    "/api/reviews/orders/{orderId}": {
+      "get": {
+        "operationId": "ReviewsController_getOrderStatus",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether the buyer may review this order now, and the existing review if any.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderReviewStatusDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid order ID."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Only buyers may use this endpoint."
+          },
+          "404": {
+            "description": "Order not found or not owned by the buyer."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Reviews"
+        ]
+      }
+    },
+    "/api/reviews/{reviewId}/reports": {
+      "post": {
+        "operationId": "ReviewsController_report",
+        "parameters": [
+          {
+            "name": "reviewId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b02",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Report recorded. Retries by the same user are idempotent and keep the first report. Reporter identity is never exposed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewReportResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid review ID, category (spam, offensive, off_topic, false_information, other) or note (max 500 characters)."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Role not allowed, or own_review: authors cannot report their own review."
+          },
+          "404": {
+            "description": "Review not found or not visible."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Reviews"
+        ]
+      }
+    },
+    "/api/producers/{producerId}/reviews": {
+      "get": {
+        "operationId": "ProducerReviewsController_list",
+        "parameters": [
+          {
+            "name": "producerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "60d5ecb8b392d13b48f10b03",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public, newest-first page of visible reviews with a visible-only rating summary. Exposes the reviewer first name only.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerReviewListDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid producer ID or pagination (page >= 1, limit 1-50)."
+          },
+          "404": {
+            "description": "Producer not found or unavailable."
+          }
+        },
+        "tags": [
+          "Reviews"
+        ]
+      }
+    },
+    "/api/producer/metrics": {
+      "get": {
+        "operationId": "ProducerMetricsController_get",
+        "parameters": [
+          {
+            "name": "period",
+            "required": false,
+            "in": "query",
+            "description": "Rolling window ending at server time, applied to order creation time. \"all\" has no lower bound.",
+            "schema": {
+              "default": "7d",
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sales totals, best sellers and low-stock warnings for the authenticated producer only.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProducerMetricsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid period or unknown query fields."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only approved or suspended producers (historical metrics) may view metrics."
+          },
+          "503": {
+            "description": "Authentication unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Producer metrics"
+        ]
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "operationId": "AdminInspectionController_listUsers",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "buyer",
+                "producer",
+                "admin"
+              ]
+            }
+          },
+          {
+            "name": "producerStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "suspended"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUsersPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filter or pagination."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin inspection"
+        ]
+      }
+    },
+    "/api/admin/users/{id}": {
+      "get": {
+        "operationId": "AdminInspectionController_getUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed user ID."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "User not found."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin inspection"
+        ]
+      }
+    },
+    "/api/admin/orders": {
+      "get": {
+        "operationId": "AdminInspectionController_listOrders",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "confirmed",
+                "shipped",
+                "delivered",
+                "ready_for_collection",
+                "collected",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "origin",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "catalogue",
+                "auction"
+              ]
+            }
+          },
+          {
+            "name": "fulfilmentMethod",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "delivery",
+                "collection"
+              ]
+            }
+          },
+          {
+            "name": "buyerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          },
+          {
+            "name": "producerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOrdersPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filter or pagination."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin inspection"
+        ]
+      }
+    },
+    "/api/admin/orders/{id}": {
+      "get": {
+        "operationId": "AdminInspectionController_getOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOrderDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed order ID."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Order not found."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin inspection"
+        ]
+      }
+    },
+    "/api/admin/orders/{id}/receipt.pdf": {
+      "get": {
+        "operationId": "AdminInspectionController_downloadOrderReceipt",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A bounded PDF purchase receipt for this order.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed order ID."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Order not found."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin inspection"
+        ]
+      }
+    },
+    "/api/admin/auctions": {
+      "get": {
+        "operationId": "AdminInspectionController_listAuctions",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "scheduled",
+                "active",
+                "finished",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "producerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAuctionsPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filter or pagination."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin inspection"
+        ]
+      }
+    },
+    "/api/admin/auctions/{id}": {
+      "get": {
+        "operationId": "AdminInspectionController_getAuction",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAuctionDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed auction ID or pagination."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Auction not found."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin inspection"
+        ]
+      }
+    },
+    "/api/admin/health": {
+      "get": {
+        "operationId": "AdminInspectionController_serviceHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminServiceHealthDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access token."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin inspection"
+        ]
+      }
+    },
+    "/api/admin/buyers/{id}/suspend": {
+      "post": {
+        "operationId": "AdminBuyersController_suspend",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuspendBuyerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBuyerStandingDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identifier, revision, or reason."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Buyer not found."
+          },
+          "409": {
+            "description": "Buyer standing changed or the decision is stale."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin buyers"
+        ]
+      }
+    },
+    "/api/admin/buyers/{id}/reinstate": {
+      "post": {
+        "operationId": "AdminBuyersController_reinstate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "671f0f98ac53ba58e26c4789",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReinstateBuyerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBuyerStandingDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identifier or revision."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Administrator access is required."
+          },
+          "404": {
+            "description": "Buyer not found."
+          },
+          "409": {
+            "description": "Buyer standing changed or the decision is stale."
+          },
+          "503": {
+            "description": "Authentication storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Admin buyers"
         ]
       }
     }
@@ -2074,6 +4075,19 @@
             "type": "string",
             "nullable": true,
             "example": null
+          },
+          "buyerStatus": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ],
+            "example": "active"
+          },
+          "buyerSuspensionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null
           }
         },
         "required": [
@@ -2082,7 +4096,9 @@
           "email",
           "role",
           "producerStatus",
-          "producerRejectionReason"
+          "producerRejectionReason",
+          "buyerStatus",
+          "buyerSuspensionReason"
         ]
       },
       "AuthResponseDto": {
@@ -2281,6 +4297,12 @@
             "example": null,
             "description": "Administrator explanation for application rejection, if rejected."
           },
+          "suspensionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Administrator explanation for the current suspension; null unless suspended."
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time",
@@ -2309,6 +4331,7 @@
         "required": [
           "status",
           "rejectionReason",
+          "suspensionReason",
           "submittedAt",
           "decidedAt",
           "application"
@@ -2539,6 +4562,12 @@
             "nullable": true,
             "example": null
           },
+          "suspensionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Reason for the current suspension; null unless suspended."
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time",
@@ -2567,6 +4596,7 @@
           "status",
           "revision",
           "rejectionReason",
+          "suspensionReason",
           "submittedAt",
           "decidedAt",
           "decidedBy",
@@ -4235,6 +6265,46 @@
           "amountCents"
         ]
       },
+      "RefundRequestResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "declined",
+              "accepted"
+            ]
+          },
+          "requestedAt": {
+            "type": "string",
+            "example": "2026-11-02T14:30:00.000Z"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "example": "Unable to collect the order."
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2026-11-02T15:00:00.000Z"
+          },
+          "refundedCents": {
+            "type": "number",
+            "nullable": true,
+            "example": 4000
+          }
+        },
+        "required": [
+          "status",
+          "requestedAt",
+          "reason",
+          "decidedAt",
+          "refundedCents"
+        ]
+      },
       "OrderResponseDto": {
         "type": "object",
         "properties": {
@@ -4246,7 +6316,8 @@
           "checkoutId": {
             "type": "string",
             "example": "60d5ecb8b392d13b48f10e01",
-            "description": "Associated multi-producer checkout session identifier."
+            "description": "Associated checkout session, or null for an auction order.",
+            "nullable": true
           },
           "buyerId": {
             "type": "string",
@@ -4365,6 +6436,16 @@
                 "$ref": "#/components/schemas/OrderPaymentSummaryDto"
               }
             ]
+          },
+          "refundRequest": {
+            "nullable": true,
+            "description": "Latest buyer refund request and producer decision.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RefundRequestResponseDto"
+              }
+            ]
           }
         },
         "required": [
@@ -4455,6 +6536,2456 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "RefundReasonDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "example": "I can no longer collect this order."
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "NotificationResourceDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "order",
+              "producer_application",
+              "buyer_account",
+              "auction",
+              "product"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ]
+      },
+      "NotificationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "order_created",
+              "order_status_changed",
+              "refund_requested",
+              "refund_decision",
+              "producer_application_approved",
+              "producer_application_rejected",
+              "producer_suspended",
+              "producer_reinstated",
+              "buyer_suspended",
+              "buyer_reinstated",
+              "product_hidden",
+              "product_restored",
+              "auction_won",
+              "auction_lost",
+              "auction_closed",
+              "auction_payment_method_expired"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "resource": {
+            "$ref": "#/components/schemas/NotificationResourceDto"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "eventType",
+          "title",
+          "message",
+          "resource",
+          "createdAt",
+          "readAt"
+        ]
+      },
+      "NotificationListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponseDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "UnreadCountResponseDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "count"
+        ]
+      },
+      "AuctionProductSnapshotResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "productionMethod": {
+            "type": "string"
+          },
+          "seasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "category",
+          "productionMethod",
+          "seasons",
+          "unit"
+        ]
+      },
+      "AuctionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "producerId": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "product": {
+            "$ref": "#/components/schemas/AuctionProductSnapshotResponseDto"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1
+          },
+          "startingPriceCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "minimumIncrementCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "upcoming",
+              "active",
+              "finished"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "active",
+              "finished",
+              "cancelled"
+            ]
+          },
+          "currentBidCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "revision": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "producerId",
+          "productId",
+          "product",
+          "quantity",
+          "startingPriceCents",
+          "minimumIncrementCents",
+          "startsAt",
+          "endsAt",
+          "state",
+          "status",
+          "currentBidCents",
+          "revision",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "AuctionListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuctionResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "minimum": 0
+          },
+          "page": {
+            "type": "number",
+            "minimum": 1
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "CreateAuctionDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "example": "671f0f98ac53ba58e26c4789"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1000000,
+            "example": 3
+          },
+          "startingPriceCents": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100000000,
+            "example": 1500
+          },
+          "minimumIncrementCents": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100000000,
+            "example": 100
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-12-01T12:00:00.000Z"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-12-01T13:00:00.000Z"
+          }
+        },
+        "required": [
+          "productId",
+          "quantity",
+          "startingPriceCents",
+          "minimumIncrementCents",
+          "startsAt",
+          "endsAt"
+        ]
+      },
+      "UpdateAuctionDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1,
+            "description": "Current auction revision."
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1000000,
+            "example": 4
+          },
+          "startingPriceCents": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100000000,
+            "example": 1800
+          },
+          "minimumIncrementCents": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100000000,
+            "example": 150
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "CancelAuctionDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1,
+            "description": "Current auction revision."
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "AuctionLiveStateDto": {
+        "type": "object",
+        "properties": {
+          "auctionId": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "upcoming",
+              "active",
+              "finished"
+            ]
+          },
+          "startingPriceCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "minimumIncrementCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "currentBidCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "currentBidderName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          },
+          "serverTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "type": "number"
+          },
+          "viewerCount": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "auctionId",
+          "state",
+          "startingPriceCents",
+          "minimumIncrementCents",
+          "currentBidCents",
+          "currentBidderName",
+          "serverTime",
+          "endsAt",
+          "revision",
+          "viewerCount"
+        ]
+      },
+      "AuctionBuyerResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "won",
+              "not_winner"
+            ]
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "succeeded"
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "state",
+          "orderId",
+          "paymentStatus"
+        ]
+      },
+      "AuctionBidResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "auctionId": {
+            "type": "string"
+          },
+          "amountCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "bidderName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "type": "number",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "id",
+          "auctionId",
+          "amountCents",
+          "bidderName",
+          "acceptedAt",
+          "endsAt",
+          "revision"
+        ]
+      },
+      "AuctionHistoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuctionBidResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "minimum": 0
+          },
+          "page": {
+            "type": "number",
+            "minimum": 1
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "CreateReviewDto": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "example": "60d5ecb8b392d13b48f10b01",
+            "description": "Delivered or collected order owned by the authenticated buyer."
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5,
+            "example": 5
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000,
+            "description": "Plain-text comment, trimmed. Empty or whitespace-only becomes null. Never interpreted as HTML."
+          }
+        },
+        "required": [
+          "orderId",
+          "rating"
+        ]
+      },
+      "OwnReviewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "producerId": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "producerId",
+          "rating",
+          "comment",
+          "createdAt"
+        ]
+      },
+      "OrderReviewStatusDto": {
+        "type": "object",
+        "properties": {
+          "eligible": {
+            "type": "boolean",
+            "description": "True when the order is delivered or collected and has no review yet."
+          },
+          "review": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OwnReviewDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "eligible",
+          "review"
+        ]
+      },
+      "ReportReviewDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "spam",
+              "offensive",
+              "off_topic",
+              "false_information",
+              "other"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Optional plain-text note, trimmed; empty becomes null."
+          }
+        },
+        "required": [
+          "category"
+        ]
+      },
+      "ReviewReportResultDto": {
+        "type": "object",
+        "properties": {
+          "reported": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "reported"
+        ]
+      },
+      "PublicReviewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewerFirstName": {
+            "type": "string",
+            "description": "First word of the reviewer name; no other identity data."
+          }
+        },
+        "required": [
+          "id",
+          "rating",
+          "comment",
+          "createdAt",
+          "reviewerFirstName"
+        ]
+      },
+      "ReviewSummaryDto": {
+        "type": "object",
+        "properties": {
+          "averageRating": {
+            "type": "number",
+            "nullable": true,
+            "description": "Average of visible ratings rounded to one decimal; null without reviews."
+          },
+          "ratingCount": {
+            "type": "number",
+            "description": "Number of visible reviews."
+          }
+        },
+        "required": [
+          "averageRating",
+          "ratingCount"
+        ]
+      },
+      "ProducerReviewListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicReviewDto"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number",
+            "description": "Total visible reviews."
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ReviewSummaryDto"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "limit",
+          "total",
+          "summary"
+        ]
+      },
+      "SalesBreakdownDto": {
+        "type": "object",
+        "properties": {
+          "orderCount": {
+            "type": "number",
+            "example": 4,
+            "minimum": 0
+          },
+          "productRevenueCents": {
+            "type": "number",
+            "example": 12500,
+            "minimum": 0,
+            "description": "Sum of original order line totals, in cents."
+          }
+        },
+        "required": [
+          "orderCount",
+          "productRevenueCents"
+        ]
+      },
+      "SalesMetricsDto": {
+        "type": "object",
+        "properties": {
+          "orderCount": {
+            "type": "number",
+            "example": 4,
+            "minimum": 0
+          },
+          "productRevenueCents": {
+            "type": "number",
+            "example": 12500,
+            "minimum": 0,
+            "description": "Sum of original order line totals, in cents."
+          },
+          "deliveryFeesCents": {
+            "type": "number",
+            "example": 800,
+            "minimum": 0,
+            "description": "Delivery fees charged on these orders, reported separately."
+          },
+          "catalogue": {
+            "$ref": "#/components/schemas/SalesBreakdownDto"
+          },
+          "auction": {
+            "$ref": "#/components/schemas/SalesBreakdownDto"
+          }
+        },
+        "required": [
+          "orderCount",
+          "productRevenueCents",
+          "deliveryFeesCents",
+          "catalogue",
+          "auction"
+        ]
+      },
+      "UnitsSoldDto": {
+        "type": "object",
+        "properties": {
+          "unit": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "bunch",
+              "box",
+              "jar",
+              "bottle",
+              "bag",
+              "kg",
+              "g_500",
+              "g_250",
+              "l",
+              "ml_500"
+            ]
+          },
+          "quantity": {
+            "type": "number",
+            "example": 12,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "unit",
+          "quantity"
+        ]
+      },
+      "BestSellerDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "example": "665f1c2e8f1b2a0012345678"
+          },
+          "productName": {
+            "type": "string",
+            "description": "Most recent order snapshot name."
+          },
+          "orderCount": {
+            "type": "number",
+            "example": 3,
+            "minimum": 1
+          },
+          "productRevenueCents": {
+            "type": "number",
+            "example": 5400,
+            "minimum": 0
+          },
+          "unitsSold": {
+            "description": "Quantities per unit; different units are never summed.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitsSoldDto"
+            }
+          }
+        },
+        "required": [
+          "productId",
+          "productName",
+          "orderCount",
+          "productRevenueCents",
+          "unitsSold"
+        ]
+      },
+      "LowStockItemDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "example": "665f1c2e8f1b2a0012345678"
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "bunch",
+              "box",
+              "jar",
+              "bottle",
+              "bag",
+              "kg",
+              "g_500",
+              "g_250",
+              "l",
+              "ml_500"
+            ]
+          },
+          "availableStock": {
+            "type": "number",
+            "example": 2,
+            "description": "Sellable stock; already excludes auction-reserved stock."
+          },
+          "reservedStock": {
+            "type": "number",
+            "example": 5,
+            "description": "Stock held by auctions, for information."
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "example": 3
+          },
+          "published": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "productId",
+          "name",
+          "unit",
+          "availableStock",
+          "reservedStock",
+          "lowStockThreshold",
+          "published"
+        ]
+      },
+      "LowStockMetricsDto": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "number",
+            "example": 7,
+            "minimum": 0,
+            "description": "All matching products."
+          },
+          "items": {
+            "description": "Up to 50 products, lowest available stock first.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LowStockItemDto"
+            }
+          }
+        },
+        "required": [
+          "totalCount",
+          "items"
+        ]
+      },
+      "DailyOrdersDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-11-08",
+            "description": "UTC calendar day."
+          },
+          "orderCount": {
+            "type": "number",
+            "example": 2,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "date",
+          "orderCount"
+        ]
+      },
+      "PreviousPeriodDto": {
+        "type": "object",
+        "properties": {
+          "orderCount": {
+            "type": "number",
+            "example": 4,
+            "minimum": 0
+          },
+          "productRevenueCents": {
+            "type": "number",
+            "example": 2850,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "orderCount",
+          "productRevenueCents"
+        ]
+      },
+      "AttentionDto": {
+        "type": "object",
+        "properties": {
+          "pendingOrders": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0,
+            "description": "Orders awaiting confirmation."
+          },
+          "openRefunds": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0,
+            "description": "Refund requests awaiting a decision."
+          }
+        },
+        "required": [
+          "pendingOrders",
+          "openRefunds"
+        ]
+      },
+      "ProducerMetricsResponseDto": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "7d",
+              "30d",
+              "90d",
+              "all"
+            ]
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Window start (inclusive); null for \"all\"."
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Server time."
+          },
+          "sales": {
+            "description": "All non-cancelled (so non-refunded) orders in the window.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesMetricsDto"
+              }
+            ]
+          },
+          "bestSellers": {
+            "description": "Top 5 by revenue, then order count, then product id.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BestSellerDto"
+            }
+          },
+          "lowStock": {
+            "$ref": "#/components/schemas/LowStockMetricsDto"
+          },
+          "daily": {
+            "description": "Non-cancelled orders per UTC day across the window, zero-filled. Empty for \"all\".",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyOrdersDto"
+            }
+          },
+          "previous": {
+            "nullable": true,
+            "description": "Same totals for the window just before; null for \"all\".",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreviousPeriodDto"
+              }
+            ]
+          },
+          "attention": {
+            "description": "Current open work, independent of the period.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttentionDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "period",
+          "from",
+          "to",
+          "sales",
+          "bestSellers",
+          "lowStock",
+          "daily",
+          "previous",
+          "attention"
+        ]
+      },
+      "AdminUserListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "buyer",
+              "producer",
+              "admin"
+            ]
+          },
+          "producerStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "suspended"
+            ],
+            "nullable": true
+          },
+          "buyerStatus": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ],
+            "nullable": true
+          },
+          "farmName": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "producerStatus",
+          "buyerStatus",
+          "farmName",
+          "city",
+          "createdAt"
+        ]
+      },
+      "AdminUsersPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminUserListItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "minimum": 0
+          },
+          "page": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 500
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "totalPages": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "AdminProducerApplicationDto": {
+        "type": "object",
+        "properties": {
+          "farmName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "farmName",
+          "description",
+          "city",
+          "submittedAt"
+        ]
+      },
+      "AdminUserDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "buyer",
+              "producer",
+              "admin"
+            ]
+          },
+          "producerStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "suspended"
+            ],
+            "nullable": true
+          },
+          "buyerStatus": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ],
+            "nullable": true
+          },
+          "farmName": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "producerApplication": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminProducerApplicationDto"
+              }
+            ]
+          },
+          "producerRejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "producerSuspensionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "producerDecisionRevision": {
+            "type": "number",
+            "minimum": 0
+          },
+          "producerDecisionBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "producerDecisionAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "buyerSuspensionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "buyerDecisionRevision": {
+            "type": "number",
+            "minimum": 0
+          },
+          "buyerDecisionBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "buyerDecisionAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "producerStatus",
+          "buyerStatus",
+          "farmName",
+          "city",
+          "createdAt",
+          "producerApplication",
+          "producerRejectionReason",
+          "producerSuspensionReason",
+          "producerDecisionRevision",
+          "producerDecisionBy",
+          "producerDecisionAt",
+          "updatedAt",
+          "buyerSuspensionReason",
+          "buyerDecisionRevision",
+          "buyerDecisionBy",
+          "buyerDecisionAt"
+        ]
+      },
+      "AdminOrderListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "checkoutId": {
+            "type": "string",
+            "nullable": true
+          },
+          "auctionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "buyerId": {
+            "type": "string"
+          },
+          "producerId": {
+            "type": "string"
+          },
+          "paymentId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "shipped",
+              "delivered",
+              "ready_for_collection",
+              "collected",
+              "cancelled"
+            ]
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "catalogue",
+              "auction"
+            ]
+          },
+          "fulfilmentMethod": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "collection"
+            ]
+          },
+          "totalCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "refundedCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "checkoutId",
+          "auctionId",
+          "buyerId",
+          "producerId",
+          "paymentId",
+          "status",
+          "origin",
+          "fulfilmentMethod",
+          "totalCents",
+          "refundedCents",
+          "createdAt"
+        ]
+      },
+      "AdminOrdersPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminOrderListItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "minimum": 0
+          },
+          "page": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 500
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "totalPages": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "AdminOrderOwnerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "buyer",
+              "producer",
+              "admin"
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role"
+        ]
+      },
+      "AdminOrderPaymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "succeeded",
+              "failed"
+            ]
+          },
+          "amountCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "checkoutId": {
+            "type": "string",
+            "nullable": true
+          },
+          "auctionId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "amountCents",
+          "checkoutId",
+          "auctionId"
+        ]
+      },
+      "AdminOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "productUnit": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "bunch",
+              "box",
+              "jar",
+              "bottle",
+              "bag",
+              "kg",
+              "g_500",
+              "g_250",
+              "l",
+              "ml_500"
+            ]
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1
+          },
+          "unitPriceCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "lineTotalCents": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "productId",
+          "productName",
+          "productUnit",
+          "quantity",
+          "unitPriceCents",
+          "lineTotalCents"
+        ]
+      },
+      "AdminOrderHistoryDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "shipped",
+              "delivered",
+              "ready_for_collection",
+              "collected",
+              "cancelled"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "actorRole": {
+            "type": "string",
+            "enum": [
+              "buyer",
+              "producer",
+              "admin"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "status",
+          "timestamp",
+          "actorId",
+          "actorRole",
+          "note"
+        ]
+      },
+      "AdminRefundAllocationDto": {
+        "type": "object",
+        "properties": {
+          "paymentId": {
+            "type": "string"
+          },
+          "refundedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "paymentId",
+          "refundedAt"
+        ]
+      },
+      "AdminRefundRequestDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "declined",
+              "accepted"
+            ]
+          },
+          "requestedBy": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "decidedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "refundedCents": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true
+          }
+        },
+        "required": [
+          "status",
+          "requestedBy",
+          "requestedAt",
+          "reason",
+          "decidedBy",
+          "decidedAt",
+          "refundedCents"
+        ]
+      },
+      "AdminOrderDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "checkoutId": {
+            "type": "string",
+            "nullable": true
+          },
+          "auctionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "buyerId": {
+            "type": "string"
+          },
+          "producerId": {
+            "type": "string"
+          },
+          "paymentId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "shipped",
+              "delivered",
+              "ready_for_collection",
+              "collected",
+              "cancelled"
+            ]
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "catalogue",
+              "auction"
+            ]
+          },
+          "fulfilmentMethod": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "collection"
+            ]
+          },
+          "totalCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "refundedCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "buyer": {
+            "$ref": "#/components/schemas/AdminOrderOwnerDto"
+          },
+          "producer": {
+            "$ref": "#/components/schemas/AdminOrderOwnerDto"
+          },
+          "payment": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminOrderPaymentDto"
+              }
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminOrderItemDto"
+            }
+          },
+          "statusHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminOrderHistoryDto"
+            }
+          },
+          "subtotalCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "deliveryFeeCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "refundAllocation": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminRefundAllocationDto"
+              }
+            ]
+          },
+          "refundRequest": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminRefundRequestDto"
+              }
+            ]
+          },
+          "revision": {
+            "type": "number",
+            "minimum": 1
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "checkoutId",
+          "auctionId",
+          "buyerId",
+          "producerId",
+          "paymentId",
+          "status",
+          "origin",
+          "fulfilmentMethod",
+          "totalCents",
+          "refundedCents",
+          "createdAt",
+          "buyer",
+          "producer",
+          "payment",
+          "items",
+          "statusHistory",
+          "subtotalCents",
+          "deliveryFeeCents",
+          "refundAllocation",
+          "refundRequest",
+          "revision",
+          "updatedAt"
+        ]
+      },
+      "AdminAuctionProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "vegetables",
+              "fruits",
+              "dairy",
+              "eggs",
+              "meat",
+              "bakery",
+              "pantry",
+              "beverages",
+              "other"
+            ]
+          },
+          "productionMethod": {
+            "type": "string",
+            "enum": [
+              "organic",
+              "sustainable",
+              "conventional",
+              "artisanal",
+              "biodynamic"
+            ]
+          },
+          "seasons": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "bunch",
+              "box",
+              "jar",
+              "bottle",
+              "bag",
+              "kg",
+              "g_500",
+              "g_250",
+              "l",
+              "ml_500"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "category",
+          "productionMethod",
+          "seasons",
+          "unit"
+        ]
+      },
+      "AdminAuctionListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "producerId": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "product": {
+            "$ref": "#/components/schemas/AdminAuctionProductDto"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "active",
+              "finished",
+              "cancelled"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1
+          },
+          "currentBidCents": {
+            "type": "number",
+            "minimum": 1,
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "producerId",
+          "productId",
+          "product",
+          "status",
+          "startsAt",
+          "endsAt",
+          "quantity",
+          "currentBidCents",
+          "createdAt"
+        ]
+      },
+      "AdminAuctionsPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminAuctionListItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "minimum": 0
+          },
+          "page": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 500
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "totalPages": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "AdminAuctionProducerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "buyer",
+              "producer",
+              "admin"
+            ],
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "suspended"
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "status"
+        ]
+      },
+      "AdminAuctionBidDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "buyerId": {
+            "type": "string"
+          },
+          "bidderName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "amountCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "type": "number",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "id",
+          "buyerId",
+          "bidderName",
+          "amountCents",
+          "acceptedAt",
+          "endsAt",
+          "revision"
+        ]
+      },
+      "AdminAuctionBidPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminAuctionBidDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "minimum": 0
+          },
+          "page": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 500
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "totalPages": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "AdminAuctionSettlementOrderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "shipped",
+              "delivered",
+              "ready_for_collection",
+              "collected",
+              "cancelled"
+            ]
+          },
+          "totalCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "paymentId": {
+            "type": "string"
+          },
+          "buyerId": {
+            "type": "string"
+          },
+          "producerId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "totalCents",
+          "paymentId",
+          "buyerId",
+          "producerId",
+          "createdAt"
+        ]
+      },
+      "AdminAuctionSettlementPaymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "succeeded",
+              "failed"
+            ]
+          },
+          "amountCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "refundedCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "buyerId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "amountCents",
+          "refundedCents",
+          "buyerId",
+          "createdAt"
+        ]
+      },
+      "AdminAuctionSettlementDto": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminAuctionSettlementOrderDto"
+              }
+            ]
+          },
+          "payment": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminAuctionSettlementPaymentDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "order",
+          "payment"
+        ]
+      },
+      "AdminAuctionDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "producerId": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "product": {
+            "$ref": "#/components/schemas/AdminAuctionProductDto"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "active",
+              "finished",
+              "cancelled"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1
+          },
+          "currentBidCents": {
+            "type": "number",
+            "minimum": 1,
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "producer": {
+            "$ref": "#/components/schemas/AdminAuctionProducerDto"
+          },
+          "startingPriceCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "minimumIncrementCents": {
+            "type": "number",
+            "minimum": 1
+          },
+          "currentBidderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentBidderName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastBidAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "revision": {
+            "type": "number",
+            "minimum": 1
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "bidHistory": {
+            "$ref": "#/components/schemas/AdminAuctionBidPageDto"
+          },
+          "settlement": {
+            "$ref": "#/components/schemas/AdminAuctionSettlementDto"
+          }
+        },
+        "required": [
+          "id",
+          "producerId",
+          "productId",
+          "product",
+          "status",
+          "startsAt",
+          "endsAt",
+          "quantity",
+          "currentBidCents",
+          "createdAt",
+          "producer",
+          "startingPriceCents",
+          "minimumIncrementCents",
+          "currentBidderId",
+          "currentBidderName",
+          "lastBidAt",
+          "revision",
+          "updatedAt",
+          "bidHistory",
+          "settlement"
+        ]
+      },
+      "AdminServiceHealthDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ]
+          },
+          "api": {
+            "type": "string",
+            "enum": [
+              "up"
+            ]
+          },
+          "mongodb": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ]
+          },
+          "redis": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ]
+          },
+          "storage": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ]
+          },
+          "mongodbLatencyMs": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2500
+          },
+          "redisLatencyMs": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2500
+          },
+          "storageLatencyMs": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2500
+          }
+        },
+        "required": [
+          "status",
+          "api",
+          "mongodb",
+          "redis",
+          "storage",
+          "mongodbLatencyMs",
+          "redisLatencyMs",
+          "storageLatencyMs"
+        ]
+      },
+      "SuspendBuyerDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "minimum": 0
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "revision",
+          "reason"
+        ]
+      },
+      "AdminBuyerStandingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ]
+          },
+          "revision": {
+            "type": "number",
+            "minimum": 0
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "decidedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "revision",
+          "reason",
+          "decidedBy",
+          "decidedAt"
+        ]
+      },
+      "ReinstateBuyerDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "revision"
         ]
       }
     }

@@ -39,13 +39,15 @@ const COOKIE = 'dwc_refresh';
 })
 @Controller('auth')
 export class AuthController {
-  private readonly origin: string;
+  private readonly webOrigin: string;
+  private readonly backofficeOrigin: string;
   private readonly secure: boolean;
   constructor(
     private readonly auth: AuthService,
     config: ConfigService,
   ) {
-    this.origin = config.getOrThrow<string>('WEB_ORIGIN');
+    this.webOrigin = config.getOrThrow<string>('WEB_ORIGIN');
+    this.backofficeOrigin = config.getOrThrow<string>('BACKOFFICE_ORIGIN');
     this.secure = config.getOrThrow<string>('AUTH_COOKIE_SECURE') === 'true';
   }
 
@@ -57,7 +59,7 @@ export class AuthController {
       ?.slice(COOKIE.length + 1);
   }
   private checkOrigin(origin: string | undefined) {
-    if (origin !== this.origin)
+    if (origin !== this.webOrigin && origin !== this.backofficeOrigin)
       throw new ForbiddenException('Origin is not allowed.');
   }
   private cookie(response: CookieResponse, token: string, expiresAt: number) {
@@ -99,7 +101,7 @@ export class AuthController {
     name: 'Origin',
     required: true,
     description:
-      'Must equal configured WEB_ORIGIN, including non-browser clients.',
+      'Must equal configured WEB_ORIGIN or BACKOFFICE_ORIGIN, including non-browser clients.',
   })
   @ApiOkResponse({
     type: AuthResponseDto,
@@ -127,7 +129,7 @@ export class AuthController {
   @ApiHeader({
     name: 'Origin',
     required: true,
-    description: 'Must equal configured WEB_ORIGIN.',
+    description: 'Must equal configured WEB_ORIGIN or BACKOFFICE_ORIGIN.',
   })
   @ApiNoContentResponse({
     description:

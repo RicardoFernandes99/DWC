@@ -8,6 +8,7 @@ export function validateEnvironment(input: Record<string, unknown>) {
     'S3_ACCESS_KEY_ID',
     'S3_SECRET_ACCESS_KEY',
     'WEB_ORIGIN',
+    'BACKOFFICE_ORIGIN',
     'JWT_SECRET',
     'JWT_ISSUER',
     'JWT_AUDIENCE',
@@ -35,8 +36,15 @@ export function validateEnvironment(input: Record<string, unknown>) {
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error('API_PORT must be an integer between 1 and 65535.');
   }
-  for (const name of ['S3_ENDPOINT', 'WEB_ORIGIN']) {
+  for (const name of [
+    'S3_ENDPOINT',
+    'S3_PUBLIC_ENDPOINT',
+    'WEB_ORIGIN',
+    'BACKOFFICE_ORIGIN',
+  ]) {
     const value = input[name];
+    if (name === 'S3_PUBLIC_ENDPOINT' && (value === undefined || value === ''))
+      continue;
     if (typeof value !== 'string') {
       throw new Error(`${name} must be a valid HTTP or HTTPS URL.`);
     }
@@ -49,10 +57,10 @@ export function validateEnvironment(input: Record<string, unknown>) {
     if (!['http:', 'https:'].includes(url.protocol)) {
       throw new Error(`${name} must use HTTP or HTTPS.`);
     }
-    if (name === 'WEB_ORIGIN') {
+    if (name === 'WEB_ORIGIN' || name === 'BACKOFFICE_ORIGIN') {
       if (url.origin !== value)
         throw new Error(
-          'WEB_ORIGIN must be an exact origin without a path or trailing slash.',
+          `${name} must be an exact origin without a path or trailing slash.`,
         );
       if (url.protocol === 'https:' && input.AUTH_COOKIE_SECURE !== 'true')
         throw new Error('HTTPS requires AUTH_COOKIE_SECURE=true.');

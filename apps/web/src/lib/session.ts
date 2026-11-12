@@ -33,7 +33,10 @@ function user(value: unknown): value is User {
       value.producerStatus === 'rejected' ||
       value.producerStatus === 'suspended') &&
     (value.producerRejectionReason === null ||
-      typeof value.producerRejectionReason === 'string')
+      typeof value.producerRejectionReason === 'string') &&
+    (value.buyerStatus === 'active' || value.buyerStatus === 'suspended') &&
+    (value.buyerSuspensionReason === null ||
+      typeof value.buyerSuspensionReason === 'string')
   );
 }
 function auth(value: unknown): value is Auth {
@@ -93,17 +96,33 @@ let token: string | undefined;
 let signedOut = false;
 let generation = 0;
 let pending: Promise<Auth> | undefined;
+const accessTokenListeners = new Set<(value: string | undefined) => void>();
+function publishAccessToken(value: string | undefined) {
+  for (const listener of accessTokenListeners) listener(value);
+}
+export function getAccessToken() {
+  return token;
+}
+export function subscribeAccessToken(
+  listener: (value: string | undefined) => void,
+) {
+  accessTokenListeners.add(listener);
+  return () => accessTokenListeners.delete(listener);
+}
 function install(value: unknown, current: number): Auth {
   if (!auth(value))
     throw new ApiError(0, 'The server returned an invalid response.');
   if (generation !== current) throw new ApiError(401, 'Session changed.');
+  const changed = token !== value.accessToken;
   token = value.accessToken;
+  if (changed) publishAccessToken(token);
   return value;
 }
 export async function login(input: Login): Promise<User> {
   const current = ++generation;
   signedOut = false;
   token = undefined;
+  publishAccessToken(undefined);
   pending = undefined;
   return install(
     await request('login', { method: 'POST', body: JSON.stringify(input) }),
@@ -128,8 +147,10 @@ export function refresh(): Promise<Auth> {
         generation === current &&
         error instanceof ApiError &&
         (error.status === 401 || error.status === 403)
-      )
+      ) {
         token = undefined;
+        publishAccessToken(undefined);
+      }
       throw error;
     })
     .finally(() => {
@@ -166,8 +187,10 @@ export async function me(): Promise<User> {
         retryError instanceof ApiError &&
         retryError.status === 401 &&
         generation === current
-      )
+      ) {
         token = undefined;
+        publishAccessToken(undefined);
+      }
       throw retryError;
     }
   }
@@ -217,17 +240,87 @@ export async function authenticatedRequest<T = unknown>(
         retryError.status === 401 &&
         generation === current &&
         token === retryToken
-      )
+      ) {
         token = undefined;
+        publishAccessToken(undefined);
+      }
       throw retryError;
     }
   }
+}
+
+/** Makes one authenticated binary request, refreshing and retrying at most once. */
+export async function authenticatedDownload(path: string): Promise<Blob> {
+  const current = generation;
+  const used = token;
+  if (!used) throw new ApiError(401, 'Please sign in.');
+  const send = async (accessToken: string) => {
+    try {
+      return await fetch(`/api/${path}`, {
+        credentials: 'include',
+        signal: AbortSignal.timeout(15000),
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch {
+      throw new ApiError(0, 'Could not connect. Please try again.');
+    }
+  };
+  const responseError = async (response: Response): Promise<ApiError> => {
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      // The API may return a plain error response.
+    }
+    const message =
+      record(payload) && typeof payload.message === 'string'
+        ? payload.message
+        : response.status === 503
+          ? 'Service temporarily unavailable. Please try again.'
+          : 'The receipt could not be downloaded. Please try again.';
+    return new ApiError(response.status, message, payload);
+  };
+  const ensureCurrent = () => {
+    if (generation !== current) throw new ApiError(401, 'Session changed.');
+  };
+  let response = await send(used);
+  if (response.status === 401 && generation === current) {
+    if (token === used) await refresh();
+    if (generation !== current || !token)
+      throw new ApiError(401, 'Please sign in.');
+    const retryToken = token;
+    response = await send(retryToken);
+    if (
+      response.status === 401 &&
+      generation === current &&
+      token === retryToken
+    ) {
+      token = undefined;
+      publishAccessToken(undefined);
+    }
+  }
+  ensureCurrent();
+  if (!response.ok) throw await responseError(response);
+  if (
+    !response.headers
+      .get('Content-Type')
+      ?.toLowerCase()
+      .includes('application/pdf')
+  ) {
+    throw new ApiError(0, 'The server returned an invalid receipt.');
+  }
+  const blob = await response.blob();
+  ensureCurrent();
+  if (blob.size === 0 || blob.size > 1_500_000)
+    throw new ApiError(0, 'The receipt size is outside the supported range.');
+  return blob;
 }
 export async function logout(): Promise<void> {
   const inFlight = pending;
   signedOut = true;
   ++generation;
   token = undefined;
+  publishAccessToken(undefined);
   pending = undefined;
   if (inFlight) await inFlight.catch(() => undefined);
   await request('logout', { method: 'POST' });
@@ -245,6 +338,7 @@ export async function currentUser(): Promise<User | null> {
       (error.status === 401 || error.status === 403)
     ) {
       token = undefined;
+      publishAccessToken(undefined);
       signedOut = true;
       return null;
     }

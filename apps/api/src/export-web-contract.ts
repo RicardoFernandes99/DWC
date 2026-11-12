@@ -25,6 +25,22 @@ import { CheckoutController } from './checkout/checkout.controller.js';
 import { CheckoutService } from './checkout/checkout.service.js';
 import { OrdersController } from './orders/orders.controller.js';
 import { OrdersService } from './orders/orders.service.js';
+import { NotificationsController } from './notifications/notifications.controller.js';
+import { NotificationsService } from './notifications/notifications.service.js';
+import { AuctionsService } from './auctions/auctions.service.js';
+import { ProducerAuctionsController } from './auctions/producer-auctions.controller.js';
+import { PublicAuctionsController } from './auctions/public-auctions.controller.js';
+import {
+  ProducerReviewsController,
+  ReviewsController,
+} from './reviews/reviews.controller.js';
+import { ReviewsService } from './reviews/reviews.service.js';
+import { ProducerMetricsController } from './producer-metrics/producer-metrics.controller.js';
+import { ProducerMetricsService } from './producer-metrics/producer-metrics.service.js';
+import { AdminInspectionController } from './admin-inspection/admin-inspection.controller.js';
+import { AdminInspectionService } from './admin-inspection/admin-inspection.service.js';
+import { AdminBuyersController } from './users/admin-buyers.controller.js';
+import { BuyerStandingService } from './users/buyer-standing.service.js';
 
 // Contract-only module: controllers and DTO metadata are real; no service is called.
 @Module({
@@ -40,6 +56,14 @@ import { OrdersService } from './orders/orders.service.js';
     CatalogueController,
     CheckoutController,
     OrdersController,
+    NotificationsController,
+    ProducerAuctionsController,
+    PublicAuctionsController,
+    ReviewsController,
+    ProducerReviewsController,
+    ProducerMetricsController,
+    AdminInspectionController,
+    AdminBuyersController,
   ],
   providers: [
     { provide: AuthService, useValue: {} },
@@ -52,6 +76,12 @@ import { OrdersService } from './orders/orders.service.js';
     { provide: CatalogueService, useValue: {} },
     { provide: CheckoutService, useValue: {} },
     { provide: OrdersService, useValue: {} },
+    { provide: NotificationsService, useValue: {} },
+    { provide: AuctionsService, useValue: {} },
+    { provide: ReviewsService, useValue: {} },
+    { provide: ProducerMetricsService, useValue: {} },
+    { provide: AdminInspectionService, useValue: {} },
+    { provide: BuyerStandingService, useValue: {} },
     {
       provide: ConfigService,
       useValue: { getOrThrow: () => 'http://localhost' },

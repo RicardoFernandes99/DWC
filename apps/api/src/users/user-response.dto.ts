@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ProducerStatus, UserRole } from './user.schema.js';
+import { BuyerStatus, ProducerStatus, UserRole } from './user.schema.js';
 
 export class UserResponseDto {
   @ApiProperty({ example: '671f0f98ac53ba58e26c4789' })
@@ -27,4 +27,10 @@ export class UserResponseDto {
     example: null,
   })
   producerRejectionReason!: string | null;
+
+  @ApiProperty({ enum: BuyerStatus, example: BuyerStatus.Active })
+  buyerStatus!: BuyerStatus;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  buyerSuspensionReason!: string | null;
 }

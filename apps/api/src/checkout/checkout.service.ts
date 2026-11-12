@@ -23,9 +23,9 @@ import {
 import { PaymentMethodsService } from '../payment-methods/payment-methods.service.js';
 import { Product, type ProductDocument } from '../products/product.schema.js';
 import {
+  BuyerStatus,
   ProducerStatus,
   User,
-  type UserDocument,
   UserRole,
 } from '../users/user.schema.js';
 import {
@@ -44,6 +44,12 @@ import {
 } from './checkout.dto.js';
 import { Checkout, CheckoutDocument } from './checkout.schema.js';
 import { Payment, PaymentDocument, PaymentStatus } from './payment.schema.js';
+import { NotificationIntegrationService } from '../notifications/notification-integration.service.js';
+import {
+  NotificationEventType,
+  NotificationResourceType,
+} from '../notifications/notification.schema.js';
+import type { NotificationDocument } from '../notifications/notification.schema.js';
 
 export const FREE_DELIVERY_THRESHOLD_CENTS = 5000;
 export const STANDARD_DELIVERY_FEE_CENTS = 500;
@@ -54,7 +60,8 @@ export class CheckoutService {
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
     @InjectModel(User.name)
-    private readonly userModel: Model<UserDocument>,
+    private readonly userModel: Model<User>,
+    private readonly notificationIntegration: NotificationIntegrationService,
     @InjectModel(Checkout.name)
     private readonly checkoutModel: Model<CheckoutDocument> = undefined as unknown as Model<CheckoutDocument>,
     @InjectModel(Payment.name)
@@ -254,7 +261,12 @@ export class CheckoutService {
 
       const lineIssues: CheckoutQuoteLineIssueDto[] = [];
 
-      if (!product.published) {
+      if (
+        !product.published ||
+        // Lean legacy documents may lack these fields entirely.
+        Boolean(product.archivedAt) ||
+        Boolean(product.moderatedAt)
+      ) {
         const issue: CheckoutQuoteLineIssueDto = {
           code: CheckoutQuoteIssueCode.UnavailableProduct,
           message: 'Product is currently unpublished or unavailable.',
@@ -546,10 +558,18 @@ export class CheckoutService {
 
     // 8. Execute atomic writes in a MongoDB transaction session
     const session = await this.connection.startSession();
+    const checkoutId = new Types.ObjectId();
+    const paymentId = new Types.ObjectId();
+    const orderIds = liveQuote.groups.map(() => new Types.ObjectId());
+    let notifications: NotificationDocument[] = [];
+    let createdNewCheckout = false;
     try {
       let createdCheckoutId: Types.ObjectId | null = null;
 
       await session.withTransaction(async () => {
+        createdCheckoutId = null;
+        notifications = [];
+        createdNewCheckout = false;
         // Concurrency idempotency check inside transaction
         const inTxExisting = await this.checkoutModel
           .findOne({
@@ -571,6 +591,23 @@ export class CheckoutService {
           return;
         }
 
+        const buyer = await this.userModel.updateOne(
+          {
+            _id: new Types.ObjectId(buyerId),
+            role: UserRole.Buyer,
+            buyerStatus: { $ne: BuyerStatus.Suspended },
+          },
+          { $inc: { buyerEligibilityRevision: 1 } },
+          { session },
+        );
+        if (buyer.matchedCount !== 1) {
+          throw new ConflictException({
+            statusCode: HttpStatus.CONFLICT,
+            code: 'buyer_suspended',
+            message: 'This account cannot place new orders while suspended.',
+          });
+        }
+
         // 8a. Recheck and lock each producer's approved eligibility
         for (const group of liveQuote.groups) {
           const producer = await this.userModel.findOneAndUpdate(
@@ -579,7 +616,9 @@ export class CheckoutService {
               role: UserRole.Producer,
               producerStatus: ProducerStatus.Approved,
             },
-            { $inc: { __v: 0 } },
+            // Real write: auctionEligibilityRevision is the producer
+            // eligibility fence, so a concurrent suspension conflicts here.
+            { $inc: { auctionEligibilityRevision: 1 } },
             { session, new: true },
           );
           if (!producer) {
@@ -600,6 +639,8 @@ export class CheckoutService {
                 _id: new Types.ObjectId(item.productId),
                 producerId: new Types.ObjectId(group.producerId),
                 published: true,
+                archivedAt: null,
+                moderatedAt: null,
                 availableStock: { $gte: item.quantity },
               },
               {
@@ -620,9 +661,6 @@ export class CheckoutService {
         }
 
         // 8c. Record simulated payment in database
-        const checkoutId = new Types.ObjectId();
-        const paymentId = new Types.ObjectId();
-
         const payment = new this.paymentModel({
           _id: paymentId,
           checkoutId,
@@ -639,10 +677,19 @@ export class CheckoutService {
         await payment.save({ session });
 
         // 8d. Create Pending order per producer
-        const orderIds: Types.ObjectId[] = [];
-        for (const group of liveQuote.groups) {
-          const orderId = new Types.ObjectId();
-          orderIds.push(orderId);
+        const receiptBuyer = await this.userModel
+          .findById(new Types.ObjectId(buyerId))
+          .session(session)
+          .select({ name: 1 })
+          .exec();
+
+        for (const [groupIndex, group] of liveQuote.groups.entries()) {
+          const orderId = orderIds[groupIndex];
+          const receiptProducer = await this.userModel
+            .findById(new Types.ObjectId(group.producerId))
+            .session(session)
+            .select({ 'producerApplication.farmName': 1 })
+            .exec();
 
           const itemsSnapshot: OrderLineSnapshot[] = group.items.map((it) => ({
             productId: new Types.ObjectId(it.productId),
@@ -665,7 +712,10 @@ export class CheckoutService {
             _id: orderId,
             checkoutId,
             buyerId: new Types.ObjectId(buyerId),
+            buyerNameSnapshot: receiptBuyer?.name ?? null,
             producerId: new Types.ObjectId(group.producerId),
+            producerNameSnapshot:
+              receiptProducer?.producerApplication?.farmName ?? null,
             paymentId,
             items: itemsSnapshot,
             fulfilmentMethod: liveQuote.fulfilmentMethod,
@@ -679,6 +729,22 @@ export class CheckoutService {
             revision: 1,
           });
           await order.save({ session });
+          notifications.push(
+            await this.notificationIntegration.persist(
+              {
+                recipientId: group.producerId,
+                eventType: NotificationEventType.OrderCreated,
+                title: 'New order received',
+                message: 'A buyer placed a new order with your farm.',
+                resource: {
+                  type: NotificationResourceType.Order,
+                  id: orderId.toString(),
+                },
+                sourceEventKey: `order:${orderId.toString()}:created`,
+              },
+              session,
+            ),
+          );
         }
 
         // 8e. Create Checkout record with idempotency key
@@ -699,6 +765,7 @@ export class CheckoutService {
         await checkout.save({ session });
 
         createdCheckoutId = checkoutId;
+        createdNewCheckout = true;
       });
 
       // Query the committed checkout document
@@ -706,6 +773,11 @@ export class CheckoutService {
         await this.checkoutModel.findById(createdCheckoutId);
       if (!committedCheckout) {
         throw new BadRequestException('Checkout failed to persist.');
+      }
+      if (createdNewCheckout) {
+        for (const notification of notifications) {
+          this.notificationIntegration.publishCommitted(notification);
+        }
       }
       return this.buildCheckoutResponse(committedCheckout);
     } catch (err: unknown) {

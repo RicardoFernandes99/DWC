@@ -1,0 +1,46 @@
+@import './blatui.css';
+
+@font-face {
+    font-family: Fraunces;
+    src: url('/fonts/fraunces-regular.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+/* DWC theme: the same palette as the web app, applied to BlatUI's tokens. */
+:root {
+    --radius: 0.75rem;
+    --font-sans:
+        system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-heading: Fraunces, Georgia, serif;
+
+    --background: #f7f5ee;
+    --foreground: #253329;
+    --card: #fff;
+    --card-foreground: #253329;
+    --popover: #fff;
+    --popover-foreground: #253329;
+    --primary: #24563d;
+    --primary-foreground: #fff;
+    --secondary: #ecebe5;
+    --secondary-foreground: #253329;
+    --muted: #ecebe5;
+    --muted-foreground: #5d675f;
+    --accent: #dde8d8;
+    --accent-foreground: #24563d;
+    --border: #d9d8ce;
+    --input: #d9d8ce;
+    --ring: #24563d;
+    --destructive: #a12b22;
+}
+
+/* Tailwind's reset gives buttons the default cursor; show that they are clickable. */
+button:not(:disabled),
+[type='submit']:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+summary,
+select:not(:disabled),
+label[for] {
+    cursor: pointer;
+}

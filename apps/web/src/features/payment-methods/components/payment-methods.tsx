@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/form-field';
+import { EmptyState } from '@/components/shared/empty-state';
+import { CreditCard, Plus } from 'lucide-react';
 
 type PaymentMethod = components['schemas']['PaymentMethodResponseDto'];
 type CreatePaymentMethod = components['schemas']['CreatePaymentMethodDto'];
@@ -34,11 +36,14 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
   const key = paymentMethodsKey(buyerId);
   const [cardError, setCardError] = useState('');
   const [expiryError, setExpiryError] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
   const methods = useQuery({
     queryKey: key,
     queryFn: listMethods,
     retry: false,
   });
+  // The form is always open while there are no cards to show.
+  const showForm = formOpen || (methods.isSuccess && methods.data.length === 0);
   const mutation = useMutation({
     mutationFn: saveMethod,
     onSuccess: async (created) => {
@@ -51,6 +56,7 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
       form.reset();
       setCardError('');
       setExpiryError('');
+      setFormOpen(false);
     },
   });
   const form = useForm({
@@ -96,153 +102,184 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
   });
 
   return (
-    <section className="mt-10" aria-labelledby="payment-methods-title">
-      <div className="mb-5">
-        <h2 id="payment-methods-title" className="text-2xl font-semibold">
-          Payment methods
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
+    <section className="mt-8" aria-labelledby="payment-methods-title">
+      <div className="mb-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2
+            id="payment-methods-title"
+            className="font-sans text-lg font-semibold"
+          >
+            Payment methods
+          </h2>
+          {!showForm && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-mr-2.5"
+              onClick={() => setFormOpen(true)}
+            >
+              <Plus aria-hidden="true" /> Add card
+            </Button>
+          )}
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
           Save card details for future checkout and bidding.
         </p>
       </div>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Card className="p-5 md:p-6">
-          <h3 className="text-lg font-semibold">Add card</h3>
-          <form
-            className="mt-5 space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              void form.handleSubmit();
-            }}
-          >
-            <form.Field name="number">
-              {(field) => (
-                <FormField
-                  id="card-number"
-                  label="Card number"
-                  description="Enter the digits shown on your card. No security code is needed."
-                  error={cardError}
-                >
-                  <Input
-                    id="card-number"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="cc-number"
-                    maxLength={23}
-                    placeholder="1234 5678 9012 3456"
-                    value={field.state.value}
-                    aria-invalid={!!cardError}
-                    aria-describedby={
-                      cardError
-                        ? 'card-number-error'
-                        : 'card-number-description'
-                    }
-                    onBlur={field.handleBlur}
-                    onChange={(event) => {
-                      mutation.reset();
-                      setCardError('');
-                      field.handleChange(
-                        event.target.value.replace(/[^\d ]/g, '').slice(0, 23),
-                      );
-                    }}
-                  />
-                </FormField>
-              )}
-            </form.Field>
-            <div className="grid grid-cols-2 gap-4">
-              <form.Field name="month">
-                {(field) => (
-                  <FormField id="expiry-month" label="Expiry month">
-                    <Input
-                      id="expiry-month"
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="cc-exp-month"
-                      placeholder="MM"
-                      maxLength={2}
-                      value={field.state.value}
-                      aria-invalid={!!expiryError}
-                      aria-describedby={
-                        expiryError ? 'expiry-error' : undefined
-                      }
-                      onBlur={field.handleBlur}
-                      onChange={(event) => {
-                        mutation.reset();
-                        setExpiryError('');
-                        field.handleChange(
-                          event.target.value.replace(/\D/g, '').slice(0, 2),
-                        );
-                      }}
-                    />
-                  </FormField>
-                )}
-              </form.Field>
-              <form.Field name="year">
-                {(field) => (
-                  <FormField id="expiry-year" label="Expiry year">
-                    <Input
-                      id="expiry-year"
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="cc-exp-year"
-                      placeholder="YYYY"
-                      maxLength={4}
-                      value={field.state.value}
-                      aria-invalid={!!expiryError}
-                      aria-describedby={
-                        expiryError ? 'expiry-error' : undefined
-                      }
-                      onBlur={field.handleBlur}
-                      onChange={(event) => {
-                        mutation.reset();
-                        setExpiryError('');
-                        field.handleChange(
-                          event.target.value.replace(/\D/g, '').slice(0, 4),
-                        );
-                      }}
-                    />
-                  </FormField>
-                )}
-              </form.Field>
-            </div>
-            {expiryError && (
-              <p
-                id="expiry-error"
-                role="alert"
-                className="text-sm text-destructive"
-              >
-                {expiryError}
-              </p>
-            )}
-            {mutation.isError && (
-              <p role="alert" className="text-sm text-destructive">
-                {mutation.error instanceof ApiError &&
-                mutation.error.status === 400
-                  ? 'The expiry date was rejected. Check the month and year and try again.'
-                  : mutation.error instanceof Error
-                    ? mutation.error.message
-                    : 'Could not save this card. Please try again.'}
-              </p>
-            )}
-            {mutation.isSuccess && (
-              <p role="status" className="text-sm text-primary">
-                Card saved.
-              </p>
-            )}
-            <form.Subscribe selector={(state) => state.isSubmitting}>
-              {(submitting) => (
+      <div className="space-y-4">
+        {showForm && (
+          <div className="rounded-lg border p-4 md:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-medium">Add a card</h3>
+              {Boolean(methods.data?.length) && (
                 <Button
-                  type="submit"
-                  disabled={submitting || mutation.isPending}
-                  className="w-full sm:w-auto"
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setFormOpen(false)}
                 >
-                  {submitting || mutation.isPending ? 'Saving…' : 'Save card'}
+                  Cancel
                 </Button>
               )}
-            </form.Subscribe>
-          </form>
-        </Card>
+            </div>
+            <form
+              className="mt-5 space-y-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                void form.handleSubmit();
+              }}
+            >
+              <form.Field name="number">
+                {(field) => (
+                  <FormField
+                    id="card-number"
+                    label="Card number"
+                    description="Enter the digits shown on your card. No security code is needed."
+                    error={cardError}
+                  >
+                    <Input
+                      id="card-number"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="cc-number"
+                      maxLength={23}
+                      placeholder="1234 5678 9012 3456"
+                      value={field.state.value}
+                      aria-invalid={!!cardError}
+                      aria-describedby={
+                        cardError
+                          ? 'card-number-error'
+                          : 'card-number-description'
+                      }
+                      onBlur={field.handleBlur}
+                      onChange={(event) => {
+                        mutation.reset();
+                        setCardError('');
+                        field.handleChange(
+                          event.target.value
+                            .replace(/[^\d ]/g, '')
+                            .slice(0, 23),
+                        );
+                      }}
+                    />
+                  </FormField>
+                )}
+              </form.Field>
+              <div className="grid grid-cols-2 gap-4">
+                <form.Field name="month">
+                  {(field) => (
+                    <FormField id="expiry-month" label="Expiry month">
+                      <Input
+                        id="expiry-month"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="cc-exp-month"
+                        placeholder="MM"
+                        maxLength={2}
+                        value={field.state.value}
+                        aria-invalid={!!expiryError}
+                        aria-describedby={
+                          expiryError ? 'expiry-error' : undefined
+                        }
+                        onBlur={field.handleBlur}
+                        onChange={(event) => {
+                          mutation.reset();
+                          setExpiryError('');
+                          field.handleChange(
+                            event.target.value.replace(/\D/g, '').slice(0, 2),
+                          );
+                        }}
+                      />
+                    </FormField>
+                  )}
+                </form.Field>
+                <form.Field name="year">
+                  {(field) => (
+                    <FormField id="expiry-year" label="Expiry year">
+                      <Input
+                        id="expiry-year"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="cc-exp-year"
+                        placeholder="YYYY"
+                        maxLength={4}
+                        value={field.state.value}
+                        aria-invalid={!!expiryError}
+                        aria-describedby={
+                          expiryError ? 'expiry-error' : undefined
+                        }
+                        onBlur={field.handleBlur}
+                        onChange={(event) => {
+                          mutation.reset();
+                          setExpiryError('');
+                          field.handleChange(
+                            event.target.value.replace(/\D/g, '').slice(0, 4),
+                          );
+                        }}
+                      />
+                    </FormField>
+                  )}
+                </form.Field>
+              </div>
+              {expiryError && (
+                <p
+                  id="expiry-error"
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
+                  {expiryError}
+                </p>
+              )}
+              {mutation.isError && (
+                <p role="alert" className="text-sm text-destructive">
+                  {mutation.error instanceof ApiError &&
+                  mutation.error.status === 400
+                    ? 'The expiry date was rejected. Check the month and year and try again.'
+                    : mutation.error instanceof Error
+                      ? mutation.error.message
+                      : 'Could not save this card. Please try again.'}
+                </p>
+              )}
+              {mutation.isSuccess && (
+                <p role="status" className="text-sm text-primary">
+                  Card saved.
+                </p>
+              )}
+              <form.Subscribe selector={(state) => state.isSubmitting}>
+                {(submitting) => (
+                  <Button
+                    type="submit"
+                    disabled={submitting || mutation.isPending}
+                    className="w-full sm:w-auto"
+                  >
+                    {submitting || mutation.isPending ? 'Saving…' : 'Save card'}
+                  </Button>
+                )}
+              </form.Subscribe>
+            </form>
+          </div>
+        )}
         <div aria-live="polite" aria-busy={methods.isPending}>
           {methods.isError && methods.data && (
             <div
@@ -284,36 +321,41 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
               </Button>
             </Card>
           ) : methods.data.length === 0 ? (
-            <Card className="p-6">
-              <h3 className="font-semibold">No saved cards yet</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Your saved payment methods will appear here.
-              </p>
-            </Card>
+            <EmptyState
+              headingLevel="h3"
+              icon={<CreditCard />}
+              title="No saved cards yet"
+              description="Add a card to check out faster and to bid in auctions."
+            />
           ) : (
-            <div className="space-y-3">
-              <h3 className="font-semibold">Saved cards</h3>
+            <ul className="divide-y rounded-lg border" aria-label="Saved cards">
               {methods.data.map((method) => (
-                <Card
+                <li
                   key={method.id}
-                  className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex items-center gap-3 px-4 py-3"
                 >
-                  <p className="font-medium">
-                    Card ending in{' '}
+                  <CreditCard
+                    aria-hidden="true"
+                    className="size-5 shrink-0 text-muted-foreground"
+                  />
+                  <p className="min-w-0 flex-1 font-medium whitespace-nowrap">
+                    <span className="sr-only">Card ending in </span>
+                    <span aria-hidden="true">•••• </span>
                     <span className="tabular-nums">{method.last4}</span>
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    Expires {String(method.expiryMonth).padStart(2, '0')}/
-                    {method.expiryYear}
-                  </p>
-                  {method.expired && (
-                    <span className="w-fit rounded-full bg-destructive/10 px-3 py-1 text-xs font-medium text-destructive">
+                  {method.expired ? (
+                    <span className="text-sm font-medium text-destructive">
                       Expired
                     </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground tabular-nums">
+                      Expires {String(method.expiryMonth).padStart(2, '0')}/
+                      {String(method.expiryYear).slice(-2)}
+                    </span>
                   )}
-                </Card>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </div>
       </div>

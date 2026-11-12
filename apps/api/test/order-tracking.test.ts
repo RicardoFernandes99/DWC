@@ -6,7 +6,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { Model, Types } from 'mongoose';
+import { Model, Mongoose, Types } from 'mongoose';
 import { OrdersService } from '../dist/orders/orders.service.js';
 import {
   FulfilmentMethod,
@@ -21,11 +21,26 @@ import {
 } from '../dist/checkout/payment.schema.js';
 import {
   type UserDocument,
+  BuyerStatus,
   ProducerStatus,
   UserRole,
 } from '../dist/users/user.schema.js';
 import { UserResponseDto } from '../dist/users/user-response.dto.js';
-import { ProductUnit } from '../dist/products/product.schema.js';
+import {
+  Product,
+  ProductSchema,
+  ProductUnit,
+} from '../dist/products/product.schema.js';
+import {
+  RefundAllocation,
+  RefundAllocationSchema,
+} from '../dist/orders/refund-allocation.schema.js';
+import {
+  Notification,
+  NotificationSchema,
+} from '../dist/notifications/notification.schema.js';
+import { NotificationsService } from '../dist/notifications/notifications.service.js';
+import { NotificationIntegrationService } from '../dist/notifications/notification-integration.service.js';
 
 interface TestOrderData {
   _id: Types.ObjectId;
@@ -196,10 +211,42 @@ function createMockEnvironment(initialOrders: TestOrderData[]) {
     }),
   };
 
+  const testMongoose = new Mongoose();
+  const productModel = testMongoose.model<Product>(Product.name, ProductSchema);
+  const refundAllocationModel = testMongoose.model<RefundAllocation>(
+    RefundAllocation.name,
+    RefundAllocationSchema,
+  );
+  const connection = testMongoose.createConnection();
+  Object.defineProperty(connection, 'startSession', {
+    value: async () => ({
+      withTransaction: async (callback: () => Promise<unknown>) => callback(),
+      endSession: async () => {},
+    }),
+  });
+  const notificationModel = testMongoose.model<Notification>(
+    Notification.name,
+    NotificationSchema,
+  );
+  Object.defineProperty(notificationModel, 'findOneAndUpdate', {
+    value: (
+      _filter: unknown,
+      update: { $setOnInsert: Record<string, unknown> },
+    ) => Promise.resolve(new notificationModel(update.$setOnInsert)),
+  });
+  const notificationIntegration = new NotificationIntegrationService(
+    new NotificationsService(notificationModel),
+    { publishNotificationCreated: () => {} },
+  );
+
   const service = new OrdersService(
     orderModel as unknown as Model<OrderDocument>,
     paymentModel as unknown as Model<PaymentDocument>,
     userModel as unknown as Model<UserDocument>,
+    productModel,
+    refundAllocationModel,
+    connection,
+    notificationIntegration,
   );
 
   return { service, orders };
@@ -212,6 +259,8 @@ const buyerUser: UserResponseDto = {
   role: UserRole.Buyer,
   producerStatus: null,
   producerRejectionReason: null,
+  buyerStatus: BuyerStatus.Active,
+  buyerSuspensionReason: null,
 };
 
 const producerUser: UserResponseDto = {
@@ -221,6 +270,8 @@ const producerUser: UserResponseDto = {
   role: UserRole.Producer,
   producerStatus: ProducerStatus.Approved,
   producerRejectionReason: null,
+  buyerStatus: BuyerStatus.Active,
+  buyerSuspensionReason: null,
 };
 
 const otherProducerUser: UserResponseDto = {
@@ -230,6 +281,8 @@ const otherProducerUser: UserResponseDto = {
   role: UserRole.Producer,
   producerStatus: ProducerStatus.Approved,
   producerRejectionReason: null,
+  buyerStatus: BuyerStatus.Active,
+  buyerSuspensionReason: null,
 };
 
 const suspendedProducerUser: UserResponseDto = {
@@ -239,6 +292,8 @@ const suspendedProducerUser: UserResponseDto = {
   role: UserRole.Producer,
   producerStatus: ProducerStatus.Suspended,
   producerRejectionReason: null,
+  buyerStatus: BuyerStatus.Active,
+  buyerSuspensionReason: null,
 };
 
 function createSampleOrder(

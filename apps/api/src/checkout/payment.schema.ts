@@ -24,8 +24,11 @@ export const PaymentMethodSnapshotSchema = SchemaFactory.createForClass(
 
 @Schema({ timestamps: true, autoIndex: true })
 export class Payment {
-  @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'Checkout' })
-  checkoutId!: Types.ObjectId;
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Checkout', default: null })
+  checkoutId!: Types.ObjectId | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Auction', default: null })
+  auctionId!: Types.ObjectId | null;
 
   @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'User' })
   buyerId!: Types.ObjectId;
@@ -45,6 +48,9 @@ export class Payment {
     default: PaymentStatus.Succeeded,
   })
   status!: PaymentStatus;
+
+  @Prop({ required: true, min: 0, default: 0 })
+  refundedCents!: number;
 }
 
 export type PaymentDocument = HydratedDocument<Payment> & {
@@ -55,3 +61,10 @@ export type PaymentDocument = HydratedDocument<Payment> & {
 export const PaymentSchema = SchemaFactory.createForClass(Payment);
 PaymentSchema.index({ buyerId: 1, createdAt: -1 });
 PaymentSchema.index({ checkoutId: 1 });
+PaymentSchema.index(
+  { auctionId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { auctionId: { $type: 'objectId' } },
+  },
+);

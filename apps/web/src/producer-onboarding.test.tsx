@@ -23,6 +23,18 @@ vi.mock('./lib/session', async (original) => ({
 vi.mock('@tanstack/react-router', async (original) => ({
   ...(await original<typeof import('@tanstack/react-router')>()),
   useNavigate: () => vi.fn(),
+  useLocation: (options?: {
+    select?: (location: { pathname: string }) => unknown;
+  }) => {
+    const location = {
+      pathname: window.location.pathname,
+      search: {},
+      hash: '',
+    };
+    return options?.select ? options.select(location) : location;
+  },
+  useParams: () => ({}),
+  useSearch: () => ({}),
   Link: ({ children }: { children: ReactNode }) => (
     <a href="/login">{children}</a>
   ),
@@ -34,6 +46,8 @@ const baseProducer: User = {
   email: 'maria@example.com',
   role: 'producer',
   producerStatus: 'pending',
+  buyerStatus: 'active' as const,
+  buyerSuspensionReason: null,
   producerRejectionReason: null,
 };
 
@@ -143,6 +157,8 @@ describe('producer onboarding and status screens', () => {
     const rejectedUser: User = {
       ...baseProducer,
       producerStatus: 'rejected',
+      buyerStatus: 'active' as const,
+      buyerSuspensionReason: null,
       producerRejectionReason:
         'Collection address is missing the street number and postal code.',
     };
@@ -168,6 +184,8 @@ describe('producer onboarding and status screens', () => {
       .mockResolvedValue({
         ...baseProducer,
         producerStatus: 'pending',
+        buyerStatus: 'active' as const,
+        buyerSuspensionReason: null,
         producerRejectionReason: null,
       });
     vi.mocked(authenticatedRequest)
@@ -253,6 +271,8 @@ describe('producer onboarding and status screens', () => {
       .mockResolvedValue({
         ...baseProducer,
         producerStatus: 'rejected',
+        buyerStatus: 'active' as const,
+        buyerSuspensionReason: null,
         producerRejectionReason: 'Please provide exact GPS coordinates.',
       });
 
@@ -365,6 +385,8 @@ describe('producer onboarding and status screens', () => {
       email: 'joao@example.com',
       role: 'buyer',
       producerStatus: null,
+      buyerStatus: 'active' as const,
+      buyerSuspensionReason: null,
       producerRejectionReason: null,
     };
     vi.mocked(currentUser).mockResolvedValue(buyer);

@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
-import { Minus, Plus, Sprout, Trash2 } from 'lucide-react';
+import { Sprout, Trash2 } from 'lucide-react';
+import { QuantityStepper } from '@/components/shared/quantity-stepper';
 import type { components } from '@/lib/api-schema';
 import { Button } from '@/components/ui/button';
 import { formatMoney, formatUnit } from '@/lib/format';
@@ -118,42 +119,14 @@ export function CartLineItem({
 
       <div className="flex items-center justify-between gap-4 sm:justify-end">
         {/* Quantity Controls */}
-        <div className="flex items-center gap-1.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-8 rounded-md"
-            aria-label={`Decrease quantity of ${name}`}
-            disabled={item.quantity <= 1 || isUnavailable || isSoldOut}
-            onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
-          >
-            <Minus aria-hidden="true" className="size-3.5" />
-          </Button>
-
-          <span
-            className="min-w-8 text-center text-sm font-medium tabular-nums"
-            aria-label={`Quantity: ${item.quantity}`}
-          >
-            {item.quantity}
-          </span>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-8 rounded-md"
-            aria-label={`Increase quantity of ${name}`}
-            disabled={
-              isUnavailable ||
-              isSoldOut ||
-              (availableStock > 0 && item.quantity >= availableStock)
-            }
-            onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
-          >
-            <Plus aria-hidden="true" className="size-3.5" />
-          </Button>
-        </div>
+        <QuantityStepper
+          variant="outline"
+          label={`Quantity of ${name}`}
+          value={item.quantity}
+          max={availableStock > 0 ? availableStock : undefined}
+          disabled={isUnavailable || isSoldOut}
+          onChange={(quantity) => onUpdateQuantity(item.productId, quantity)}
+        />
 
         {/* Line Price Total */}
         <div className="min-w-20 text-right tabular-nums">

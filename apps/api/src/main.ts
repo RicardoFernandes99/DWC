@@ -6,10 +6,12 @@ import { getConnectionToken } from '@nestjs/mongoose';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { Connection } from 'mongoose';
 import { AppModule } from './app.module.js';
+import { SocketIoAdapter } from './realtime/socket-io.adapter.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
+  app.useWebSocketAdapter(new SocketIoAdapter(app, config));
   app.setGlobalPrefix('api');
   app.enableCors({
     origin: config.getOrThrow<string>('WEB_ORIGIN'),
@@ -42,7 +44,11 @@ async function bootstrap() {
   await Promise.all(
     Object.values(database.models).map((model) => model.init()),
   );
-  await app.listen(config.getOrThrow<number>('API_PORT'), '127.0.0.1');
+  // Loopback by default; the Compose stack sets 0.0.0.0 inside its container.
+  await app.listen(
+    config.getOrThrow<number>('API_PORT'),
+    config.get<string>('API_HOST') || '127.0.0.1',
+  );
 }
 
 void bootstrap().catch((error: unknown) => {

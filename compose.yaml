@@ -48,7 +48,144 @@ services:
       - floci-data:/app/data
     # Use the image's built-in readiness probe; the native image has no curl.
 
+  # Full stack (`pnpm stack:up`): api, web and backoffice in containers.
+  # Linux node_modules live in named volumes so they never mix with host installs.
+  deps:
+    profiles: [app]
+    image: &node-image node:24.19.0-bookworm-slim
+    working_dir: /workspace
+    environment: &node-env
+      CI: 'true'
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+      npm_config_store_dir: /pnpm-store
+    command: ['sh', '-c', 'corepack enable && pnpm install --frozen-lockfile']
+    volumes: &node-volumes
+      - .:/workspace
+      - node-modules:/workspace/node_modules
+      - api-node-modules:/workspace/apps/api/node_modules
+      - web-node-modules:/workspace/apps/web/node_modules
+      - backoffice-node-modules:/workspace/apps/backoffice/node_modules
+      - pnpm-store:/pnpm-store
+
+  api:
+    profiles: [app]
+    image: *node-image
+    working_dir: /workspace
+    command: ['sh', '-c', 'corepack enable && pnpm --filter @dwc/api dev']
+    env_file:
+      - ./.env
+    environment:
+      <<: *node-env
+      API_HOST: 0.0.0.0
+      MONGODB_URI: mongodb://mongodb:27017/dwc?replicaSet=rs0&directConnection=true
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://storage:4566
+      # Signed image URLs must use the host-published storage address.
+      S3_PUBLIC_ENDPOINT: ${S3_ENDPOINT:-http://127.0.0.1:4566}
+      # Windows bind mounts do not deliver file events into containers.
+      TSC_WATCHFILE: DynamicPriorityPolling
+      TSC_WATCHDIRECTORY: DynamicPriorityPolling
+    ports:
+      - '127.0.0.1:${API_PORT:-3000}:${API_PORT:-3000}'
+    volumes: *node-volumes
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      storage:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:'+(process.env.API_PORT||3000)+'/api/health/live').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 20s
+
+  web:
+    profiles: [app]
+    image: *node-image
+    working_dir: /workspace
+    command:
+      [
+        'sh',
+        '-c',
+        'corepack enable && pnpm --filter @dwc/web exec vite --host 0.0.0.0',
+      ]
+    environment:
+      <<: *node-env
+      API_PROXY_TARGET: http://api:${API_PORT:-3000}
+      WEB_USE_POLLING: 'true'
+    ports:
+      - '127.0.0.1:5173:5173'
+    volumes: *node-volumes
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+
+  # Builds the backoffice CSS/JS (Tailwind + Alpine) into apps/backoffice/public/build.
+  backoffice-assets:
+    profiles: [backoffice, app]
+    image: *node-image
+    working_dir: /workspace
+    command:
+      [
+        'sh',
+        '-c',
+        'corepack enable && pnpm install --frozen-lockfile --filter @dwc/backoffice && pnpm --filter @dwc/backoffice dev',
+      ]
+    environment: *node-env
+    volumes: *node-volumes
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+        required: false
+
+  backoffice:
+    profiles: [backoffice, app]
+    build:
+      context: ./apps/backoffice
+    ports:
+      - '127.0.0.1:${BACKOFFICE_PORT:-8080}:8080'
+    env_file:
+      - ./apps/backoffice/.env
+    environment:
+      APP_DEBUG: 'false'
+      NEST_API_URL: http://api:${API_PORT:-3000}/api
+      # Octane/FrankenPHP serves plain HTTP on :8080.
+      SERVER_NAME: :8080
+      # Sessions, logs and compiled views live on a Docker volume: stat/read calls
+      # on the Windows bind mount dominate page time. Templates are not re-checked
+      # per request; docker/dev.sh clears them when a view changes.
+      LARAVEL_STORAGE_PATH: /var/lib/backoffice/storage
+      VIEW_COMPILED_PATH: /var/lib/backoffice/storage/framework/views
+      VIEW_CHECK_TIMESTAMPS: 'false'
+    volumes:
+      - ./apps/backoffice:/var/www/html
+      - ./apps/backoffice/docker/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini:ro
+      - backoffice-storage:/var/lib/backoffice/storage
+    depends_on:
+      api:
+        condition: service_healthy
+        required: false
+      backoffice-assets:
+        condition: service_started
+
 volumes:
+  node-modules:
+  api-node-modules:
+  web-node-modules:
+  backoffice-node-modules:
+  backoffice-storage:
+  pnpm-store:
   mongodb-data:
   redis-data:
   floci-data:

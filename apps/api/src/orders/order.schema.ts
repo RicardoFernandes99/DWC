@@ -24,6 +24,38 @@ export enum OrderOrigin {
   Auction = 'auction',
 }
 
+export enum RefundRequestStatus {
+  Open = 'open',
+  Declined = 'declined',
+  Accepted = 'accepted',
+}
+
+@Schema({ _id: false })
+export class RefundRequest {
+  @Prop({ required: true, enum: Object.values(RefundRequestStatus) })
+  status!: RefundRequestStatus;
+
+  @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'User' })
+  requestedBy!: Types.ObjectId;
+
+  @Prop({ required: true, default: Date.now })
+  requestedAt!: Date;
+
+  @Prop({ type: String, trim: true, maxlength: 500, default: null })
+  reason!: string | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
+  decidedBy!: Types.ObjectId | null;
+
+  @Prop({ type: Date, default: null })
+  decidedAt!: Date | null;
+
+  @Prop({ type: Number, min: 0, default: null })
+  refundedCents!: number | null;
+}
+
+export const RefundRequestSchema = SchemaFactory.createForClass(RefundRequest);
+
 @Schema({ _id: false })
 export class OrderLineSnapshot {
   @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'Product' })
@@ -72,14 +104,23 @@ export const OrderStatusHistoryEntrySchema = SchemaFactory.createForClass(
 
 @Schema({ timestamps: true, autoIndex: true })
 export class Order {
-  @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'Checkout' })
-  checkoutId!: Types.ObjectId;
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Checkout', default: null })
+  checkoutId!: Types.ObjectId | null;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Auction', default: null })
+  auctionId!: Types.ObjectId | null;
 
   @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'User' })
   buyerId!: Types.ObjectId;
 
+  @Prop({ type: String, trim: true, maxlength: 100, default: null })
+  buyerNameSnapshot!: string | null;
+
   @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'User' })
   producerId!: Types.ObjectId;
+
+  @Prop({ type: String, trim: true, maxlength: 120, default: null })
+  producerNameSnapshot!: string | null;
 
   @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'Payment' })
   paymentId!: Types.ObjectId;
@@ -121,6 +162,9 @@ export class Order {
 
   @Prop({ type: Number, required: true, default: 1, min: 1 })
   revision!: number;
+
+  @Prop({ type: RefundRequestSchema, default: null })
+  refundRequest!: RefundRequest | null;
 }
 
 export type OrderDocument = HydratedDocument<Order> & {
@@ -131,4 +175,14 @@ export type OrderDocument = HydratedDocument<Order> & {
 export const OrderSchema = SchemaFactory.createForClass(Order);
 OrderSchema.index({ buyerId: 1, createdAt: -1 });
 OrderSchema.index({ producerId: 1, createdAt: -1 });
+OrderSchema.index({ status: 1, createdAt: -1, _id: -1 });
+OrderSchema.index({ origin: 1, createdAt: -1, _id: -1 });
+OrderSchema.index({ fulfilmentMethod: 1, createdAt: -1, _id: -1 });
 OrderSchema.index({ checkoutId: 1 });
+OrderSchema.index(
+  { auctionId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { auctionId: { $type: 'objectId' } },
+  },
+);

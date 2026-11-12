@@ -15,6 +15,26 @@ pnpm infra:up
 pnpm dev
 ```
 
+### Full stack in Docker
+
+To run everything in containers (API, web, backoffice and infrastructure):
+
+```sh
+pnpm setup:local          # once; host Node only for this step
+pnpm backoffice:setup     # once; creates apps/backoffice/.env and vendor/
+pnpm stack:up             # build/start all services and create the S3 bucket
+pnpm stack:logs           # follow api, web and backoffice logs
+pnpm stack:down           # stop everything; named volumes are kept
+```
+
+Web is on http://localhost:5173, the API on 3000 and the backoffice on 8080
+(set `BACKOFFICE_PORT` to publish it elsewhere). Containers reach each other by
+service name, so the backoffice calls `http://api:3000/api` directly. Linux
+`node_modules` live in named volumes, separate from any host install, and source
+changes are picked up by polling. Do not run `pnpm dev` at the same time; both
+publish ports 3000 and 5173. The API listens on `API_HOST` (default
+`127.0.0.1`; the container sets `0.0.0.0`, still published on loopback only).
+
 `setup:local` creates an ignored root `.env` with random local credentials only
 when it does not exist. It never overwrites an existing environment file.
 The API loads this file; Compose uses the same settings.
@@ -70,9 +90,13 @@ docs/             project scope, architecture, agent workflow and research
 .claude/skills/   symlink to the shared skills
 ```
 
-Laravel backoffice remains planned as `apps/backoffice`; it is not scaffolded in
-this Web/API foundation. The API supports buyer/producer registration and Redis-backed authentication sessions.
-Other business features remain unimplemented.
+The Laravel backoffice lives in `apps/backoffice`. Start it alongside the API
+with `pnpm backoffice:setup` once, then `pnpm backoffice:dev` in a separate
+terminal. It listens on port 8080 and authenticates administrators through the
+API. `backoffice:dev` also starts the containerized API it calls
+(`http://api:3000/api`), so stop a host `pnpm dev` first, or use `pnpm stack:up`. Root `setup:local` adds `BACKOFFICE_ORIGIN` to an existing `.env` without
+replacing credentials. Run `pnpm backoffice:check` for Pint and Larastan.
+Administrative business screens follow in later tickets.
 
 ## Working with agents
 
@@ -147,7 +171,11 @@ accounts. Create a local administrator account deliberately with:
 pnpm --filter @dwc/api admin:bootstrap -- --name "Local Admin" --email "admin@example.com" --password "<8..72-byte-secret>"
 ```
 
-`ADMIN_BOOTSTRAP_NAME`, `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` are
+When `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` are set in `.env` (the
+`.env.example` ships `admin@admin.com` / `admin`), the API also creates that
+administrator on start if the email is not taken. It never changes an existing
+account; remove the variables to disable it. `ADMIN_BOOTSTRAP_NAME`,
+`ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` are
 also accepted from the environment. The bootstrap command hashes the password with
 bcrypt, refuses to overwrite or promote an existing user, and never logs credentials.
 
@@ -157,6 +185,36 @@ Authenticated administrators can inspect and decide submitted producer applicati
 - `GET /api/admin/producer-applications/:id` — application review details and current `revision`.
 - `POST /api/admin/producer-applications/:id/approve` — atomically approves a pending application matching `{ revision }`.
 - `POST /api/admin/producer-applications/:id/reject` — atomically rejects a pending application matching `{ revision, reason }`.
+- `POST /api/admin/producers/:id/suspend` — suspends an approved producer matching `{ revision, reason }` (reason 1-500 chars, shown to the producer). Notifies the producer.
+- `POST /api/admin/producers/:id/reinstate` — returns a suspended producer to approved matching `{ revision }` and clears the reason. Notifies the producer. Other statuses answer `409`.
+
+## Local demo fixtures
+
+With local MongoDB running, stop the API and other processes that write marketplace data. Then run:
+
+```powershell
+$env:FIXTURE_MAINTENANCE_ACK = 'stopped'
+pnpm --filter @dwc/api fixtures --create
+Remove-Item Env:FIXTURE_MAINTENANCE_ACK
+```
+
+The command builds the API first, then inserts a deterministic set of buyers, producer states, products, catalogue orders, refund cases, reviews, and auctions in one MongoDB transaction. This narrow fixture-only setup writes historical records directly through the API's Mongoose schemas, so it does not replay registration, checkout, refund, review, approval, or bidding workflows. It does not change production services, API contracts, or authentication; sign-in still uses normal password verification and role checks. It uses generated demo passwords stored in the ignored local file `demos/ticket-044-review/credentials.local.json`. The command never prints passwords or password hashes. Card details are dummy metadata ending in `4242`; no payment is sent. Each product gets a real photo: the command uploads committed JPEGs from `apps/api/fixtures/images/` to the local S3 bucket under `products/<producerId>/<productId>/fixture.jpg` (Unsplash License; sources in `apps/api/fixtures/CREDITS.md`). It does not create Redis sessions.
+
+The same command also creates a larger catalogue namespace, `dwc-local-demo-catalogue-v1`, with its own ownership manifest: 7 more approved farms, 47 products covering every category (some low or out of stock), 6 more buyers, about 40 catalogue orders spread over 90 days in every status (with refunds and reviews), and 15 auctions (5 upcoming, 5 live, 5 finished with paid winning orders). Catalogue accounts use the same generated password as the core fixture accounts, with emails such as `hillside@demo.dwclocal.invalid` (farms) and `buyer.sam@demo.dwclocal.invalid` (buyers). If the core fixture already exists without images, `--create` attaches images to its three products in place. Cleanup removes the catalogue namespace and its images first, then the core fixture.
+
+Product stock balances against the fixture history. Vegetables start at 20 units: 14 available, 1 reserved for the upcoming auction, 3 sold in catalogue orders, and 2 sold in the finished auction. Eggs start at 5 boxes: 2 available, 1 reserved for the active auction, and 2 sold in catalogue orders. Jam has 10 jars available after an accepted refund restores 2 jars.
+
+The command targets only a local MongoDB host and refuses to run while an API answers on `API_PORT` (default `3000`). The maintenance acknowledgement also applies to other writers, including additional API processes. A second `--create` checks that all manifest-owned records still exist and makes no changes. It never repairs partial data or resets demo interactions. Checkout request hashes in these historical records are fixture placeholders, not live checkout idempotency keys. If a fixture record is missing or the local credentials file is lost, run cleanup, then create again. Cleanup tolerates missing manifest-owned records but still refuses foreign references.
+
+Remove the fixture namespace after stopping writers with:
+
+```powershell
+$env:FIXTURE_MAINTENANCE_ACK = 'stopped'
+pnpm --filter @dwc/api fixtures --cleanup
+Remove-Item Env:FIXTURE_MAINTENANCE_ACK
+```
+
+Cleanup checks incoming and outgoing references before deleting manifest-owned records in a transaction. If another record refers to a fixture record, cleanup stops and preserves both the records and local credentials. Resolve that reference yourself, then retry. It deletes only listed fixture IDs and removes only the fixture credentials file. Do not edit the ownership manifest or run create/cleanup while any other data writer is active.
 
 ## Public catalogue
 
@@ -169,3 +227,15 @@ one producer use `GET /api/producers/:id/products`. Public results include only
 published, unarchived, unmoderated products belonging to currently approved
 producers with a producer application. Responses expose allowlisted profile and
 product fields; stored product images receive short-lived signed URLs.
+
+## Purchase receipts
+
+`GET /api/orders/:orderId/receipt.pdf` downloads a PDF receipt for a catalogue
+order or auction win. The buyer or that order's producer must sign in. Admins
+use the separate `GET /api/admin/orders/:id/receipt.pdf` endpoint. Both routes
+return private, non-cacheable attachments; there are no public links. New
+purchases snapshot the buyer name and producer farm name. Older orders show
+stable account references and state that historical names were not recorded.
+Receipts preserve original order amounts and show any order-specific refund,
+cancellation date and remaining paid amount. The document is a purchase receipt,
+not a tax invoice.

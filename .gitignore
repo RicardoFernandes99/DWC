@@ -45,3 +45,5 @@ demos/**/*.wav
 demos/**/*.record-demo/
 demos/**/*.produce-demo/
 demos/**/*.review/
+/demos/ticket-044-review/credentials.local.json
+/demos/ticket-044-review/admin-credentials.local.json

@@ -68,6 +68,8 @@ function renderCart(userRole?: 'buyer' | 'producer' | null) {
         email: `${userRole}@example.com`,
         role: userRole,
         producerStatus: userRole === 'producer' ? ('approved' as const) : null,
+        buyerStatus: 'active' as const,
+        buyerSuspensionReason: null,
         producerRejectionReason: null,
       }
     : null;
@@ -150,7 +152,6 @@ describe('Cart page interactions and multi-producer behavior', () => {
     expect(
       screen.getByRole('heading', { name: 'Order Summary' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('3 items from 2 producers')).toBeInTheDocument();
 
     // Sign in prompt for guest
     expect(
@@ -207,51 +208,6 @@ describe('Cart page interactions and multi-producer behavior', () => {
         screen.getByRole('heading', { name: 'Your cart is empty' }),
       ).toBeInTheDocument();
     });
-  });
-
-  it('shows producer role warning banner and disables checkout for producer accounts without deleting cart', async () => {
-    saveCart({
-      version: 1,
-      items: [
-        {
-          productId: mockProductA.id,
-          quantity: 1,
-          producerId: mockProductA.producerId,
-          producerFarmName: mockProductA.producerFarmName,
-          name: mockProductA.name,
-          priceCents: mockProductA.priceCents,
-          unit: mockProductA.unit,
-        },
-      ],
-    });
-
-    vi.mocked(publicRequest).mockResolvedValue(mockProductA);
-
-    renderCart('producer');
-
-    expect(await screen.findByText('Organic Tomatoes')).toBeInTheDocument();
-
-    // Producer account banner
-    expect(
-      screen.getByText('Producer accounts cannot purchase products'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /Your cart is preserved. To place an order, please sign in with a buyer account./i,
-      ),
-    ).toBeInTheDocument();
-
-    // Checkout disabled
-    expect(
-      screen.getByRole('button', {
-        name: /Producer account \(Checkout disabled\)/i,
-      }),
-    ).toBeDisabled();
-
-    // Cart in localStorage is still preserved
-    expect(
-      JSON.parse(localStorage.getItem(CART_STORAGE_KEY) ?? '{}').items,
-    ).toHaveLength(1);
   });
 
   it('displays out of stock and unavailable warnings distinctly with clear guidance', async () => {

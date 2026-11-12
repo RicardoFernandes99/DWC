@@ -1,4 +1,14 @@
 node_modules/
+apps/backoffice/vendor/
+apps/backoffice/public/build/
+apps/backoffice/resources/css/blatui.css
+apps/backoffice/resources/js/blatui*.js
+apps/backoffice/bootstrap/cache/
+apps/backoffice/storage/framework/cache/
+apps/backoffice/storage/framework/sessions/
+apps/backoffice/storage/framework/views/
+apps/backoffice/storage/logs/
+apps/backoffice/database/*.sqlite
 dist/
 coverage/
 pnpm-lock.yaml
@@ -11,6 +21,11 @@ pnpm-lock.yaml
 .agents/skills/emil-design-eng/
 .agents/skills/impeccable/
 .agents/skills/taste-skill/
+.agents/skills/interface-design/
+.agents/skills/frontend-design/
+.agents/skills/unslop/
+.agents/skills/web-design-guidelines/
+.agents/skills/vercel-react-best-practices/
 demos/takes/
 demos/**/*.record-demo/
 demos/**/*.produce-demo/

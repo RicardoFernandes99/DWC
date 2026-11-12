@@ -1,11 +1,11 @@
 # 044: Create repeatable non-destructive marketplace demo fixtures
 
 - Macro: M01-M08 integration
-- Status: Draft
+- Status: In review
 - Depends on: 020, 028, 031, 035, 036
-- PR: Not opened
-- Branch / parent: Not assigned
-- Blockers: None beyond dependencies
+- PR: https://github.com/RicardoFernandes99/DWC/pull/58
+- Branch / parent: `codex/age-044-local-demo-fixtures` / PR 57 (`36fb266a2e31c48118ed6de517129e84c07e90f1`)
+- Blockers: None
 
 ## Outcome
 
@@ -37,11 +37,11 @@ implemented schemas/services and existing `apps/api/scripts/smoke.ts` convention
 
 ## Acceptance criteria
 
-- [ ] Fresh fixture run produces coherent visible flows with no fabricated features.
-- [ ] Re-running does not duplicate accounts, inventory, payments or bid history.
-- [ ] Unrelated local records/objects/keys remain untouched on create and cleanup.
-- [ ] Fixtures respect stock conservation, roles, approval and order snapshots.
-- [ ] Credentials/card metadata are demonstrative and no real secret is committed.
+- [x] Fresh fixture run produces coherent visible flows with no fabricated features.
+- [x] Re-running does not duplicate accounts, inventory, payments or bid history.
+- [x] Unrelated local records/objects/keys remain untouched on create and cleanup.
+- [x] Fixtures respect stock conservation, roles, approval and order snapshots.
+- [x] Credentials/card metadata are demonstrative and no real secret is committed.
 
 ## Checks
 
@@ -51,4 +51,38 @@ Run the fixture command twice on local data, inspect a few coherent records and 
 
 ## Delivery notes
 
-Not implemented. Record actual evidence and PR/stack metadata here.
+Frontier APPROVED on 2026-11-06 after one correction round. Executor:
+`gpt-6-luna` at High, unchanged throughout. Token/cost measurements were not
+available. Parent verified live at `36fb266a2e31c48118ed6de517129e84c07e90f1`.
+Reviewed implementation: `167c58945b8f99b79f6a7f7a02b3b34687e7f1c8`.
+Published ready for review through native `gh stack`, stack 34, targeting PR 57.
+No merge was performed.
+
+The explicit fixture command checks the local target and stopped API before
+building. It inserts 35 schema-validated historical records plus a deterministic
+ownership manifest in one transaction. Reruns preserve existing demo interactions.
+Cleanup checks incoming and outgoing references, tolerates missing owned rows,
+and removes only manifest-owned records and the ignored generated credentials.
+Images are omitted; the command creates no Redis sessions or S3 objects.
+
+Real checks used Node 24.19.0, pinned pnpm 11.25.0 and local MongoDB/Redis/Floci.
+Two creates left every fixture record and credential unchanged. Stock accounting,
+checkout/order/payment totals, delivery addresses, name snapshots, refund
+allocations and auction lot pricing were inspected. Unrelated domain records were
+compared by hashes, and unrelated Redis and S3 sentinels survived create/cleanup.
+External review reports and an owned auction pointing to an outside user both
+refused cleanup without deletion. A missing fixture card caused rerun refusal;
+cleanup then removed the remaining namespace, manifest and credentials. A second
+cleanup did nothing. Non-local targets and a running API refused before build.
+
+All six accounts signed in through normal authentication. API reads showed the
+four producer states, searchable products, two reviews, three orders per buyer,
+all six receipt PDFs, the three auction states and the winning bid/order link.
+Review login sessions and all temporary sentinels were removed. Local evidence
+remains under `demos/ticket-044-review/`; no video or report was generated.
+
+API and tooling strict typechecks, Nest build, scoped Prettier and root ESLint
+passed. Local lint excluded only the inherited untracked
+`demos/ticket-040-review/review.ts` failure and untracked `.pnpm-store/` artifacts.
+No production endpoint or shared contract changed. Docker was updated by the user
+after stale runtime sockets blocked startup; required checks passed after recovery.

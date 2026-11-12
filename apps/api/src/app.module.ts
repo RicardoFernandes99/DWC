@@ -15,6 +15,14 @@ import { ProductsModule } from './products/products.module.js';
 import { CatalogueModule } from './catalogue/catalogue.module.js';
 import { CheckoutModule } from './checkout/checkout.module.js';
 import { OrdersModule } from './orders/orders.module.js';
+import { RealtimeModule } from './realtime/realtime.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
+import { AuctionsModule } from './auctions/auctions.module.js';
+import { ReviewsModule } from './reviews/reviews.module.js';
+import { ModerationModule } from './moderation/moderation.module.js';
+import { ProducerMetricsModule } from './producer-metrics/producer-metrics.module.js';
+import { AdminInspectionModule } from './admin-inspection/admin-inspection.module.js';
+import { BuyerStandingModule } from './users/buyer-standing.module.js';
 
 @Module({
   imports: [
@@ -25,6 +33,14 @@ import { OrdersModule } from './orders/orders.module.js';
     CatalogueModule,
     CheckoutModule,
     OrdersModule,
+    RealtimeModule,
+    NotificationsModule,
+    AuctionsModule,
+    ReviewsModule,
+    ProducerMetricsModule,
+    AdminInspectionModule,
+    BuyerStandingModule,
+    ModerationModule,
     UsersModule,
     RedisModule,
     StorageModule,

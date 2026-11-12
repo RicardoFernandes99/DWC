@@ -143,6 +143,9 @@ export class Product {
   @Prop({ type: String, trim: true, maxlength: 500, default: null })
   moderationReason!: string | null;
 
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
+  moderatedBy!: Types.ObjectId | null;
+
   @Prop({ type: ProductImageMetadataSchema, default: null })
   image!: ProductImageMetadata | null;
 

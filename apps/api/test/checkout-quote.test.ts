@@ -7,7 +7,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Model, Types } from 'mongoose';
+import { Model, Mongoose, Types } from 'mongoose';
 import {
   type AuthenticatedUserRequest,
   RoleGuard,
@@ -22,14 +22,28 @@ import {
   FulfilmentMethod,
 } from '../dist/checkout/checkout.dto.js';
 import {
+  type User,
   ProducerStatus,
-  type UserDocument,
   UserRole,
 } from '../dist/users/user.schema.js';
 import {
   type ProductDocument,
   ProductUnit,
 } from '../dist/products/product.schema.js';
+import { NotificationIntegrationService } from '../dist/notifications/notification-integration.service.js';
+import {
+  Notification,
+  NotificationSchema,
+} from '../dist/notifications/notification.schema.js';
+import { NotificationsService } from '../dist/notifications/notifications.service.js';
+
+const testMongoose = new Mongoose();
+const quoteOnlyNotificationIntegration = new NotificationIntegrationService(
+  new NotificationsService(
+    testMongoose.model<Notification>(Notification.name, NotificationSchema),
+  ),
+  { publishNotificationCreated: () => {} },
+);
 
 interface MockProduct {
   _id: Types.ObjectId;
@@ -97,7 +111,7 @@ function createMockModels(
 
   return {
     productModel: productModel as unknown as Model<ProductDocument>,
-    userModel: userModel as unknown as Model<UserDocument>,
+    userModel: userModel as unknown as Model<User>,
     didAttemptWrite: () => writeAttempted,
   };
 }
@@ -165,7 +179,11 @@ test('EUR 49.99 incurs EUR 5; EUR 50.00 is free independently per producer in de
     products,
     producers,
   );
-  const service = new CheckoutService(productModel, userModel);
+  const service = new CheckoutService(
+    productModel,
+    userModel,
+    quoteOnlyNotificationIntegration,
+  );
 
   const quote = await service.quote('buyer-1', {
     fulfilmentMethod: FulfilmentMethod.Delivery,
@@ -256,7 +274,11 @@ test('Collection is free regardless of subtotal amounts', async () => {
   ];
 
   const { productModel, userModel } = createMockModels(products, producers);
-  const service = new CheckoutService(productModel, userModel);
+  const service = new CheckoutService(
+    productModel,
+    userModel,
+    quoteOnlyNotificationIntegration,
+  );
 
   const quote = await service.quote('buyer-1', {
     fulfilmentMethod: FulfilmentMethod.Collection,
@@ -307,7 +329,11 @@ test('Deduplicates and normalizes product lines so duplicate lines cannot evade 
   ];
 
   const { productModel, userModel } = createMockModels(products, producers);
-  const service = new CheckoutService(productModel, userModel);
+  const service = new CheckoutService(
+    productModel,
+    userModel,
+    quoteOnlyNotificationIntegration,
+  );
 
   // User submits 2 lines of 3 units each = 6 units total (exceeds stock of 4)
   const quote = await service.quote('buyer-1', {
@@ -396,7 +422,11 @@ test('Identifies unavailable products and suspended producers with stable issue 
   ];
 
   const { productModel, userModel } = createMockModels(products, producers);
-  const service = new CheckoutService(productModel, userModel);
+  const service = new CheckoutService(
+    productModel,
+    userModel,
+    quoteOnlyNotificationIntegration,
+  );
 
   const quote = await service.quote('buyer-1', {
     fulfilmentMethod: FulfilmentMethod.Collection,
@@ -452,7 +482,11 @@ test('Fails when delivery address is incomplete or missing for delivery fulfilme
   ];
 
   const { productModel, userModel } = createMockModels(products, producers);
-  const service = new CheckoutService(productModel, userModel);
+  const service = new CheckoutService(
+    productModel,
+    userModel,
+    quoteOnlyNotificationIntegration,
+  );
 
   await assert.rejects(
     async () => {
@@ -486,7 +520,8 @@ test('Fails when delivery address is incomplete or missing for delivery fulfilme
 test('Fingerprint is deterministic and responds to price, quantity, revision, and method changes', async () => {
   const service = new CheckoutService(
     {} as unknown as Model<ProductDocument>,
-    {} as unknown as Model<UserDocument>,
+    {} as unknown as Model<User>,
+    quoteOnlyNotificationIntegration,
   );
 
   const basePayload = {

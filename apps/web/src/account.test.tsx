@@ -12,6 +12,18 @@ vi.mock('./lib/session', async (original) => ({
 vi.mock('@tanstack/react-router', async (original) => ({
   ...(await original<typeof import('@tanstack/react-router')>()),
   useNavigate: () => vi.fn(),
+  useLocation: (options?: {
+    select?: (location: { pathname: string }) => unknown;
+  }) => {
+    const location = {
+      pathname: window.location.pathname,
+      search: {},
+      hash: '',
+    };
+    return options?.select ? options.select(location) : location;
+  },
+  useParams: () => ({}),
+  useSearch: () => ({}),
   Link: ({ children }: { children: ReactNode }) => (
     <a href="/login">{children}</a>
   ),
@@ -22,6 +34,8 @@ const person = {
   email: 'buyer@example.com',
   role: 'buyer' as const,
   producerStatus: null,
+  buyerStatus: 'active' as const,
+  buyerSuspensionReason: null,
   producerRejectionReason: null,
 };
 function showAccount() {
@@ -47,10 +61,8 @@ describe('account retry states', () => {
     expect(
       await screen.findByText(/information shown may be out of date/),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Your account' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Buyer')).toBeInTheDocument();
+    expect(screen.getByText('Your account')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Buyer' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     await vi.waitFor(() =>
       expect(

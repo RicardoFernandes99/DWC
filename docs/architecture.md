@@ -16,9 +16,16 @@ sessions. Refresh uses atomic Lua compare-and-set rotation; logout revokes only
 the current cookie session. Each authenticated request verifies JWT signature,
 issuer/audience, session existence and current MongoDB user status.
 
-`apps/backoffice` will hold Laravel. Prefer consuming authenticated NestJS
-administrative endpoints to avoid duplicating business rules. Choose its auth
-flow and PHP tooling when scaffolding that app.
+`apps/backoffice` is Laravel 13 on PHP 8.4 with Blade. Its separate browser
+session uses encrypted, file-backed Laravel sessions and CSRF protection; the
+session stores NestJS access and opaque refresh credentials server-side only.
+Every protected request checks `GET /api/auth/me`, refreshing once after an
+access-token 401. The API's refresh-cookie expiry sets the absolute seven-day
+session cap. Laravel sends `BACKOFFICE_ORIGIN` for refresh and logout; NestJS
+continues to use `WEB_ORIGIN` for the React app and Socket.IO. NestJS remains the
+only user store and the authority for roles and business rules. Laravel does not
+connect to MongoDB or create a second SQL user database. See the backoffice
+README and app guidance for the Docker-based runtime and checks.
 
 ## Local services
 
@@ -64,6 +71,41 @@ Readiness pings MongoDB and Redis and checks the configured S3 bucket. The smoke
 command also exercises database persistence, a Redis value round-trip and TTL,
 and object upload/download/delete. These
 checks do not imply catalogue, order or auction behavior is implemented.
+
+Read-only administrator inspection lives in NestJS for the Laravel backoffice.
+`GET /api/admin/users`, `/orders`, and `/auctions` use bounded pages, explicit
+filters and stable timestamp/ID ordering. Detail responses select safe fields,
+including order-specific refund allocations and auction settlement links. Admin
+routes return `Cache-Control: no-store`. `GET /api/admin/health` reports bounded
+MongoDB, Redis and storage checks without dependency errors or configuration.
+The public `/api/health/ready` response remains unchanged. Because `AdminGuard`
+checks the Redis-backed session, an HTTP admin health request may itself return
+503 during a Redis outage; the health service can still report Redis as down when
+called in-process.
+
+Purchase receipts are bounded PDF attachments. Buyer and producer routes
+authorize against the order's buyer/producer IDs; administrators use a separate
+admin route. Rendering reads the order and its unique refund allocation in a
+MongoDB transaction and uses the order's immutable purchase values. New checkout
+and auction orders snapshot buyer and farm names in their transactions. Older
+orders use account IDs and do not look up current names. The API embeds the
+Fraunces font, distributed under the SIL Open Font License.
+
+## Realtime transport
+
+Socket.IO runs on the API's existing HTTP server and configured `WEB_ORIGIN`.
+The default namespace authenticates the access JWT through `AuthService` at
+connection time, checking JWT claims, the Redis session and current MongoDB
+user. The server derives personal rooms as `user:<userId>` and accepts no client
+room-join commands. Personal notifications are published to authenticated
+connections without repeating authentication before each event. The separate
+`/auctions` namespace permits guest watching, derives auction rooms only from
+validated auction IDs, and authenticates the supplied JWT/session/current buyer
+and saved payment method for each bid. Auction state and history expose only
+bounded public bidder snapshots. Both namespaces enforce the configured web
+origin when supplied. See the [Socket.IO event contract](socket-events.md) for
+event shapes and delivery limitations. Connections and viewer counts are
+process-local; there is no multi-instance adapter.
 
 ## Tooling choices
 

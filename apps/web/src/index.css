@@ -41,6 +41,8 @@
   --input: var(--border);
   --ring: var(--primary);
   --radius: 0.625rem;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --duration-reveal: 200ms;
   --auth-surface: #f7f5ee;
   --font-editorial: 'Fraunces', Georgia, serif;
 }
@@ -82,6 +84,33 @@
 }
 
 @layer base {
+  /* Tailwind v4 dropped the pointer cursor on buttons; restore it for every interactive control. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='menuitem']:not([data-disabled]),
+  [role='option']:not([data-disabled]),
+  [role='tab'],
+  [role='checkbox'],
+  [role='switch'],
+  [role='slider'],
+  summary,
+  select:not(:disabled),
+  label[for],
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled),
+  input[type='file']:not(:disabled),
+  input[type='range']:not(:disabled),
+  input[type='submit']:not(:disabled),
+  input[type='button']:not(:disabled),
+  a[href] {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
+
   html {
     scrollbar-gutter: stable;
   }
@@ -117,14 +146,15 @@
 }
 
 .site-header {
-  background: var(--auth-surface);
+  background: var(--card);
   border-bottom: 1px solid var(--border);
 }
 .site-nav {
-  max-width: 1600px;
+  /* Same container as page content: max-w-[1440px] px-4 md:px-8 xl:px-12. */
+  max-width: 1440px;
   margin: auto;
   min-height: 88px;
-  padding: 18px 4%;
+  padding: 18px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -329,7 +359,7 @@
 .auth-form .auth-submit {
   height: 49px;
   width: 100%;
-  justify-content: space-between;
+  justify-content: center;
   padding-inline: 18px;
   margin-top: 5px;
   font-size: 13px;
@@ -467,7 +497,7 @@
 @media (max-width: 479px) {
   .site-nav {
     min-height: 76px;
-    padding: 16px 20px;
+    padding: 16px;
   }
   .brand-link {
     font-size: 14px;
@@ -485,10 +515,6 @@
     gap: 14px;
     font-size: 12px;
   }
-  .site-nav-links .home-link,
-  .site-nav-links .nav-register {
-    display: none;
-  }
   .auth-layout {
     min-height: calc(100svh - 76px);
   }
@@ -496,5 +522,39 @@
 @media (prefers-reduced-motion: reduce) {
   .auth-submit svg {
     transition: none;
+  }
+}
+
+@keyframes drawer-slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+@keyframes drawer-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.drawer-panel {
+  animation: drawer-slide-in 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.drawer-overlay {
+  animation: drawer-fade-in 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer-panel,
+  .drawer-overlay {
+    animation: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .site-nav {
+    padding-inline: 32px;
+  }
+}
+@media (min-width: 1280px) {
+  .site-nav {
+    padding-inline: 48px;
   }
 }

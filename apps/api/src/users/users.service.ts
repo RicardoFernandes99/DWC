@@ -39,6 +39,11 @@ function toUserResponse(user: UserDocument): UserResponseDto {
       user.producerStatus === ProducerStatus.Rejected
         ? (user.producerRejectionReason ?? null)
         : null,
+    buyerStatus: user.buyerStatus ?? 'active',
+    buyerSuspensionReason:
+      user.role === UserRole.Buyer && user.buyerStatus === 'suspended'
+        ? (user.buyerSuspensionReason ?? null)
+        : null,
   };
 }
 

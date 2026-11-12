@@ -1,21 +1,23 @@
 import { safeReturn } from './safe-return';
+import { routeAccess } from './route-access';
 import { useState } from 'react';
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Leaf,
-  ShoppingBasket,
-  Sprout,
-} from 'lucide-react';
+import { ArrowRight, Leaf, LogOut, ShoppingBasket, Sprout } from 'lucide-react';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, Outlet, useNavigate, useSearch } from '@tanstack/react-router';
+import {
+  Link,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+  useSearch,
+} from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/form-field';
 import { PaymentMethods } from '@/features/payment-methods/components/payment-methods';
 import { ProducerOnboarding } from '@/features/producer-onboarding/components/producer-onboarding';
-import { ProducerProducts } from '@/features/producer-products/components/producer-products';
+import { ProducerProfileEditor } from '@/features/producer-products/components/producer-products';
 import {
   ApiError,
   login,
@@ -24,70 +26,53 @@ import {
   register,
   type User,
 } from '@/lib/session';
+import { sessionOptions } from './lib/session-query';
 import { useCart } from '@/features/cart/use-cart';
+import { SiteHeader } from '@/components/shared/site-header';
+import './pages.css';
 
 const sessionKey = ['session'] as const;
 export function Shell() {
   const { totalItemCount } = useCart();
-  const query = useQuery({
-    queryKey: sessionKey,
-    queryFn: currentUser,
-    retry: false,
-    staleTime: 0,
-  });
+  const query = useQuery(sessionOptions);
+  const location = useLocation();
+  const access =
+    query.data === undefined
+      ? 'allow'
+      : routeAccess(location.pathname, query.data);
+  const changingAuth =
+    location.pathname === '/login' || location.pathname === '/register';
   return (
     <>
-      <header className="site-header">
-        <nav className="site-nav" aria-label="Main navigation">
-          <Link to="/" className="brand-link">
-            <span className="brand-mark">
-              <Sprout aria-hidden="true" />
-            </span>
-            <span>
-              From Farm <span className="brand-connector">to</span> Table
-            </span>
-          </Link>
-          <div className="site-nav-links">
-            <Link to="/" className="home-link">
-              Home
-            </Link>
-            <Link
-              to="/cart"
-              className="inline-flex items-center gap-1.5 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-              aria-label={
-                totalItemCount > 0
-                  ? `Shopping cart with ${totalItemCount} items`
-                  : 'Shopping cart, empty'
-              }
-            >
-              <ShoppingBasket aria-hidden="true" className="size-4" />
-              <span>Cart</span>
-              {totalItemCount > 0 && (
-                <span className="inline-flex items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground min-w-5 h-5 tabular-nums">
-                  {totalItemCount}
-                </span>
+      <SiteHeader user={query.data} cartCount={totalItemCount} />
+      {query.data?.role === 'buyer' &&
+        query.data.buyerStatus === 'suspended' && (
+          <section
+            className="mx-auto mt-4 max-w-5xl px-6"
+            aria-live="polite"
+            aria-label="Account suspension"
+          >
+            <div className="rounded-lg border border-warning/50 bg-warning/10 px-4 py-3 text-sm">
+              <h2 className="font-semibold">Purchases and bids are paused</h2>
+              <p className="mt-1">
+                You can still manage your account, saved cards, orders, reviews
+                and notifications. Your cart is saved.
+              </p>
+              {query.data.buyerSuspensionReason && (
+                <p className="mt-2 text-muted-foreground">
+                  Reason: {query.data.buyerSuspensionReason}
+                </p>
               )}
-            </Link>
-            {query.data ? (
-              <Link
-                to={query.data.role === 'producer' ? '/producer' : '/account'}
-              >
-                My account
-              </Link>
-            ) : (
-              <>
-                <Link to="/login" activeProps={{ className: 'nav-active' }}>
-                  Sign in
-                </Link>
-                <Link to="/register" className="nav-register">
-                  Sign up <ArrowUpRight aria-hidden="true" />
-                </Link>
-              </>
-            )}
-          </div>
-        </nav>
-      </header>
-      <Outlet />
+            </div>
+          </section>
+        )}
+      {!changingAuth && access === 'home' ? (
+        <Navigate to="/" replace />
+      ) : access === 'login' ? (
+        <Navigate to="/login" search={{ returnTo: location.href }} replace />
+      ) : (
+        <Outlet />
+      )}
     </>
   );
 }
@@ -141,7 +126,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
         void queryClient.invalidateQueries({ queryKey: sessionKey });
         await navigate({
           href:
-            safeReturn(search.returnTo) ??
+            safeReturn(search.returnTo, signedIn) ??
             (signedIn.role === 'producer' ? '/producer' : '/account'),
         });
       } catch (err) {
@@ -427,12 +412,7 @@ export function Account() {
       setBusy(false);
     }
   }
-  if (query.isPending)
-    return (
-      <main className="mx-auto max-w-5xl px-6 py-16" role="status">
-        Restoring your session…
-      </main>
-    );
+  if (query.isPending) return null;
   if (!query.data)
     return (
       <main className="mx-auto max-w-5xl px-6 py-16">
@@ -469,65 +449,92 @@ export function Account() {
       ? pathname
       : undefined;
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12 md:py-20">
-      <h1 className="text-3xl font-semibold">Your account</h1>
-      {query.isError && (
-        <div role="alert" className="mt-5 rounded-lg border p-4 text-sm">
-          <p>
-            Could not refresh your account. The information shown may be out of
-            date.
-          </p>
-          <Button
-            className="mt-3"
-            variant="outline"
-            disabled={query.isFetching}
-            onClick={() => void query.refetch()}
+    <main className="mx-auto max-w-3xl px-4 py-8 md:px-8 md:py-12">
+      <div className="rounded-2xl border bg-card p-4 sm:p-5 md:p-8">
+        <header className="flex flex-wrap items-center gap-4 border-b pb-6">
+          <span
+            aria-hidden="true"
+            className="grid size-14 shrink-0 place-items-center rounded-full bg-secondary text-lg font-semibold text-primary"
           >
-            Retry
-          </Button>
-        </div>
-      )}
-      {current.role === 'producer' && (
-        <>
-          <ProducerOnboarding
-            key={current.id}
-            user={current}
-            requestedSellingPath={requestedSellingPath}
-          />
-          <ProducerProducts status={current.producerStatus} />
-        </>
-      )}
-      {current.role === 'buyer' && (
-        <PaymentMethods key={current.id} buyerId={current.id} />
-      )}
-      <section className="mt-10 border-t pt-6" aria-labelledby="profile-title">
-        <h2 id="profile-title" className="text-lg font-semibold">
-          Profile
-        </h2>
-        <dl className="mt-4 grid gap-4 text-sm md:grid-cols-2">
-          <div className="min-w-0">
-            <dt className="text-muted-foreground">Name</dt>
-            <dd className="mt-1 break-words">{current.name}</dd>
+            {current.name
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((part) => part[0]!.toUpperCase())
+              .join('')}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-muted-foreground">Your account</p>
+            <h1 className="text-2xl leading-tight break-words md:text-3xl">
+              {current.name}
+            </h1>
+            <p
+              className="truncate text-sm text-muted-foreground"
+              title={current.email}
+            >
+              {current.email}
+            </p>
           </div>
-          <div className="min-w-0">
-            <dt className="text-muted-foreground">Email</dt>
-            <dd className="mt-1 break-words">{current.email}</dd>
+          <div className="-ml-2.5 flex basis-full items-center gap-1 sm:ml-0 sm:basis-auto">
+            {current.role === 'producer' && (
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/producer/auctions">
+                  {current.producerStatus === 'suspended'
+                    ? 'View auctions'
+                    : 'Manage auctions'}
+                </Link>
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onClick={() => void signOut()}
+            >
+              <LogOut aria-hidden="true" />
+              Sign out
+            </Button>
           </div>
-        </dl>
-      </section>
-      {message && (
-        <p role="alert" className="mt-5 text-destructive">
-          {message}
-        </p>
-      )}
-      <Button
-        className="mt-8"
-        variant="outline"
-        disabled={busy}
-        onClick={() => void signOut()}
-      >
-        Sign out
-      </Button>
+        </header>
+        {message && (
+          <p role="alert" className="mt-4 text-destructive">
+            {message}
+          </p>
+        )}
+        {query.isError && (
+          <div role="alert" className="mt-5 rounded-lg border p-4 text-sm">
+            <p>
+              Could not refresh your account. The information shown may be out
+              of date.
+            </p>
+            <Button
+              className="mt-3"
+              variant="outline"
+              disabled={query.isFetching}
+              onClick={() => void query.refetch()}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+        {current.role === 'producer' && (
+          <>
+            <ProducerOnboarding
+              key={current.id}
+              user={current}
+              requestedSellingPath={requestedSellingPath}
+            />
+            {current.producerStatus === 'approved' && (
+              <div className="mt-8">
+                <ProducerProfileEditor />
+              </div>
+            )}
+          </>
+        )}
+        {current.role === 'buyer' && (
+          <PaymentMethods key={current.id} buyerId={current.id} />
+        )}
+      </div>
     </main>
   );
 }

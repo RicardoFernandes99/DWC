@@ -21,7 +21,12 @@ export class AdminGuard implements CanActivate {
   constructor(private readonly auth: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<AdminRequest>();
+    const http = context.switchToHttp();
+    const request = http.getRequest<AdminRequest>();
+    const response = http.getResponse<{
+      setHeader(name: string, value: string): void;
+    }>();
+    response.setHeader('Cache-Control', 'no-store');
     const rawHeader = request.headers?.authorization;
     const authorization = Array.isArray(rawHeader) ? rawHeader[0] : rawHeader;
     const user = await this.auth.authenticate(authorization);

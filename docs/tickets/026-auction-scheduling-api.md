@@ -1,11 +1,11 @@
 # 026: Schedule auction lots and reserve catalogue stock
 
 - Macro: M05
-- Status: Blocked
+- Status: In review
 - Depends on: 010, 019
-- PR: Not opened
-- Branch / parent: Not assigned
-- Blockers: Decide scheduled-auction handling when suspension spans its start/end time
+- PR: https://github.com/RicardoFernandes99/DWC/pull/40
+- Branch / parent: `codex/age-026-auction-scheduling` / `codex/age-025-notifications-web` (PR #39, `22f2cefbda543097acde819f98b0e860f507064b`)
+- Blockers: None; scheduled-auction suspension and downtime behavior is recorded in [product decisions](../product-decisions.md#laravel-administration-and-suspension).
 
 ## Outcome
 
@@ -29,25 +29,50 @@ only before their start. Stock cannot also be sold in the catalogue.
   Pre-start edits adjust reservation deltas safely; pre-start cancellation releases
   stock exactly once. Never permit active edits/cancellation, even without bids.
 - Scheduled auctions start using server time only while producer is eligible.
-  Resolve the named suspension blocker before specifying paused/elapsed behavior.
-  Active auctions remain valid when a producer is suspended.
+  A suspended producer's missed start cancels the auction and releases its lot
+  exactly once. Recovery after API downtime retains original start/end times;
+  reinstatement after the scheduled start does not revive a missed auction.
+  Active auctions remain valid when a producer is suspended. Ended auctions
+  remain persisted as active until ticket 028 settlement, while public reads
+  report them as finished and bids can reject against the original deadline.
 - Stock release must preserve archived/moderated visibility; restoring quantity
   must not republish a hidden product. Settlement/no-bid closure belongs to 028.
 
 ## Acceptance criteria
 
-- [ ] Create/edit/cancel maintains the exact available-plus-reserved quantity.
-- [ ] Concurrent checkout/reservation cannot oversell the same product.
-- [ ] Owner/status/start-time predicates prevent unauthorized or late edits.
-- [ ] Duplicate cancellation does not release twice; hidden stock stays hidden.
-- [ ] Public DTOs and scheduled suspension behavior match the resolved rules.
+- [x] Create/edit/cancel maintains the exact available-plus-reserved quantity.
+- [x] Concurrent checkout/reservation cannot oversell the same product.
+- [x] Owner/status/start-time predicates prevent unauthorized or late edits.
+- [x] Duplicate cancellation does not release twice; hidden stock stays hidden.
+- [x] Public DTOs and scheduled suspension behavior match the resolved rules.
 
 ## Checks
 
 Follow [lightweight verification](README.md#lightweight-verification).
 
-After resolving suspension timing, create/edit/cancel a lot and inspect stock. Try a late edit and one competing stock request; targeted automated race checks are optional.
+Create/edit/cancel a lot and inspect stock. Try a late edit and one competing stock request; targeted automated race checks are optional.
 
 ## Delivery notes
 
-Not implemented. Resolve the named blocker; Sol reviews stock/time race evidence.
+- Reviewed implementation: `380fe64ce812b8d856fe2a1ac6fa1f6b76f97f4b`.
+- Frontier verdict: APPROVED, zero formal correction rounds. Executor: `gpt-6-luna`
+  at High effort for transactional stock and scheduling concurrency. Usage and
+  cost measurements are unavailable.
+- Passed on Node 24.19.0 / pnpm 11.25.0: `pnpm contract:generate`,
+  `pnpm contract:check` (including API build), API/Web typechecks, Web production
+  build with React Compiler verification, root lint, scoped Prettier and
+  `git diff --check`. Existing bundle-size warning remains.
+- Real HTTP/MongoDB verification passed via the local
+  `demos/ticket-026-review/verify-auctions.ts` script against API port 3026:
+  create/edit/cancel stock deltas, duplicate cancellation, hidden/moderated stock
+  release, competing actual checkout/reservation, null/past/stale/late refusals,
+  immutable snapshot, overdue recovery with original deadlines, public finished
+  view, active-auction suspension, suspended missed-start cancellation and
+  post-start reinstatement cancellation. Only fixture-owned records and sessions
+  were cleaned; the temporary API was stopped.
+- Ended auctions remain persisted Active with reservations until ticket 028
+  settlement. Ticket 035 must update `producerDecisionAt` on suspension decisions.
+  The one-second runner processes at most 100 due records per pass; a delayed
+  transition never shifts the stored deadline. No bidding or settlement is added.
+- Unrelated order UI edits, guidance/docs changes and all pre-existing demos were
+  excluded. Evidence scripts remain local under demos. No full test suite run.

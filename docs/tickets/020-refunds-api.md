@@ -1,10 +1,10 @@
 # 020: Request refunds and cancel Pending orders safely
 
 - Macro: M04
-- Status: Draft
+- Status: In review
 - Depends on: 019
-- PR: Not opened
-- Branch / parent: Not assigned
+- PR: https://github.com/RicardoFernandes99/DWC/pull/32
+- Branch / parent: `codex/age-020-refunds-api` / `main`
 - Blockers: None beyond dependencies
 
 ## Outcome
@@ -37,11 +37,11 @@ cancel/refund. Stock and simulated money are restored once.
 
 ## Acceptance criteria
 
-- [ ] Open request prevents confirmation; decline requires a reason.
-- [ ] Acceptance/direct cancellation restores stock and the exact paid order total.
-- [ ] Concurrent confirmation/refund has one valid outcome, never both.
-- [ ] Repeated decisions cannot restore stock or refund twice; siblings are unchanged.
-- [ ] Foreign orders, non-Pending states and auction orders are refused appropriately.
+- [x] Open request prevents confirmation; decline requires a reason.
+- [x] Acceptance/direct cancellation restores stock and the exact paid order total.
+- [x] Concurrent confirmation/refund has one valid outcome, never both.
+- [x] Repeated decisions cannot restore stock or refund twice; siblings are unchanged.
+- [x] Foreign orders, non-Pending states and auction orders are refused appropriately.
 
 ## Checks
 
@@ -51,4 +51,33 @@ Request/decline/accept a refund and repeat the decision; verify product stock an
 
 ## Delivery notes
 
-Not implemented. Sol reviews payment allocation and concurrency evidence directly.
+- Builder: `gpt-6-luna`, medium effort. Two correction rounds; no model/effort
+  adaptation. Input, cached input, output/reasoning usage, rates and total cost
+  are unavailable, including orchestration and review.
+- Parent: `main` at `3924477699908af6baf5f583c61a1735d5f64ec9`. No open feature
+  stack existed. Frontier verdict: APPROVED after reviewing the ticket-only diff.
+- Reviewed implementation/check revision: `5799f362e7f0a91c9d228af146fcd1593c2765b4`.
+  The subsequent delivery update changes ticket metadata only.
+- Passed with Node 24.19.0 and pnpm 11.25.0:
+  - `pnpm --filter @dwc/api typecheck` and `pnpm --filter @dwc/api build`.
+  - API test TypeScript compilation and 11 focused order-tracking tests.
+  - `pnpm lint` and scoped Prettier checks.
+  - `pnpm contract:generate` and `pnpm contract:check`.
+  - `pnpm --filter @dwc/web typecheck` and `pnpm --filter @dwc/web build`.
+- Real HTTP/MongoDB checks passed with isolated records, removed afterward:
+  - Request, decline with a required nonblank reason, request again, accept,
+    and repeat acceptance/direct cancellation. The EUR 29 refund included the
+    original EUR 5 delivery fee; stock restored once and the sibling order was
+    unchanged. An existing payment without `refundedCents` was supported.
+  - Concurrent direct collection refunds restored EUR 24 and stock once.
+  - Declining allowed normal confirmation. Foreign buyer/producer access returned
+    404; confirmed and auction orders refused refund actions with 409.
+  - Four confirmation/direct-refund races and four confirmation/refund-request
+    races each had one successful action with consistent state. These sampled
+    races do not prove every possible interleaving.
+  - A failed payment rolled back cancellation, stock restoration and allocation
+    together. Readiness reported MongoDB, Redis and S3 up.
+- The final correction changed Mongoose type parameters and test setup only;
+  unchanged runtime and contract evidence was retained.
+- Limitations: Web build retains its non-blocking large-chunk warning. Refund UI
+  and notification delivery remain later-ticket work.

@@ -139,7 +139,7 @@ export class CatalogueService {
       match.priceCents = price;
     }
     const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
+    const limit = query.limit ?? 12;
     const pipeline: PipelineStage[] = [
       { $match: match },
       { $sort: SORT_ORDERS[query.sort ?? CatalogueSort.Newest] },

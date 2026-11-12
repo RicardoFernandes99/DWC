@@ -3,11 +3,18 @@ import {
   ForbiddenException,
   HttpStatus,
   Injectable,
+  BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { Payment, type PaymentDocument } from '../checkout/payment.schema.js';
+import { Types } from 'mongoose';
+import type { Connection, Model } from 'mongoose';
+import { InjectConnection } from '@nestjs/mongoose';
+import {
+  Payment,
+  PaymentStatus,
+  type PaymentDocument,
+} from '../checkout/payment.schema.js';
 import { UserResponseDto } from '../users/user-response.dto.js';
 import { User, type UserDocument, UserRole } from '../users/user.schema.js';
 import {
@@ -16,6 +23,7 @@ import {
   OrderPaymentSummaryDto,
   OrderResponseDto,
   UpdateOrderStatusDto,
+  RefundReasonDto,
 } from './order.dto.js';
 import {
   FulfilmentMethod,
@@ -23,7 +31,19 @@ import {
   type OrderDocument,
   OrderStatus,
   OrderStatusHistoryEntry,
+  OrderOrigin,
+  RefundRequestStatus,
 } from './order.schema.js';
+import { Product } from '../products/product.schema.js';
+import { RefundAllocation } from './refund-allocation.schema.js';
+import { renderPurchaseReceipt } from './purchase-receipt-pdf.js';
+import type { PurchaseReceiptData } from './purchase-receipt-pdf.js';
+import { NotificationIntegrationService } from '../notifications/notification-integration.service.js';
+import {
+  NotificationEventType,
+  NotificationResourceType,
+} from '../notifications/notification.schema.js';
+import type { NotificationDocument } from '../notifications/notification.schema.js';
 
 const NEXT_ORDER_STATUS: Record<
   FulfilmentMethod,
@@ -48,14 +68,437 @@ export class OrdersService {
     @InjectModel(Payment.name)
     private readonly paymentModel: Model<PaymentDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    @InjectModel(Product.name)
+    private readonly productModel: Model<Product>,
+    @InjectModel(RefundAllocation.name)
+    private readonly refundAllocationModel: Model<RefundAllocation>,
+    @InjectConnection() private readonly connection: Connection,
+    private readonly notificationIntegration: NotificationIntegrationService,
   ) {}
 
   /**
    * Confirmation predicate for ticket 020 to block confirmation when a refund request is open.
    */
   async canConfirmOrder(order: OrderDocument): Promise<boolean> {
-    void order;
-    return true;
+    return order.refundRequest?.status !== RefundRequestStatus.Open;
+  }
+
+  async purchaseReceipt(
+    user: UserResponseDto,
+    orderId: string,
+  ): Promise<Buffer> {
+    if (
+      ![UserRole.Buyer, UserRole.Producer, UserRole.Admin].includes(user.role)
+    ) {
+      throw new ForbiddenException(
+        'This account cannot download purchase receipts.',
+      );
+    }
+    const orderFilter =
+      user.role === UserRole.Admin
+        ? { _id: new Types.ObjectId(orderId) }
+        : user.role === UserRole.Buyer
+          ? {
+              _id: new Types.ObjectId(orderId),
+              buyerId: new Types.ObjectId(user.id),
+            }
+          : {
+              _id: new Types.ObjectId(orderId),
+              producerId: new Types.ObjectId(user.id),
+            };
+    const session = await this.connection.startSession();
+    let receipt: PurchaseReceiptData | undefined;
+    try {
+      await session.withTransaction(async () => {
+        const order = await this.orderModel
+          .findOne(orderFilter)
+          .session(session)
+          .exec();
+        if (!order) throw new NotFoundException('Order not found.');
+        const allocation = await this.refundAllocationModel
+          .findOne({ orderId: order._id, paymentId: order.paymentId })
+          .session(session)
+          .exec();
+        const cancelledAt =
+          order.statusHistory.find(
+            (entry) => entry.status === OrderStatus.Cancelled,
+          )?.timestamp ?? null;
+        receipt = {
+          orderId: order._id.toString(),
+          checkoutId: order.checkoutId?.toString() ?? null,
+          auctionId: order.auctionId?.toString() ?? null,
+          buyerId: order.buyerId.toString(),
+          buyerNameSnapshot: order.buyerNameSnapshot ?? null,
+          producerId: order.producerId.toString(),
+          producerNameSnapshot: order.producerNameSnapshot ?? null,
+          createdAt: order.createdAt,
+          cancelledAt,
+          items: order.items.map((item) => ({
+            productName: item.productName,
+            productUnit: item.productUnit,
+            quantity: item.quantity,
+            unitPriceCents: item.unitPriceCents,
+            lineTotalCents: item.lineTotalCents,
+          })),
+          fulfilmentMethod: order.fulfilmentMethod,
+          subtotalCents: order.subtotalCents,
+          deliveryFeeCents: order.deliveryFeeCents,
+          totalCents: order.totalCents,
+          origin: order.origin,
+          status: order.status,
+          refundedCents: allocation?.amountCents ?? 0,
+          refundedAt: allocation?.refundedAt ?? null,
+        };
+      });
+    } finally {
+      await session.endSession();
+    }
+    if (!receipt) throw new NotFoundException('Order not found.');
+    return renderPurchaseReceipt(receipt);
+  }
+
+  async requestRefund(
+    user: UserResponseDto,
+    orderId: string,
+    input: RefundReasonDto,
+  ): Promise<OrderResponseDto> {
+    if (user.role !== UserRole.Buyer)
+      throw new ForbiddenException('Only buyers may request refunds.');
+    if (!input.reason.trim())
+      throw new BadRequestException('Refund reason cannot be blank.');
+    const order = await this.findOwnedOrder(orderId, user.id, UserRole.Buyer);
+    if (
+      order.status !== OrderStatus.Pending ||
+      order.origin !== OrderOrigin.Catalogue
+    )
+      throw this.refundConflict();
+    if (order.refundRequest?.status === RefundRequestStatus.Open)
+      return this.orderResponse(order);
+    const refundRequest = {
+      status: RefundRequestStatus.Open,
+      requestedBy: new Types.ObjectId(user.id),
+      requestedAt: new Date(),
+      reason: input.reason.trim(),
+      decidedBy: null,
+      decidedAt: null,
+      refundedCents: null,
+    };
+    const session = await this.connection.startSession();
+    let updated: OrderDocument | null = null;
+    let notification: NotificationDocument | null = null;
+    try {
+      await session.withTransaction(async () => {
+        updated = null;
+        notification = null;
+        updated = await this.orderModel
+          .findOneAndUpdate(
+            {
+              _id: order._id,
+              buyerId: order.buyerId,
+              status: OrderStatus.Pending,
+              origin: OrderOrigin.Catalogue,
+              revision: order.revision,
+              'refundRequest.status': { $ne: RefundRequestStatus.Open },
+            },
+            { $set: { refundRequest }, $inc: { revision: 1 } },
+            { new: true, session },
+          )
+          .exec();
+        if (updated) {
+          notification = await this.notificationIntegration.persist(
+            {
+              recipientId: order.producerId.toString(),
+              eventType: NotificationEventType.RefundRequested,
+              title: 'Refund requested',
+              message: 'A buyer requested a refund for a pending order.',
+              resource: {
+                type: NotificationResourceType.Order,
+                id: order._id.toString(),
+              },
+              sourceEventKey: `order:${order._id.toString()}:refund-request:${order.revision + 1}`,
+            },
+            session,
+          );
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
+    if (!updated) throw this.refundConflict();
+    if (notification)
+      this.notificationIntegration.publishCommitted(notification);
+    return this.orderResponse(updated);
+  }
+
+  async decideRefund(
+    user: UserResponseDto,
+    orderId: string,
+    accept: boolean,
+    input?: RefundReasonDto,
+  ): Promise<OrderResponseDto> {
+    if (user.role !== UserRole.Producer)
+      throw new ForbiddenException(
+        'Only producers may decide refund requests.',
+      );
+    if (!accept && !input?.reason.trim())
+      throw new BadRequestException('Decline reason cannot be blank.');
+    const order = await this.findOwnedOrder(
+      orderId,
+      user.id,
+      UserRole.Producer,
+    );
+    if (
+      order.status === OrderStatus.Cancelled &&
+      order.refundRequest?.status === RefundRequestStatus.Accepted
+    )
+      return this.orderResponse(order);
+    if (
+      order.status !== OrderStatus.Pending ||
+      order.origin !== OrderOrigin.Catalogue ||
+      order.refundRequest?.status !== RefundRequestStatus.Open
+    )
+      throw this.refundConflict();
+    if (!accept) {
+      const session = await this.connection.startSession();
+      let updated: OrderDocument | null = null;
+      let notification: NotificationDocument | null = null;
+      try {
+        await session.withTransaction(async () => {
+          updated = null;
+          notification = null;
+          updated = await this.orderModel
+            .findOneAndUpdate(
+              {
+                _id: order._id,
+                producerId: order.producerId,
+                status: OrderStatus.Pending,
+                origin: OrderOrigin.Catalogue,
+                revision: order.revision,
+                'refundRequest.status': RefundRequestStatus.Open,
+              },
+              {
+                $set: {
+                  'refundRequest.status': RefundRequestStatus.Declined,
+                  'refundRequest.decidedBy': new Types.ObjectId(user.id),
+                  'refundRequest.decidedAt': new Date(),
+                  'refundRequest.reason': input?.reason.trim(),
+                },
+                $inc: { revision: 1 },
+              },
+              { new: true, session },
+            )
+            .exec();
+          if (updated) {
+            notification = await this.notificationIntegration.persist(
+              {
+                recipientId: order.buyerId.toString(),
+                eventType: NotificationEventType.RefundDecision,
+                title: 'Refund request declined',
+                message: 'The producer declined your refund request.',
+                resource: {
+                  type: NotificationResourceType.Order,
+                  id: order._id.toString(),
+                },
+                sourceEventKey: `order:${order._id.toString()}:refund-decision:${order.revision + 1}`,
+              },
+              session,
+            );
+          }
+        });
+      } finally {
+        await session.endSession();
+      }
+      if (!updated) throw this.refundConflict();
+      if (notification)
+        this.notificationIntegration.publishCommitted(notification);
+      return this.orderResponse(updated);
+    }
+    return this.cancelAndRefund(order, user.id, true);
+  }
+
+  async cancelAndRefundOrder(
+    user: UserResponseDto,
+    orderId: string,
+  ): Promise<OrderResponseDto> {
+    if (user.role !== UserRole.Producer)
+      throw new ForbiddenException('Only producers may cancel orders.');
+    const order = await this.findOwnedOrder(
+      orderId,
+      user.id,
+      UserRole.Producer,
+    );
+    if (
+      order.status === OrderStatus.Cancelled &&
+      order.refundRequest?.status === RefundRequestStatus.Accepted
+    )
+      return this.orderResponse(order);
+    if (
+      order.status !== OrderStatus.Pending ||
+      order.origin !== OrderOrigin.Catalogue
+    )
+      throw this.refundConflict();
+    return this.cancelAndRefund(order, user.id, false);
+  }
+
+  private async cancelAndRefund(
+    order: OrderDocument,
+    actorId: string,
+    requestedRefund: boolean,
+  ): Promise<OrderResponseDto> {
+    const session = await this.connection.startSession();
+    let notification: NotificationDocument | null = null;
+    try {
+      await session.withTransaction(async () => {
+        notification = null;
+        const now = new Date();
+        const updated = await this.orderModel
+          .findOneAndUpdate(
+            {
+              _id: order._id,
+              status: OrderStatus.Pending,
+              origin: OrderOrigin.Catalogue,
+              revision: order.revision,
+              'refundRequest.status':
+                order.refundRequest?.status === RefundRequestStatus.Open
+                  ? RefundRequestStatus.Open
+                  : { $ne: RefundRequestStatus.Open },
+            },
+            {
+              $set: {
+                status: OrderStatus.Cancelled,
+                refundRequest: {
+                  status: RefundRequestStatus.Accepted,
+                  requestedBy:
+                    order.refundRequest?.requestedBy ??
+                    new Types.ObjectId(actorId),
+                  requestedAt: order.refundRequest?.requestedAt ?? now,
+                  reason: order.refundRequest?.reason ?? null,
+                  decidedBy: new Types.ObjectId(actorId),
+                  decidedAt: now,
+                  refundedCents: order.totalCents,
+                },
+              },
+              $inc: { revision: 1 },
+              $push: {
+                statusHistory: {
+                  status: OrderStatus.Cancelled,
+                  timestamp: now,
+                  actorId: new Types.ObjectId(actorId),
+                  actorRole: UserRole.Producer,
+                  note: 'Order cancelled and refunded',
+                },
+              },
+            },
+            { new: true, session },
+          )
+          .exec();
+        if (!updated) throw this.refundConflict();
+        notification = await this.notificationIntegration.persist(
+          {
+            recipientId: order.buyerId.toString(),
+            eventType: NotificationEventType.RefundDecision,
+            title: requestedRefund
+              ? 'Refund request approved'
+              : 'Order cancelled and refunded',
+            message: requestedRefund
+              ? 'The producer approved your refund request.'
+              : 'The producer cancelled and refunded your order.',
+            resource: {
+              type: NotificationResourceType.Order,
+              id: order._id.toString(),
+            },
+            sourceEventKey: `order:${order._id.toString()}:refund-decision:${order.revision + 1}`,
+          },
+          session,
+        );
+        for (const item of order.items) {
+          const restored = await this.productModel
+            .updateOne(
+              { _id: item.productId, producerId: order.producerId },
+              { $inc: { availableStock: item.quantity } },
+              { session },
+            )
+            .exec();
+          if (restored.matchedCount !== 1)
+            throw new ConflictException(
+              'A product in this order no longer exists.',
+            );
+        }
+        const currentPayment = await this.paymentModel
+          .findById(order.paymentId)
+          .session(session)
+          .exec();
+        const currentRefundedCents = currentPayment?.refundedCents ?? 0;
+        if (
+          !currentPayment ||
+          currentPayment.status !== PaymentStatus.Succeeded ||
+          currentRefundedCents + order.totalCents > currentPayment.amountCents
+        ) {
+          throw new ConflictException(
+            'Payment cannot allocate this order refund.',
+          );
+        }
+        const paymentUpdate = await this.paymentModel.updateOne(
+          {
+            _id: order.paymentId,
+            status: PaymentStatus.Succeeded,
+            $or: [
+              { refundedCents: currentRefundedCents },
+              { refundedCents: { $exists: false } },
+            ],
+          },
+          { $inc: { refundedCents: order.totalCents } },
+          { session },
+        );
+        if (paymentUpdate.matchedCount !== 1)
+          throw new ConflictException(
+            'Payment cannot allocate this order refund.',
+          );
+        await new this.refundAllocationModel({
+          orderId: order._id,
+          paymentId: order.paymentId,
+          buyerId: order.buyerId,
+          amountCents: order.totalCents,
+          refundedAt: now,
+        }).save({ session });
+      });
+    } finally {
+      await session.endSession();
+    }
+    if (notification)
+      this.notificationIntegration.publishCommitted(notification);
+    const refreshed = await this.orderModel.findById(order._id).exec();
+    if (!refreshed) throw new NotFoundException('Order not found.');
+    return this.orderResponse(refreshed);
+  }
+
+  private async findOwnedOrder(
+    orderId: string,
+    userId: string,
+    role: UserRole,
+  ): Promise<OrderDocument> {
+    if (!Types.ObjectId.isValid(orderId))
+      throw new NotFoundException('Order not found.');
+    const filter =
+      role === UserRole.Buyer
+        ? { _id: orderId, buyerId: userId }
+        : { _id: orderId, producerId: userId };
+    const order = await this.orderModel.findOne(filter).exec();
+    if (!order) throw new NotFoundException('Order not found.');
+    return order;
+  }
+
+  private refundConflict(): ConflictException {
+    return new ConflictException({
+      statusCode: HttpStatus.CONFLICT,
+      code: 'refund_unavailable',
+      message: 'Refund action is unavailable for this order state.',
+    });
+  }
+
+  private async orderResponse(order: OrderDocument): Promise<OrderResponseDto> {
+    const [dto] = await this.mapOrdersToResponse([order]);
+    return dto;
   }
 
   async listOrders(
@@ -220,18 +663,55 @@ export class OrdersService {
     if (input.expectedRevision !== undefined) {
       filter.revision = input.expectedRevision;
     }
+    if (
+      currentStatus === OrderStatus.Pending &&
+      targetStatus === OrderStatus.Confirmed
+    ) {
+      filter.$or = [
+        { refundRequest: null },
+        { 'refundRequest.status': { $ne: RefundRequestStatus.Open } },
+      ];
+    }
 
-    const updatedOrder = await this.orderModel
-      .findOneAndUpdate(
-        filter,
-        {
-          $set: { status: targetStatus },
-          $inc: { revision: 1 },
-          $push: { statusHistory: statusHistoryEntry },
-        },
-        { new: true },
-      )
-      .exec();
+    filter.revision = order.revision;
+    const session = await this.connection.startSession();
+    let updatedOrder: OrderDocument | null = null;
+    let notification: NotificationDocument | null = null;
+    try {
+      await session.withTransaction(async () => {
+        updatedOrder = null;
+        notification = null;
+        updatedOrder = await this.orderModel
+          .findOneAndUpdate(
+            filter,
+            {
+              $set: { status: targetStatus },
+              $inc: { revision: 1 },
+              $push: { statusHistory: statusHistoryEntry },
+            },
+            { new: true, session },
+          )
+          .exec();
+        if (updatedOrder) {
+          notification = await this.notificationIntegration.persist(
+            {
+              recipientId: order.buyerId.toString(),
+              eventType: NotificationEventType.OrderStatusChanged,
+              title: 'Order status updated',
+              message: 'Your order has a new fulfilment status.',
+              resource: {
+                type: NotificationResourceType.Order,
+                id: order._id.toString(),
+              },
+              sourceEventKey: `order:${order._id.toString()}:status:${order.revision + 1}`,
+            },
+            session,
+          );
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
 
     if (!updatedOrder) {
       // Re-read to detect concurrent race or idempotent duplicate
@@ -251,6 +731,18 @@ export class OrdersService {
         return idempotentDto;
       }
 
+      if (
+        targetStatus === OrderStatus.Confirmed &&
+        freshOrder.refundRequest?.status === RefundRequestStatus.Open
+      ) {
+        throw new ConflictException({
+          statusCode: HttpStatus.CONFLICT,
+          code: 'confirmation_blocked_by_refund',
+          message:
+            'Order confirmation is blocked while a refund request is open.',
+        });
+      }
+
       throw new ConflictException({
         statusCode: HttpStatus.CONFLICT,
         code: 'invalid_status_transition',
@@ -258,6 +750,8 @@ export class OrdersService {
       });
     }
 
+    if (notification)
+      this.notificationIntegration.publishCommitted(notification);
     const [updatedDto] = await this.mapOrdersToResponse([updatedOrder]);
     return updatedDto;
   }
@@ -331,7 +825,7 @@ export class OrdersService {
 
       return {
         id: order._id.toString(),
-        checkoutId: order.checkoutId.toString(),
+        checkoutId: order.checkoutId?.toString() ?? null,
         buyerId: order.buyerId.toString(),
         buyerName: nameMap.get(order.buyerId.toString()) ?? null,
         producerId: order.producerId.toString(),
@@ -371,6 +865,15 @@ export class OrdersService {
         createdAt: order.createdAt.toISOString(),
         updatedAt: order.updatedAt.toISOString(),
         payment: paymentSummary,
+        refundRequest: order.refundRequest
+          ? {
+              status: order.refundRequest.status,
+              requestedAt: order.refundRequest.requestedAt.toISOString(),
+              reason: order.refundRequest.reason,
+              decidedAt: order.refundRequest.decidedAt?.toISOString() ?? null,
+              refundedCents: order.refundRequest.refundedCents,
+            }
+          : null,
       };
     });
   }

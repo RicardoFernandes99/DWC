@@ -18,10 +18,13 @@ Use the active session's model and selected reasoning effort for orchestration
 and review. Do not impose Medium on the orchestrator. Map Light to `low`.
 The executor is selected separately to minimize total cost of accepted work.
 
-- Consider `gpt-6-luna` and `gpt-6.1-terra` at `low`, `medium` or `high`.
-  High is the ceiling, not the default. Start with an effort appropriate to the
-  scope and observed results. Luna suits straightforward bounded edits; Terra
-  is a candidate for UI/browser work or scopes where Luna needs corrections.
+- When running in Codex, default to `gpt-6-luna` as the executor. Choose `low`,
+  `medium` or `high` reasoning effort according to the ticket's scope and observed
+  results. High is the ceiling, not the default.
+- When running in Claude Code, the session model (Opus) orchestrates and reviews;
+  delegate implementation to one builder through the Agent tool with
+  `model: "sonnet"` and continue it with SendMessage for correction rounds.
+  The frontier may make trivial one-line fixes itself; record them.
 - Consider `gpt-6.1-sol` at `low` as an executor alternative when cheaper models'
   extra reasoning, retries or review overhead may erase their price advantage.
   Do not assume either Sol Light or a cheaper model at High is always cheapest.
@@ -34,7 +37,7 @@ The executor is selected separately to minimize total cost of accepted work.
   Effort labels alone do not prove cost or quality. Learn across real tickets;
   do not reimplement a ticket just to benchmark configurations.
 
-For `spawn_agent`, use `fork_turns: "none"` with explicit `model` and
+In Codex, for `spawn_agent`, use `fork_turns: "none"` with explicit `model` and
 `reasoning_effort` and a compact self-contained handoff. If delegation or the
 chosen configuration is unavailable, report it and ask for a supported fallback.
 Keep architecture, review and Git/PR mutations with the orchestrator. The builder
@@ -76,6 +79,10 @@ decisions with `grill-me`. Once clear, continue without a separate plan approval
 Write no PLAN.md/STATE.md, research folders, tickets or ADRs as side effects.
 The ticket is the durable record. Mark it In progress when implementation starts.
 
+For frontend work, read [frontend skill selection](references/frontend.md).
+Name the selected design and implementation skills, what each contributes and
+the screens/states to inspect. Carry those choices into the builder handoff.
+
 ## 3. Execute through the builder
 
 Send one handoff containing:
@@ -104,7 +111,10 @@ Review the actual diff against the selected parent, plus uncommitted/untracked
 ticket files, and inspect the critical implementation. Parent PR changes are
 context, not this ticket's review diff. A builder's summary is evidence, not an
 approval. Check acceptance, authorization/concurrency risks, scope and test results.
-For UI work inspect real behavior and the agreed responsive ranges when required.
+For UI work, follow the [frontend visual review](references/frontend.md#visual-review)
+alongside behavior checks. Inspect the rendered composition in all three screen
+ranges, fix concrete findings, and provide before/after evidence for changed
+existing screens. Capturing screenshots alone does not establish visual approval.
 
 Give a concrete verdict in chat:
 

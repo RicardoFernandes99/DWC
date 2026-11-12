@@ -1,11 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  ShoppingBasket,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShoppingBasket } from 'lucide-react';
 import { ProductGrid } from '@/components/shared/product-card';
 import { Button } from '@/components/ui/button';
 import { formatMoney } from '@/lib/format';
@@ -14,6 +9,7 @@ import type { components } from '@/lib/api-schema';
 import { useCart } from '../use-cart';
 import type { StoredCartItem } from '../cart-storage';
 import { ProducerCartSection } from './producer-cart-section';
+import { EmptyState } from '@/components/shared/empty-state';
 
 type CatalogueProduct = components['schemas']['CatalogueProductDto'];
 type ProductList = components['schemas']['CatalogueListDto'];
@@ -27,8 +23,7 @@ interface ProducerGroup {
 }
 
 export function CartPage() {
-  const { items, updateQuantity, removeItem, clearCart, totalItemCount } =
-    useCart();
+  const { items, updateQuantity, removeItem, totalItemCount } = useCart();
 
   const userQuery = useQuery({
     queryKey: ['session'],
@@ -117,7 +112,6 @@ export function CartPage() {
   const isEmpty = items.length === 0;
 
   const user = userQuery.data;
-  const isProducer = user?.role === 'producer';
   const isBuyer = user?.role === 'buyer';
 
   return (
@@ -132,63 +126,25 @@ export function CartPage() {
         <h1 className="mt-2 font-editorial text-3xl font-bold tracking-tight md:text-4xl">
           Your Shopping Cart
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {totalItemCount === 1 ? '1 item' : `${totalItemCount} items`} from{' '}
-          {producerGroups.length}{' '}
-          {producerGroups.length === 1 ? 'producer' : 'producers'}
-        </p>
       </div>
-
-      {isProducer && (
-        <div
-          role="status"
-          className="mb-6 flex items-start gap-3 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm text-warning-foreground"
-        >
-          <AlertCircle
-            aria-hidden="true"
-            className="size-5 shrink-0 text-warning"
-          />
-          <div>
-            <p className="font-semibold">
-              Producer accounts cannot purchase products
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Your cart is preserved. To place an order, please sign in with a
-              buyer account.
-            </p>
-          </div>
-        </div>
-      )}
 
       {isEmpty ? (
         <div className="space-y-12">
-          <section
-            aria-labelledby="empty-cart-title"
-            className="flex flex-col items-center justify-center rounded-lg border bg-card p-10 text-center shadow-2xs md:p-14"
-          >
-            <div className="grid size-16 place-items-center rounded-full bg-secondary text-primary">
-              <ShoppingBasket
-                aria-hidden="true"
-                className="size-8 stroke-[1.5]"
-              />
-            </div>
-            <h2
-              id="empty-cart-title"
-              className="mt-4 font-editorial text-2xl font-semibold"
-            >
-              Your cart is empty
-            </h2>
-            <p className="mt-2 max-w-md text-sm text-muted-foreground leading-relaxed">
-              Explore freshly harvested fruits, vegetables, dairy, and artisanal
-              goods directly from regional producers.
-            </p>
-            <Button asChild className="mt-6 rounded-md">
-              <Link to="/">
-                Explore the Market{' '}
-                <ArrowRight aria-hidden="true" className="size-4" />
-              </Link>
-            </Button>
-          </section>
+          <EmptyState
+            size="page"
+            titleId="empty-cart-title"
+            icon={<ShoppingBasket />}
+            title="Your cart is empty"
+            description="Explore freshly harvested fruits, vegetables, dairy and artisanal goods directly from regional producers."
+            action={
+              <Button asChild>
+                <Link to="/">
+                  Explore the market{' '}
+                  <ArrowRight aria-hidden="true" className="size-4" />
+                </Link>
+              </Button>
+            }
+          />
 
           {featuredQuery.data?.items && featuredQuery.data.items.length > 0 && (
             <section aria-labelledby="suggested-title" className="space-y-4">
@@ -221,18 +177,6 @@ export function CartPage() {
                 onRemove={removeItem}
               />
             ))}
-
-            <div className="flex justify-end pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={clearCart}
-                className="text-xs text-muted-foreground hover:text-destructive rounded-md"
-              >
-                Clear cart
-              </Button>
-            </div>
           </div>
 
           {/* Order Summary */}
@@ -271,10 +215,6 @@ export function CartPage() {
                     <Link to="/login" search={{ returnTo: '/checkout' }}>
                       Sign in as buyer to check out
                     </Link>
-                  </Button>
-                ) : isProducer ? (
-                  <Button disabled className="w-full rounded-md" size="lg">
-                    Producer account (Checkout disabled)
                   </Button>
                 ) : isBuyer ? (
                   <Button

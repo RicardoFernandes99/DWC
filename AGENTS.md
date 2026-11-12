@@ -15,8 +15,8 @@
 - pnpm workspaces: `apps/web` (`@dwc/web`), `apps/api` (`@dwc/api`).
 - Node 24 LTS; pnpm is pinned in `package.json`. Commit `pnpm-lock.yaml`.
 - Local Docker MongoDB, Redis and Floci's S3 emulation; no cloud deployment required.
-- Laravel backoffice is planned, not yet implemented. Do not replace it with
-  a React admin application or add a PHP app incidentally.
+- Laravel backoffice is implemented in `apps/backoffice` with Blade. Follow its
+  app guidance; do not replace it with a React admin application.
 - Prefer existing scripts and libraries. Add shared packages only when there
   is a real consumer; do not build speculative abstractions.
 
@@ -31,9 +31,9 @@
 
 ## Implementation
 
-- Use TypeScript with strict types; validate external input at boundaries.
-- All authored application code, scripts, executable configuration and tests
-  use TypeScript. Keep UI copy, documentation and identifiers in English.
+- Use strict TypeScript for Web/API application code, scripts, executable
+  configuration and tests. Laravel necessarily uses PHP. Validate external
+  input at boundaries. Keep UI copy, documentation and identifiers in English.
 - Keep domain logic in the API. The client cannot establish permissions,
   prices, stock, auction timing, or bid validity.
 - Verify changed behavior with proportionate manual checks and strict typecheck,
@@ -74,6 +74,10 @@ Shared task instructions live in `.agents/skills/<name>/SKILL.md`:
 - `nestjs-best-practices`: feature modules, injection, Mongoose and API boundaries.
 - `design-engineering`: React composition, forms, accessibility and UI polish.
 - `animate`: purposeful motion, timing, easing and interruption.
+- Frontend design and review (vendored): `interface-design`, `frontend-design`,
+  `impeccable`, `taste-skill`, `emil-design-eng`, `web-design-guidelines`,
+  `vercel-react-best-practices` (client rules only) and `unslop` for copy. The
+  build skill's `references/frontend.md` says which to use when.
 - `plan`: short implementation bullets in chat.
 - `build`: implement a numbered ticket with a cheaper builder, frontier review
   and an `Age N - ...` ready-for-review PR stacked on the latest open feature PR.
