@@ -11,7 +11,11 @@ try {
   await copyFile(example, env, 1 /* COPYFILE_EXCL */);
   console.log('Created apps/backoffice/.env from the example.');
 } catch (error) {
-  if (!(error instanceof Error) || !('code' in error) || error.code !== 'EEXIST')
+  if (
+    !(error instanceof Error) ||
+    !('code' in error) ||
+    error.code !== 'EEXIST'
+  )
     throw error;
 }
 
