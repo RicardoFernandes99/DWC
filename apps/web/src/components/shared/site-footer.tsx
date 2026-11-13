@@ -93,19 +93,16 @@ export function SiteFooter() {
               <p className="text-xs leading-none font-semibold tracking-wider uppercase">
                 Secured by
               </p>
-              <ul className="flex flex-wrap items-center gap-2">
+              <ul className="flex flex-wrap items-center gap-x-3.5 gap-y-3">
                 {payments.map(({ label, file, mono }) => (
-                  // Same tile for every logo; every logo is 20px high.
-                  <li
-                    key={label}
-                    className="grid h-9 w-20 place-items-center rounded-md border border-background/15"
-                  >
+                  // One height for every logo so the row lines up.
+                  <li key={label} className="flex items-center">
                     <img
                       src={`/images/payments/${file}`}
                       alt={label}
                       loading="lazy"
                       className={cn(
-                        'h-5 w-auto max-w-16 object-contain',
+                        'h-4 w-auto object-contain',
                         mono && 'brightness-0 invert',
                       )}
                     />
