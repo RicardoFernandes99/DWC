@@ -17,15 +17,19 @@ pnpm dev
 
 ### Full stack in Docker
 
-To run everything in containers (API, web, backoffice and infrastructure):
+To run everything in containers (API, web, backoffice and infrastructure), only
+Docker is needed:
 
 ```sh
-pnpm setup:local          # once; host Node only for this step
-pnpm backoffice:setup     # once; creates apps/backoffice/.env and vendor/
-pnpm stack:up             # build/start all services and create the S3 bucket
-pnpm stack:logs           # follow api, web and backoffice logs
-pnpm stack:down           # stop everything; named volumes are kept
+docker compose --profile app up -d --build   # or: pnpm stack:up
+docker compose --profile app logs -f api web backoffice
+docker compose --profile app down            # named volumes are kept
 ```
+
+On first start an `init` container creates the ignored root `.env` and
+`apps/backoffice/.env` with random local secrets (never overwriting existing
+files), the API container creates the S3 bucket, and the backoffice container
+installs its Composer dependencies.
 
 Web is on http://localhost:5173, the API on 3000 and the backoffice on 8080
 (set `BACKOFFICE_PORT` to publish it elsewhere). Containers reach each other by

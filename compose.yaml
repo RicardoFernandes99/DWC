@@ -48,7 +48,16 @@ services:
       - floci-data:/app/data
     # Use the image's built-in readiness probe; the native image has no curl.
 
-  # Full stack (`pnpm stack:up`): api, web and backoffice in containers.
+  # Full stack (`docker compose --profile app up`): api, web and backoffice in containers.
+  # Creates ignored .env files with random local secrets when missing; never overwrites.
+  init:
+    profiles: [app]
+    image: node:24.19.0-bookworm-slim
+    working_dir: /workspace
+    command: ['node', 'scripts/docker-init.ts']
+    volumes:
+      - .:/workspace
+
   # Linux node_modules live in named volumes so they never mix with host installs.
   deps:
     profiles: [app]
@@ -71,9 +80,13 @@ services:
     profiles: [app]
     image: *node-image
     working_dir: /workspace
-    command: ['sh', '-c', 'corepack enable && pnpm --filter @dwc/api dev']
-    env_file:
-      - ./.env
+    # The API reads ./.env itself (created by init); values below take precedence.
+    command:
+      [
+        'sh',
+        '-c',
+        'corepack enable && pnpm --filter @dwc/api storage:init && pnpm --filter @dwc/api dev',
+      ]
     environment:
       <<: *node-env
       API_HOST: 0.0.0.0
@@ -96,7 +109,9 @@ services:
       redis:
         condition: service_healthy
       storage:
-        condition: service_started
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
     healthcheck:
       test:
         - CMD
@@ -155,8 +170,6 @@ services:
       context: ./apps/backoffice
     ports:
       - '127.0.0.1:${BACKOFFICE_PORT:-8080}:8080'
-    env_file:
-      - ./apps/backoffice/.env
     environment:
       APP_DEBUG: 'false'
       NEST_API_URL: http://api:${API_PORT:-3000}/api
@@ -173,6 +186,9 @@ services:
       - ./apps/backoffice/docker/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini:ro
       - backoffice-storage:/var/lib/backoffice/storage
     depends_on:
+      init:
+        condition: service_completed_successfully
+        required: false
       api:
         condition: service_healthy
         required: false

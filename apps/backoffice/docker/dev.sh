@@ -7,6 +7,9 @@ set -u
 storage="${LARAVEL_STORAGE_PATH:-/var/lib/backoffice/storage}"
 mkdir -p "$storage/logs" "$storage/framework/sessions" "$storage/framework/views" "$storage/framework/cache/data"
 
+# A fresh clone has no vendor/ yet; install it inside the container.
+[ -f vendor/autoload.php ] || composer install --no-interaction --prefer-dist
+
 php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8080 --workers=4 --max-requests=500 &
 octane=$!
 trap 'kill "$octane" 2>/dev/null' TERM INT

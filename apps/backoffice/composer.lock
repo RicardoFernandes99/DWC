@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7f188243d001d7d435b05f8979acbd49",
+    "content-hash": "4f04e06e498d336ce8ba15bab58170d1",
     "packages": [
         {
             "name": "anousss007/blatui",
@@ -6869,7 +6869,7 @@
     },
     "platform-dev": {},
     "platform-overrides": {
-        "php": "8.4.0"
+        "php": "8.4.1"
     },
     "plugin-api-version": "2.11.0"
 }
