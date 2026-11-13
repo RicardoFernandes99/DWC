@@ -89,21 +89,23 @@ export function SiteFooter() {
               Local producers, fresh food and live auctions in one market. Buy
               direct from the people who grow it.
             </p>
-            <div className="mt-auto flex flex-wrap items-end gap-x-4 gap-y-3 pt-6">
+            <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-3 pt-6">
               <p className="text-xs leading-none font-semibold tracking-wider uppercase">
                 Secured by
               </p>
-              <ul className="flex flex-wrap items-end gap-x-3.5 gap-y-3">
+              <ul className="flex flex-wrap items-center gap-2">
                 {payments.map(({ label, file, mono }) => (
-                  <li key={label} className="flex h-5 items-end">
+                  // Same tile for every logo; every logo is 20px high.
+                  <li
+                    key={label}
+                    className="grid h-9 w-20 place-items-center rounded-md border border-background/15"
+                  >
                     <img
                       src={`/images/payments/${file}`}
                       alt={label}
                       loading="lazy"
                       className={cn(
-                        'h-full w-auto object-contain',
-                        label === 'Visa' && 'h-3',
-                        label === 'Google Pay' && 'h-4',
+                        'h-5 w-auto max-w-16 object-contain',
                         mono && 'brightness-0 invert',
                       )}
                     />
