@@ -14,7 +14,6 @@ import {
   Package,
   ShoppingBasket,
   Sprout,
-  Truck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuantityStepper } from '@/components/shared/quantity-stepper';
@@ -560,7 +559,7 @@ function ProductAddToCart({
         </dl>
       </div>
 
-      <div className="mt-auto space-y-3 px-5 pt-5 pb-3">
+      <div className="mt-auto space-y-3 p-5">
         {!purchasable ? (
           <p className="rounded-lg bg-secondary/50 p-3 text-center text-sm text-muted-foreground">
             To buy, use your personal buyer account.
@@ -612,11 +611,6 @@ function ProductAddToCart({
           </>
         )}
       </div>
-
-      <p className="flex items-center justify-center gap-1.5 px-5 pb-5 text-xs text-muted-foreground">
-        <Truck aria-hidden="true" className="size-3.5 text-primary" />
-        Delivery or farm collection, straight from the producer
-      </p>
     </section>
   );
 }
