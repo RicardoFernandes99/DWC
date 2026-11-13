@@ -82,21 +82,19 @@ export function CheckoutPage() {
     useState<FulfilmentMethod>('delivery');
   const [address, setAddress] = useState<DeliveryAddress>(() => {
     const stored = getStoredAddress();
-    // Nothing typed here before: start from the account's saved address.
-    const saved = stored.street
-      ? null
-      : queryClient.getQueryData<Awaited<ReturnType<typeof currentUser>>>([
-          'session',
-        ])?.deliveryAddress;
     return {
       recipientName: stored.recipientName ?? '',
-      street: saved?.street ?? stored.street ?? '',
-      city: saved?.city ?? stored.city ?? '',
-      postalCode: saved?.postalCode ?? stored.postalCode ?? '',
+      street: stored.street ?? '',
+      city: stored.city ?? '',
+      postalCode: stored.postalCode ?? '',
       country: stored.country ?? 'Portugal',
       notes: stored.notes ?? '',
     };
   });
+  // The account's default address, or a one-off address for this order.
+  const [chosenAddressMode, setChosenAddressMode] = useState<
+    'saved' | 'new' | null
+  >(null);
   const [addressErrors, setAddressErrors] = useState<Record<string, string>>(
     {},
   );
@@ -148,18 +146,33 @@ export function CheckoutPage() {
       ? userSelectedMethodId
       : (availableMethods[0]?.id ?? '');
 
+  const savedAddress = user?.deliveryAddress ?? null;
+  const addressMode = savedAddress ? (chosenAddressMode ?? 'saved') : 'new';
+  // What this order ships to: the saved default or the typed one-off address.
+  const active: DeliveryAddress =
+    addressMode === 'saved' && savedAddress
+      ? {
+          recipientName: user?.name ?? '',
+          street: savedAddress.street,
+          city: savedAddress.city,
+          postalCode: savedAddress.postalCode,
+          country: 'Portugal',
+          notes: address.notes,
+        }
+      : address;
+
   // Effective recipient name falls back to user's name if not typed
   const effectiveRecipientName =
-    address.recipientName.trim() || user?.name || '';
+    active.recipientName.trim() || user?.name || '';
 
   // Address validation check
   const isAddressComplete =
     fulfilmentMethod === 'collection' ||
     Boolean(
       effectiveRecipientName.trim() &&
-      address.street.trim() &&
-      address.city.trim() &&
-      address.postalCode.trim(),
+      active.street.trim() &&
+      active.city.trim() &&
+      active.postalCode.trim(),
     );
 
   // Quote query
@@ -169,7 +182,7 @@ export function CheckoutPage() {
       items.map((i) => `${i.productId}:${i.quantity}`).join(','),
       fulfilmentMethod,
       fulfilmentMethod === 'delivery'
-        ? `${effectiveRecipientName}|${address.street.trim()}|${address.city.trim()}|${address.postalCode.trim()}`
+        ? `${effectiveRecipientName}|${active.street.trim()}|${active.city.trim()}|${active.postalCode.trim()}`
         : 'collection',
     ],
     queryFn: () => {
@@ -185,11 +198,11 @@ export function CheckoutPage() {
             fulfilmentMethod === 'delivery'
               ? {
                   recipientName: effectiveRecipientName.trim(),
-                  street: address.street.trim(),
-                  city: address.city.trim(),
-                  postalCode: address.postalCode.trim(),
-                  country: address.country?.trim() || 'Portugal',
-                  notes: address.notes?.trim() || '',
+                  street: active.street.trim(),
+                  city: active.city.trim(),
+                  postalCode: active.postalCode.trim(),
+                  country: active.country?.trim() || 'Portugal',
+                  notes: active.notes?.trim() || '',
                 }
               : undefined,
         }),
@@ -268,9 +281,9 @@ export function CheckoutPage() {
       const errors: Record<string, string> = {};
       if (!effectiveRecipientName.trim())
         errors.recipientName = 'Recipient name is required.';
-      if (!address.street.trim()) errors.street = 'Street address is required.';
-      if (!address.city.trim()) errors.city = 'City is required.';
-      if (!address.postalCode.trim())
+      if (!active.street.trim()) errors.street = 'Street address is required.';
+      if (!active.city.trim()) errors.city = 'City is required.';
+      if (!active.postalCode.trim())
         errors.postalCode = 'Postal code is required.';
 
       if (Object.keys(errors).length > 0) {
@@ -280,10 +293,11 @@ export function CheckoutPage() {
         );
         return;
       }
-      saveStoredAddress({
-        ...address,
-        recipientName: effectiveRecipientName.trim(),
-      });
+      if (addressMode === 'new')
+        saveStoredAddress({
+          ...address,
+          recipientName: effectiveRecipientName.trim(),
+        });
     }
 
     if (!quote) {
@@ -366,11 +380,11 @@ export function CheckoutPage() {
               fulfilmentMethod === 'delivery'
                 ? {
                     recipientName: effectiveRecipientName.trim(),
-                    street: address.street.trim(),
-                    city: address.city.trim(),
-                    postalCode: address.postalCode.trim(),
-                    country: address.country?.trim() || 'Portugal',
-                    notes: address.notes?.trim() || '',
+                    street: active.street.trim(),
+                    city: active.city.trim(),
+                    postalCode: active.postalCode.trim(),
+                    country: active.country?.trim() || 'Portugal',
+                    notes: active.notes?.trim() || '',
                   }
                 : undefined,
             fingerprint: quote.fingerprint,
@@ -721,92 +735,153 @@ export function CheckoutPage() {
                   Where should local producers deliver your order?
                 </p>
 
+                {savedAddress && (
+                  <div
+                    role="radiogroup"
+                    aria-label="Delivery address"
+                    className="mt-4 grid gap-3 sm:grid-cols-2"
+                  >
+                    {(
+                      [
+                        [
+                          'saved',
+                          'Default address',
+                          `${savedAddress.street}, ${savedAddress.postalCode} ${savedAddress.city}`,
+                        ],
+                        [
+                          'new',
+                          'Use a different address',
+                          'Just for this order. Your default stays the same.',
+                        ],
+                      ] as const
+                    ).map(([mode, title, detail]) => (
+                      <label
+                        key={mode}
+                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors ${
+                          addressMode === mode
+                            ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                            : 'border-border hover:bg-muted/30'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="addressMode"
+                          value={mode}
+                          checked={addressMode === mode}
+                          onChange={() => {
+                            setChosenAddressMode(mode);
+                            setAddressErrors({});
+                          }}
+                          className="mt-1 size-4 accent-primary"
+                        />
+                        <div className="min-w-0 space-y-1">
+                          <p className="font-medium text-foreground">{title}</p>
+                          <p className="text-xs break-words text-muted-foreground">
+                            {mode === 'saved' && (
+                              <span className="block text-foreground">
+                                {user?.name}
+                              </span>
+                            )}
+                            {detail}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <div className="sm:col-span-2">
-                    <FormField
-                      id="recipientName"
-                      label="Recipient Full Name"
-                      error={addressErrors.recipientName}
-                    >
-                      <Input
-                        id="recipientName"
-                        value={address.recipientName}
-                        onChange={(e) =>
-                          handleAddressChange('recipientName', e.target.value)
-                        }
-                        placeholder={user?.name || 'e.g. Maria Silva'}
-                        autoComplete="name"
-                        className="rounded-md"
-                        required
-                      />
-                    </FormField>
-                  </div>
+                  {addressMode === 'new' && (
+                    <>
+                      <div className="sm:col-span-2">
+                        <FormField
+                          id="recipientName"
+                          label="Recipient Full Name"
+                          error={addressErrors.recipientName}
+                        >
+                          <Input
+                            id="recipientName"
+                            value={address.recipientName}
+                            onChange={(e) =>
+                              handleAddressChange(
+                                'recipientName',
+                                e.target.value,
+                              )
+                            }
+                            placeholder={user?.name || 'e.g. Maria Silva'}
+                            autoComplete="name"
+                            className="rounded-md"
+                            required
+                          />
+                        </FormField>
+                      </div>
 
-                  <div className="sm:col-span-2">
-                    <FormField
-                      id="street"
-                      label="Street Address"
-                      error={addressErrors.street}
-                    >
-                      <Input
-                        id="street"
-                        value={address.street}
-                        onChange={(e) =>
-                          handleAddressChange('street', e.target.value)
-                        }
-                        placeholder="e.g. Rua das Flores 123, 2º Dto"
-                        autoComplete="street-address"
-                        className="rounded-md"
-                        required
-                      />
-                    </FormField>
-                  </div>
+                      <div className="sm:col-span-2">
+                        <FormField
+                          id="street"
+                          label="Street Address"
+                          error={addressErrors.street}
+                        >
+                          <Input
+                            id="street"
+                            value={address.street}
+                            onChange={(e) =>
+                              handleAddressChange('street', e.target.value)
+                            }
+                            placeholder="e.g. Rua das Flores 123, 2º Dto"
+                            autoComplete="street-address"
+                            className="rounded-md"
+                            required
+                          />
+                        </FormField>
+                      </div>
 
-                  <div>
-                    <FormField
-                      id="city"
-                      label="City / Municipality"
-                      error={addressErrors.city}
-                    >
-                      <Input
-                        id="city"
-                        value={address.city}
-                        onChange={(e) =>
-                          handleAddressChange('city', e.target.value)
-                        }
-                        placeholder="e.g. Porto"
-                        autoComplete="address-level2"
-                        className="rounded-md"
-                        required
-                      />
-                    </FormField>
-                  </div>
+                      <div>
+                        <FormField
+                          id="city"
+                          label="City / Municipality"
+                          error={addressErrors.city}
+                        >
+                          <Input
+                            id="city"
+                            value={address.city}
+                            onChange={(e) =>
+                              handleAddressChange('city', e.target.value)
+                            }
+                            placeholder="e.g. Porto"
+                            autoComplete="address-level2"
+                            className="rounded-md"
+                            required
+                          />
+                        </FormField>
+                      </div>
 
-                  <div>
-                    <FormField
-                      id="postalCode"
-                      label="Postal Code"
-                      error={addressErrors.postalCode}
-                    >
-                      <Input
-                        id="postalCode"
-                        value={address.postalCode}
-                        onChange={(e) =>
-                          handleAddressChange('postalCode', e.target.value)
-                        }
-                        placeholder="e.g. 4000-001"
-                        autoComplete="postal-code"
-                        className="rounded-md"
-                        required
-                      />
-                    </FormField>
-                  </div>
+                      <div>
+                        <FormField
+                          id="postalCode"
+                          label="Postal Code"
+                          error={addressErrors.postalCode}
+                        >
+                          <Input
+                            id="postalCode"
+                            value={address.postalCode}
+                            onChange={(e) =>
+                              handleAddressChange('postalCode', e.target.value)
+                            }
+                            placeholder="e.g. 4000-001"
+                            autoComplete="postal-code"
+                            className="rounded-md"
+                            required
+                          />
+                        </FormField>
+                      </div>
+                    </>
+                  )}
 
                   <div className="sm:col-span-2">
                     <FormField
                       id="deliveryNotes"
                       label="Delivery Notes (Optional)"
-                      description="Gate codes, doorbells, or delivery instructions for drivers."
                     >
                       <Input
                         id="deliveryNotes"
