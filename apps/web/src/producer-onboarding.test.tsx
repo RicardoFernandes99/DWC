@@ -91,6 +91,8 @@ const baseProducer: User = {
   buyerSuspensionReason: null,
   producerRejectionReason: null,
   avatarUrl: null,
+  phone: null,
+  deliveryAddress: null,
 };
 
 const sampleApplication = {
@@ -225,6 +227,8 @@ describe('producer onboarding and status screens', () => {
         buyerSuspensionReason: null,
         producerRejectionReason: null,
         avatarUrl: null,
+        phone: null,
+        deliveryAddress: null,
       });
     vi.mocked(authenticatedRequest)
       .mockResolvedValueOnce(rejectedResponse)
@@ -428,6 +432,8 @@ describe('producer onboarding and status screens', () => {
       buyerSuspensionReason: null,
       producerRejectionReason: null,
       avatarUrl: null,
+      phone: null,
+      deliveryAddress: null,
     };
     vi.mocked(currentUser).mockResolvedValue(buyer);
     vi.mocked(authenticatedRequest).mockResolvedValue([]);

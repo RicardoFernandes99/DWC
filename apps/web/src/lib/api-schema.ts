@@ -959,6 +959,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/account/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AccountController_updateDetails"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/account/avatar": {
         parameters: {
             query?: never;
@@ -1000,6 +1016,14 @@ export interface components {
             email: string;
             password: string;
         };
+        SavedAddressDto: {
+            /** @example Rua das Flores 123 */
+            street: string;
+            /** @example Porto */
+            city: string;
+            /** @example 4000-001 */
+            postalCode: string;
+        };
         UserResponseDto: {
             /** @example 671f0f98ac53ba58e26c4789 */
             id: string;
@@ -1031,6 +1055,9 @@ export interface components {
              * @example null
              */
             avatarUrl: string | null;
+            /** @example +351 912 345 678 */
+            phone: string | null;
+            deliveryAddress: components["schemas"]["SavedAddressDto"] | null;
         };
         AuthResponseDto: {
             accessToken: string;
@@ -2939,6 +2966,16 @@ export interface components {
         };
         ReinstateBuyerDto: {
             revision: number;
+        };
+        UpdateAccountDetailsDto: {
+            /** @example Ana Silva */
+            name: string;
+            /**
+             * @description Digits with optional +, spaces, dashes or brackets; null or empty clears it.
+             * @example +351 912 345 678
+             */
+            phone: string | null;
+            deliveryAddress: components["schemas"]["SavedAddressDto"] | null;
         };
         UploadAvatarSwaggerDto: {
             /** Format: binary */
@@ -6445,6 +6482,44 @@ export interface operations {
             };
             /** @description Authentication storage unavailable. */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AccountController_updateDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAccountDetailsDto"];
+            };
+        };
+        responses: {
+            /** @description Name, phone and default delivery address saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponseDto"];
+                };
+            };
+            /** @description Invalid name, phone or address. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

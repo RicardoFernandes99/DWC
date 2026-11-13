@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Header,
@@ -27,6 +28,7 @@ import {
   MAX_PRODUCT_IMAGE_BYTES,
   type UploadedImageFileInput,
 } from '../products/product-image.validator.js';
+import { UpdateAccountDetailsDto } from '../users/update-account-details.dto.js';
 import { UserResponseDto } from '../users/user-response.dto.js';
 import { UsersService } from '../users/users.service.js';
 
@@ -46,6 +48,21 @@ export class AccountController {
     private readonly auth: AuthService,
     private readonly users: UsersService,
   ) {}
+
+  @Put('details')
+  @Header('Cache-Control', 'no-store')
+  @ApiOkResponse({
+    type: UserResponseDto,
+    description: 'Name, phone and default delivery address saved.',
+  })
+  @ApiBadRequestResponse({ description: 'Invalid name, phone or address.' })
+  async updateDetails(
+    @Headers('authorization') authorization: string | undefined,
+    @Body() details: UpdateAccountDetailsDto,
+  ): Promise<UserResponseDto> {
+    const user = await this.auth.authenticate(authorization);
+    return this.users.updateDetails(user.id, details);
+  }
 
   @Put('avatar')
   @HttpCode(HttpStatus.OK)

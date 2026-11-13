@@ -38,6 +38,8 @@ const person = {
   buyerSuspensionReason: null,
   producerRejectionReason: null,
   avatarUrl: null,
+  phone: null,
+  deliveryAddress: null,
 };
 function showAccount() {
   const client = new QueryClient({

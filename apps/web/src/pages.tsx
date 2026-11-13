@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/form-field';
+import { PersonalDetails } from '@/features/account/components/personal-details';
 import { PaymentMethods } from '@/features/payment-methods/components/payment-methods';
 import { ProducerOnboarding } from '@/features/producer-onboarding/components/producer-onboarding';
 import { ProducerProfileEditor } from '@/features/producer-products/components/producer-products';
@@ -526,7 +527,10 @@ export function Account() {
           </>
         )}
         {current.role === 'buyer' && (
-          <PaymentMethods key={current.id} buyerId={current.id} />
+          <>
+            <PersonalDetails key={`details-${current.id}`} user={current} />
+            <PaymentMethods key={current.id} buyerId={current.id} />
+          </>
         )}
       </div>
     </main>

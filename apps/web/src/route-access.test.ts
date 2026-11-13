@@ -13,6 +13,8 @@ const buyer: User = {
   buyerSuspensionReason: null,
   producerRejectionReason: null,
   avatarUrl: null,
+  phone: null,
+  deliveryAddress: null,
 };
 const producer: User = {
   ...buyer,

@@ -83,11 +83,17 @@ export function CheckoutPage() {
     useState<FulfilmentMethod>('delivery');
   const [address, setAddress] = useState<DeliveryAddress>(() => {
     const stored = getStoredAddress();
+    // Nothing typed here before: start from the account's saved address.
+    const saved = stored.street
+      ? null
+      : queryClient.getQueryData<Awaited<ReturnType<typeof currentUser>>>([
+          'session',
+        ])?.deliveryAddress;
     return {
       recipientName: stored.recipientName ?? '',
-      street: stored.street ?? '',
-      city: stored.city ?? '',
-      postalCode: stored.postalCode ?? '',
+      street: saved?.street ?? stored.street ?? '',
+      city: saved?.city ?? stored.city ?? '',
+      postalCode: saved?.postalCode ?? stored.postalCode ?? '',
       country: stored.country ?? 'Portugal',
       notes: stored.notes ?? '',
     };

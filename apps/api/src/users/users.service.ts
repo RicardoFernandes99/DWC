@@ -11,6 +11,7 @@ import bcrypt from 'bcryptjs';
 import { Model } from 'mongoose';
 import { PublicRegisterRole, RegisterUserDto } from './register-user.dto.js';
 import { ProducerStatus, User, UserDocument, UserRole } from './user.schema.js';
+import { UpdateAccountDetailsDto } from './update-account-details.dto.js';
 import { UserResponseDto } from './user-response.dto.js';
 import {
   MAX_SIGNED_GET_URL_EXPIRES_IN_SECONDS,
@@ -63,6 +64,14 @@ function toUserResponse(
         ? (user.buyerSuspensionReason ?? null)
         : null,
     avatarUrl,
+    phone: user.phone ?? null,
+    deliveryAddress: user.deliveryAddress
+      ? {
+          street: user.deliveryAddress.street,
+          city: user.deliveryAddress.city,
+          postalCode: user.deliveryAddress.postalCode,
+        }
+      : null,
   };
 }
 
@@ -126,6 +135,25 @@ export class UsersService {
     if (previous.avatarKey) await this.deleteQuietly(previous.avatarKey);
     const current = await this.users.findById(userId);
     return this.toResponse(current!);
+  }
+
+  async updateDetails(
+    userId: string,
+    details: UpdateAccountDetailsDto,
+  ): Promise<UserResponseDto> {
+    const current = await this.users.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          name: details.name,
+          phone: details.phone || null,
+          deliveryAddress: details.deliveryAddress ?? null,
+        },
+      },
+      { new: true, runValidators: true },
+    );
+    if (!current) throw new NotFoundException('User not found.');
+    return this.toResponse(current);
   }
 
   async removeAvatar(userId: string): Promise<UserResponseDto> {

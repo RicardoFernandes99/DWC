@@ -46,6 +46,21 @@ export class ProducerApplication {
 export const ProducerApplicationSchema =
   SchemaFactory.createForClass(ProducerApplication);
 
+/** Buyer's default delivery address; checkout pre-fills it. */
+@Schema({ _id: false })
+export class SavedAddress {
+  @Prop({ required: true, trim: true, minlength: 3, maxlength: 200 })
+  street!: string;
+
+  @Prop({ required: true, trim: true, minlength: 1, maxlength: 100 })
+  city!: string;
+
+  @Prop({ required: true, trim: true, minlength: 3, maxlength: 20 })
+  postalCode!: string;
+}
+
+export const SavedAddressSchema = SchemaFactory.createForClass(SavedAddress);
+
 @Schema({ timestamps: true, autoIndex: true })
 export class User {
   @Prop({ required: true, trim: true, minlength: 1, maxlength: 100 })
@@ -65,6 +80,12 @@ export class User {
   /** Private S3 key of the profile picture; null shows initials. */
   @Prop({ type: String, default: null })
   avatarKey!: string | null;
+
+  @Prop({ type: String, trim: true, maxlength: 20, default: null })
+  phone!: string | null;
+
+  @Prop({ type: SavedAddressSchema, default: null })
+  deliveryAddress!: SavedAddress | null;
 
   @Prop({ required: true, enum: Object.values(UserRole) })
   role!: UserRole;

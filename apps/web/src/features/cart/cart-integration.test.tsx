@@ -72,6 +72,8 @@ function renderCart(userRole?: 'buyer' | 'producer' | null) {
         buyerSuspensionReason: null,
         producerRejectionReason: null,
         avatarUrl: null,
+        phone: null,
+        deliveryAddress: null,
       }
     : null;
 
