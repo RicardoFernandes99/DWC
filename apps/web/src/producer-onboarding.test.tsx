@@ -110,13 +110,13 @@ describe('producer onboarding and status screens', () => {
       screen.getByText(/Application details are for producer verification/i),
     ).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Farm or enterprise name'), {
+    fireEvent.change(screen.getByLabelText('Name'), {
       target: { value: '  Quinta do Sol  ' },
     });
     fireEvent.change(screen.getByLabelText('City'), {
       target: { value: 'Sintra' },
     });
-    fireEvent.change(screen.getByLabelText('Collection address'), {
+    fireEvent.change(screen.getByLabelText('Address'), {
       target: { value: 'Rua Principal 12, 2710-001 Sintra' },
     });
     fireEvent.change(screen.getByLabelText('Latitude'), {
@@ -125,7 +125,7 @@ describe('producer onboarding and status screens', () => {
     fireEvent.change(screen.getByLabelText('Longitude'), {
       target: { value: '-9.3817' },
     });
-    fireEvent.change(screen.getByLabelText('Farming practices and story'), {
+    fireEvent.change(screen.getByLabelText('Description'), {
       target: {
         value: 'Organic heirloom vegetables and citrus orchard in Sintra.',
       },
@@ -206,9 +206,7 @@ describe('producer onboarding and status screens', () => {
       ),
     ).toBeInTheDocument();
 
-    const addressInput = screen.getByLabelText(
-      'Collection address',
-    ) as HTMLInputElement;
+    const addressInput = screen.getByLabelText('Address') as HTMLInputElement;
     expect(addressInput.value).toBe('Rua Principal, Sintra');
 
     fireEvent.change(addressInput, {
@@ -302,7 +300,7 @@ describe('producer onboarding and status screens', () => {
     renderAccount(baseProducer);
 
     const farmInput = (await screen.findByLabelText(
-      'Farm or enterprise name',
+      'Name',
     )) as HTMLInputElement;
     const latInput = screen.getByLabelText('Latitude') as HTMLInputElement;
 

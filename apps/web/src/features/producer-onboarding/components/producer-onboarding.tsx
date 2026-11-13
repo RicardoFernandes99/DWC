@@ -199,7 +199,7 @@ function ApplicationSummaryCard({
       </div>
       <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
         <div className="min-w-0">
-          <dt className="text-muted-foreground">Farm name</dt>
+          <dt className="text-muted-foreground">Name</dt>
           <dd className="mt-1 font-medium break-words">
             {application.farmName}
           </dd>
@@ -209,7 +209,7 @@ function ApplicationSummaryCard({
           <dd className="mt-1 break-words">{application.city}</dd>
         </div>
         <div className="min-w-0 sm:col-span-2">
-          <dt className="text-muted-foreground">Collection address</dt>
+          <dt className="text-muted-foreground">Address</dt>
           <dd className="mt-1 break-words">{application.collectionAddress}</dd>
         </div>
         <div className="min-w-0">
@@ -220,7 +220,7 @@ function ApplicationSummaryCard({
           </dd>
         </div>
         <div className="min-w-0 sm:col-span-2">
-          <dt className="text-muted-foreground">Farming practices and story</dt>
+          <dt className="text-muted-foreground">Description</dt>
           <dd className="mt-1 max-w-[70ch] leading-relaxed whitespace-pre-line break-words">
             {application.description}
           </dd>
@@ -361,8 +361,7 @@ function ProducerApplicationForm({
             {(field) => (
               <FormField
                 id="producer-farm-name"
-                label="Farm or enterprise name"
-                description="Shown on your public producer profile and products."
+                label="Name"
                 error={fieldErrors.farmName}
               >
                 <Input
@@ -373,10 +372,7 @@ function ProducerApplicationForm({
                   value={field.state.value}
                   aria-invalid={!!fieldErrors.farmName}
                   aria-describedby={
-                    [
-                      'producer-farm-name-description',
-                      fieldErrors.farmName ? 'producer-farm-name-error' : '',
-                    ]
+                    [fieldErrors.farmName ? 'producer-farm-name-error' : '']
                       .filter(Boolean)
                       .join(' ') || undefined
                   }
@@ -395,7 +391,6 @@ function ProducerApplicationForm({
               <FormField
                 id="producer-city"
                 label="City"
-                description="City or municipality used for local discovery."
                 error={fieldErrors.city}
               >
                 <Input
@@ -406,10 +401,7 @@ function ProducerApplicationForm({
                   value={field.state.value}
                   aria-invalid={!!fieldErrors.city}
                   aria-describedby={
-                    [
-                      'producer-city-description',
-                      fieldErrors.city ? 'producer-city-error' : '',
-                    ]
+                    [fieldErrors.city ? 'producer-city-error' : '']
                       .filter(Boolean)
                       .join(' ') || undefined
                   }
@@ -424,41 +416,6 @@ function ProducerApplicationForm({
           </form.Field>
         </div>
 
-        <form.Field name="collectionAddress">
-          {(field) => (
-            <FormField
-              id="producer-collection-address"
-              label="Collection address"
-              description="Physical address where buyers collect orders."
-              error={fieldErrors.collectionAddress}
-            >
-              <Input
-                id="producer-collection-address"
-                type="text"
-                autoComplete="street-address"
-                maxLength={240}
-                value={field.state.value}
-                aria-invalid={!!fieldErrors.collectionAddress}
-                aria-describedby={
-                  [
-                    'producer-collection-address-description',
-                    fieldErrors.collectionAddress
-                      ? 'producer-collection-address-error'
-                      : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ') || undefined
-                }
-                onBlur={field.handleBlur}
-                onChange={(event) => {
-                  clearFieldError('collectionAddress');
-                  field.handleChange(event.target.value);
-                }}
-              />
-            </FormField>
-          )}
-        </form.Field>
-
         <form.Subscribe
           selector={(state) =>
             [
@@ -469,9 +426,18 @@ function ProducerApplicationForm({
           }
         >
           {([latitude, longitude, address]) => (
-            <FormField id="producer-location" label="Find on the map">
+            <FormField
+              id="producer-collection-address"
+              label="Address"
+              error={fieldErrors.collectionAddress}
+            >
               <AddressSearch
-                id="producer-location"
+                id="producer-collection-address"
+                describedBy={
+                  fieldErrors.collectionAddress
+                    ? 'producer-collection-address-error'
+                    : undefined
+                }
                 value={address}
                 onValueChange={(next) => {
                   clearFieldError('collectionAddress');
@@ -584,7 +550,7 @@ function ProducerApplicationForm({
           {(field) => (
             <FormField
               id="producer-description"
-              label="Farming practices and story"
+              label="Description"
               description="Describe what you grow, your production methods and collection notes (up to 2,000 characters)."
               error={fieldErrors.description}
             >

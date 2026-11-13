@@ -1223,7 +1223,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
       {!editing && (
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
           <div className="min-w-0">
-            <dt className="text-muted-foreground">Farm name</dt>
+            <dt className="text-muted-foreground">Name</dt>
             <dd className="mt-1 font-medium break-words">
               {baseProfile.farmName}
             </dd>
@@ -1233,7 +1233,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
             <dd className="mt-1 break-words">{baseProfile.city}</dd>
           </div>
           <div className="min-w-0 sm:col-span-2">
-            <dt className="text-muted-foreground">Collection address</dt>
+            <dt className="text-muted-foreground">Address</dt>
             <dd className="mt-1 break-words">
               {baseProfile.collectionAddress}
             </dd>
@@ -1258,10 +1258,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
           <div className="grid gap-4 md:grid-cols-2">
             <form.Field name="farmName">
               {(field) => (
-                <FormField
-                  id="profile-farm-name"
-                  label="Farm or enterprise name"
-                >
+                <FormField id="profile-farm-name" label="Name">
                   <Input
                     id="profile-farm-name"
                     maxLength={120}
@@ -1274,7 +1271,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
             </form.Field>
             <form.Field name="city">
               {(field) => (
-                <FormField id="profile-city" label="City or locality">
+                <FormField id="profile-city" label="City">
                   <Input
                     id="profile-city"
                     maxLength={120}
@@ -1296,7 +1293,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
                 }
               >
                 {([latitude, longitude, address]) => (
-                  <FormField id="profile-location" label="Collection address">
+                  <FormField id="profile-location" label="Address">
                     <AddressSearch
                       id="profile-location"
                       value={address}
@@ -1373,7 +1370,8 @@ function ProfileForm({ profile }: { profile: Profile }) {
               {reloadError}
             </p>
           )}
-          <div className="flex flex-wrap gap-2">
+          {/* Reversed so Save sits on the right while staying first in tab order. */}
+          <div className="flex flex-row-reverse flex-wrap justify-start gap-2">
             <Button type="submit" disabled={mutation.isPending}>
               {mutation.isPending ? 'Saving…' : 'Save changes'}
             </Button>

@@ -117,8 +117,9 @@ export function AddressSearch({
                       aria-selected={false}
                       className="flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                       onClick={() => {
-                        onPick(item);
+                        // Text first: editing the text clears the pin.
                         onValueChange(item.label);
+                        onPick(item);
                         setOpen(false);
                       }}
                     >
