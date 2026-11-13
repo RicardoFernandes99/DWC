@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   CreditCard,
-  PackageCheck,
   ShoppingBag,
   Store,
   Truck,
@@ -1183,11 +1182,6 @@ export function CheckoutPage() {
                     Please return to your cart to adjust unavailable items.
                   </p>
                 )}
-
-                <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-                  <PackageCheck aria-hidden="true" className="size-3.5" />
-                  <span>Atomic order placement · Direct from farmers</span>
-                </div>
               </div>
             </div>
           </aside>
