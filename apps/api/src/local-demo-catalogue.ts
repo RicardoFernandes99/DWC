@@ -20,6 +20,11 @@ const IMAGE_DIR = resolve(process.cwd(), 'fixtures/images');
 const IMAGE_WIDTH = 900;
 const IMAGE_HEIGHT = 675;
 const DAY = 24 * 60 * 60_000;
+/** Farm whose producer account carries the long sales history for demos. */
+const SHOWCASE_FARM = 'hillside';
+const SHOWCASE_ORDER_COUNT = 140;
+/** How long the showcase auctions stay live after seeding. */
+const SHOWCASE_AUCTION_DAYS = 3;
 
 type Collection =
   | 'users'
@@ -1117,61 +1122,60 @@ async function build(context: BuildContext) {
     'Great flavour, a real step up from the supermarket.',
     'Arrived quickly and in perfect condition.',
     'Good value. One item was smaller than expected.',
+    'The best carrots we have had in years. The kids actually ate them.',
+    'Always reliable, and the weekly box is great value.',
+    'Picked that morning and you can tell.',
+    'Generous portions and lovely to deal with.',
   ];
+  type Buyer = (typeof buyers)[number];
+  type Item = {
+    productId: Types.ObjectId;
+    productName: string;
+    productUnit: string;
+    quantity: number;
+    unitPriceCents: number;
+    lineTotalCents: number;
+  };
+  const lineItems = (farmKey: string, maxLines: number, maxQuantity = 3) => {
+    const farmProducts = productsByFarm.get(farmKey)!;
+    const lineCount =
+      1 + Math.floor(rand() * Math.min(maxLines, farmProducts.length));
+    return [...farmProducts]
+      .sort(() => rand() - 0.5)
+      .slice(0, lineCount)
+      .map((item) => {
+        const quantity = 1 + Math.floor(rand() * maxQuantity);
+        return {
+          productId: oid(`product_${item.image}`),
+          productName: item.name,
+          productUnit: item.unit,
+          quantity,
+          unitPriceCents: item.priceCents,
+          lineTotalCents: quantity * item.priceCents,
+        };
+      });
+  };
 
-  // Status mix weighted towards completed orders so dashboards have history.
-  const STATUSES = [
-    'delivered',
-    'collected',
-    'delivered',
-    'collected',
-    'delivered',
-    'collected',
-    'confirmed',
-    'pending',
-    'shipped',
-    'ready_for_collection',
-    'cancelled',
-    'delivered',
-    'collected',
-    'pending',
-  ];
-  const ORDER_COUNT = 42;
-  for (let index = 0; index < ORDER_COUNT; index += 1) {
-    const buyer = buyers[index % buyers.length]!;
-    const farm = FARMS[(index * 3) % FARMS.length]!;
+  /** Adds one paid catalogue order with its checkout, payment and optional review. */
+  const addOrder = (spec: {
+    key: string;
+    buyer: Buyer;
+    farm: Farm;
+    status: string;
+    createdAt: Date;
+    items: Item[];
+    addressIndex: number;
+    review: { rating: number; comment: string } | null;
+    openRefundReason?: string;
+  }) => {
+    const { key, buyer, farm, status, createdAt, items } = spec;
     const farmId = farmIds.get(farm.key)!;
-    const status = STATUSES[index % STATUSES.length]!;
-    const active = ['pending', 'confirmed', 'shipped', 'ready_for_collection'];
-    // Active orders are recent; completed ones spread across 90 days.
-    const createdAt = active.includes(status)
-      ? ago(index % 4, 2 + (index % 5))
-      : ago(
-          3 + Math.floor((index / ORDER_COUNT) * 85) + (index % 3),
-          index % 12,
-        );
     const collection = ['collected', 'ready_for_collection'].includes(status)
       ? true
       : ['delivered', 'shipped'].includes(status)
         ? false
         : rand() < 0.5;
     const method = collection ? 'collection' : 'delivery';
-    const farmProducts = productsByFarm.get(farm.key)!;
-    const lineCount = 1 + Math.floor(rand() * Math.min(3, farmProducts.length));
-    const chosen = [...farmProducts]
-      .sort(() => rand() - 0.5)
-      .slice(0, lineCount);
-    const items = chosen.map((item) => {
-      const quantity = 1 + Math.floor(rand() * 3);
-      return {
-        productId: oid(`product_${item.image}`),
-        productName: item.name,
-        productUnit: item.unit,
-        quantity,
-        unitPriceCents: item.priceCents,
-        lineTotalCents: quantity * item.priceCents,
-      };
-    });
     const subtotalCents = items.reduce(
       (sum, item) => sum + item.lineTotalCents,
       0,
@@ -1179,11 +1183,11 @@ async function build(context: BuildContext) {
     const deliveryFeeCents =
       method === 'delivery' && subtotalCents < 5000 ? 500 : 0;
     const totalCents = subtotalCents + deliveryFeeCents;
-    const orderId = oid(`order_${index}`);
-    const paymentId = oid(`payment_${index}`);
-    const checkoutId = oid(`checkout_${index}`);
+    const orderId = oid(`order_${key}`);
+    const paymentId = oid(`payment_${key}`);
+    const checkoutId = oid(`checkout_${key}`);
     const deliveryAddress =
-      method === 'delivery' ? address(buyer.name, index) : null;
+      method === 'delivery' ? address(buyer.name, spec.addressIndex) : null;
 
     const path =
       status === 'cancelled'
@@ -1191,18 +1195,20 @@ async function build(context: BuildContext) {
         : method === 'delivery'
           ? ['pending', 'confirmed', 'shipped', 'delivered']
           : ['pending', 'confirmed', 'ready_for_collection', 'collected'];
-    const history = path
-      .slice(0, path.indexOf(status) + 1)
-      .map((step, stepIndex) => ({
-        status: step,
-        timestamp: new Date(createdAt.getTime() + stepIndex * 18 * 60 * 60_000),
-        actorId: step === 'pending' ? buyer.id : farmId,
-        actorRole: step === 'pending' ? 'buyer' : 'producer',
-        note:
-          step === 'cancelled'
-            ? 'Out of stock on the day, refund issued.'
-            : null,
-      }));
+    const steps = path.slice(0, path.indexOf(status) + 1);
+    // Space status changes up to 18 hours apart without passing the seed time.
+    const stepGap = Math.min(
+      18 * 60 * 60_000,
+      (now.getTime() - createdAt.getTime()) / steps.length,
+    );
+    const history = steps.map((step, stepIndex) => ({
+      status: step,
+      timestamp: new Date(createdAt.getTime() + stepIndex * stepGap),
+      actorId: step === 'pending' ? buyer.id : farmId,
+      actorRole: step === 'pending' ? 'buyer' : 'producer',
+      note:
+        step === 'cancelled' ? 'Out of stock on the day, refund issued.' : null,
+    }));
     const updatedAt = history.at(-1)!.timestamp;
     const refundedCents = status === 'cancelled' ? totalCents : 0;
 
@@ -1265,19 +1271,31 @@ async function build(context: BuildContext) {
               decidedAt: updatedAt,
               refundedCents,
             }
-          : null,
+          : spec.openRefundReason
+            ? {
+                status: 'open',
+                requestedBy: buyer.id,
+                requestedAt: updatedAt,
+                reason: spec.openRefundReason,
+                decidedBy: null,
+                decidedAt: null,
+                refundedCents: null,
+              }
+            : null,
       createdAt,
       updatedAt,
     });
-    if (['delivered', 'collected'].includes(status) && index % 5 !== 4) {
-      const reviewedAt = new Date(updatedAt.getTime() + DAY);
+    if (spec.review && ['delivered', 'collected'].includes(status)) {
+      const reviewedAt = new Date(
+        Math.min(updatedAt.getTime() + DAY, now.getTime()),
+      );
       reviews.push({
-        _id: oid(`review_${index}`),
+        _id: oid(`review_${key}`),
         authorId: buyer.id,
         orderId,
         producerId: farmId,
-        rating: index % 7 === 3 ? 3 : index % 3 === 0 ? 4 : 5,
-        comment: REVIEW_TEXT[index % REVIEW_TEXT.length],
+        rating: spec.review.rating,
+        comment: spec.review.comment,
         visibility: 'visible',
         revision: 1,
         moderatedAt: null,
@@ -1287,9 +1305,96 @@ async function build(context: BuildContext) {
         updatedAt: reviewedAt,
       });
     }
+  };
+
+  // Status mix weighted towards completed orders so dashboards have history.
+  const STATUSES = [
+    'delivered',
+    'collected',
+    'delivered',
+    'collected',
+    'delivered',
+    'collected',
+    'confirmed',
+    'pending',
+    'shipped',
+    'ready_for_collection',
+    'cancelled',
+    'delivered',
+    'collected',
+    'pending',
+  ];
+  const ACTIVE = ['pending', 'confirmed', 'shipped', 'ready_for_collection'];
+  const ORDER_COUNT = 42;
+  for (let index = 0; index < ORDER_COUNT; index += 1) {
+    const status = STATUSES[index % STATUSES.length]!;
+    const farm = FARMS[(index * 3) % FARMS.length]!;
+    // Active orders are recent; completed ones spread across 90 days.
+    const createdAt = ACTIVE.includes(status)
+      ? ago(index % 4, 2 + (index % 5))
+      : ago(
+          3 + Math.floor((index / ORDER_COUNT) * 85) + (index % 3),
+          index % 12,
+        );
+    addOrder({
+      key: String(index),
+      buyer: buyers[index % buyers.length]!,
+      farm,
+      status,
+      createdAt,
+      items: lineItems(farm.key, 3),
+      addressIndex: index,
+      review:
+        index % 5 !== 4
+          ? {
+              rating: index % 7 === 3 ? 3 : index % 3 === 0 ? 4 : 5,
+              comment: REVIEW_TEXT[index % 6]!,
+            }
+          : null,
+    });
   }
 
-  // Auctions: five upcoming, five live, five finished with paid winners.
+  // The showcase producer gets a long, growing sales history so its
+  // dashboard, order list and reviews look like an established business.
+  const heroFarm = FARMS.find((farm) => farm.key === SHOWCASE_FARM)!;
+  let openRefundAdded = false;
+  for (let index = 0; index < SHOWCASE_ORDER_COUNT; index += 1) {
+    // Skewed towards recent days so weekly sales trend upwards over 150 days.
+    const days = Math.floor(150 * rand() ** 1.6);
+    const status =
+      days < 1
+        ? pick(['pending', 'pending', 'confirmed'])
+        : days < 3
+          ? pick(['confirmed', 'shipped', 'ready_for_collection'])
+          : rand() < 0.06
+            ? 'cancelled'
+            : pick(['delivered', 'collected']);
+    const openRefund = status === 'pending' && !openRefundAdded;
+    if (openRefund) openRefundAdded = true;
+    const roll = rand();
+    addOrder({
+      key: `${SHOWCASE_FARM}_${index}`,
+      buyer: buyers[(index * 5 + Math.floor(rand() * 3)) % buyers.length]!,
+      farm: heroFarm,
+      status,
+      createdAt: ago(days, 1 + Math.floor(rand() * 10)),
+      items: lineItems(heroFarm.key, 5, 5),
+      addressIndex: ORDER_COUNT + index,
+      review:
+        roll < 0.65
+          ? {
+              rating: roll < 0.05 ? 3 : roll < 0.22 ? 4 : 5,
+              comment: REVIEW_TEXT[index % REVIEW_TEXT.length]!,
+            }
+          : null,
+      openRefundReason: openRefund
+        ? 'I ordered the wrong week, could I cancel this one please?'
+        : undefined,
+    });
+  }
+
+  // Auctions: five upcoming, five live, five finished with paid winners, plus
+  // two long-running showcase lots that stay live for parallel bidding demos.
   const auctions: Row[] = [];
   const auctionbids: Row[] = [];
   const AUCTION_LOTS: [string, number, number][] = [
@@ -1309,14 +1414,65 @@ async function build(context: BuildContext) {
     ['beeswax_candles', 3, 1700],
     ['raspberries', 4, 1100],
   ];
+  const lots = AUCTION_LOTS.map(
+    ([image, quantity, startingPriceCents], index) => {
+      const kind = index < 5 ? 'scheduled' : index < 10 ? 'active' : 'finished';
+      const startsAt =
+        kind === 'scheduled'
+          ? new Date(now.getTime() + (index + 1) * 5 * 60 * 60_000)
+          : kind === 'active'
+            ? new Date(now.getTime() - (index - 4) * 20 * 60_000)
+            : ago(index - 8, 4);
+      const endsAt =
+        kind === 'active'
+          ? new Date(now.getTime() + (index - 4) * 45 * 60_000)
+          : new Date(startsAt.getTime() + 2 * 60 * 60_000);
+      const bidCount =
+        kind === 'scheduled'
+          ? 0
+          : kind === 'active'
+            ? index - 5
+            : 2 + (index % 3);
+      return {
+        image,
+        quantity,
+        startingPriceCents,
+        kind,
+        startsAt,
+        endsAt,
+        bidCount,
+      };
+    },
+  );
+  lots.push(
+    {
+      image: 'heritage_carrots',
+      quantity: 10,
+      startingPriceCents: 1500,
+      kind: 'active',
+      startsAt: ago(0, 1),
+      endsAt: new Date(now.getTime() + SHOWCASE_AUCTION_DAYS * DAY),
+      bidCount: 2,
+    },
+    {
+      image: 'vine_tomatoes',
+      quantity: 6,
+      startingPriceCents: 1200,
+      kind: 'active',
+      startsAt: ago(0, 1),
+      endsAt: new Date(
+        now.getTime() + SHOWCASE_AUCTION_DAYS * DAY + 4 * 60 * 60_000,
+      ),
+      bidCount: 0,
+    },
+  );
   for (const [
     index,
-    [image, quantity, startingPriceCents],
-  ] of AUCTION_LOTS.entries()) {
+    { image, quantity, startingPriceCents, kind, startsAt, endsAt, bidCount },
+  ] of lots.entries()) {
     const item = CATALOGUE_PRODUCTS.find((product) => product.image === image)!;
     const farmId = farmIds.get(item.farm)!;
     const auctionId = oid(`auction_${index}`);
-    const kind = index < 5 ? 'scheduled' : index < 10 ? 'active' : 'finished';
     const increment = 100;
     if (kind !== 'finished') {
       // Scheduled and live lots hold their quantity as reserved stock, which
@@ -1326,22 +1482,6 @@ async function build(context: BuildContext) {
       )!;
       productRow.reservedStock = Number(productRow.reservedStock) + quantity;
     }
-    const startsAt =
-      kind === 'scheduled'
-        ? new Date(now.getTime() + (index + 1) * 5 * 60 * 60_000)
-        : kind === 'active'
-          ? new Date(now.getTime() - (index - 4) * 20 * 60_000)
-          : ago(index - 8, 4);
-    const endsAt =
-      kind === 'active'
-        ? new Date(now.getTime() + (index - 4) * 45 * 60_000)
-        : new Date(startsAt.getTime() + 2 * 60 * 60_000);
-    const bidCount =
-      kind === 'scheduled'
-        ? 0
-        : kind === 'active'
-          ? index - 5
-          : 2 + (index % 3);
     let amount = startingPriceCents;
     let lastBid: {
       buyer: (typeof buyers)[number];

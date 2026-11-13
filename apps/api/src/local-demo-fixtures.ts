@@ -30,6 +30,62 @@ const REVIEW_ROOT = resolve(process.cwd(), '../../demos/ticket-044-review');
 const CREDENTIALS_FILE = resolve(REVIEW_ROOT, 'credentials.local.json');
 const BCRYPT_COST = 12;
 const FIXTURE_EMAIL_DOMAIN = 'demo.dwclocal.invalid';
+const BUYER_ONE_NAME = 'Alex Carter';
+const BUYER_TWO_NAME = 'Morgan Ellis';
+const CORE_FARM_NAME = 'Ashcombe Orchard';
+/** Display names for the core accounts; emails stay derived from the keys. */
+const ACCOUNT_NAMES: Record<string, string> = {
+  buyer_one: BUYER_ONE_NAME,
+  buyer_two: BUYER_TWO_NAME,
+  producer_approved: CORE_FARM_NAME,
+  producer_pending: 'Harbourside Microgreens',
+  producer_rejected: 'Clevedon Honey Co.',
+  producer_suspended: 'Severn Smokehouse',
+};
+/** Application details per core farm, so each producer reads as a real business. */
+const FARM_DETAILS: Record<
+  string,
+  {
+    description: string;
+    city: string;
+    collectionAddress: string;
+    latitude: number;
+    longitude: number;
+  }
+> = {
+  [CORE_FARM_NAME]: {
+    description:
+      'A small orchard on the edge of Bristol growing heritage apples and pears, with free-range hens and a jam kitchen in the old barn.',
+    city: 'Bristol',
+    collectionAddress: 'Ashcombe Farm, Long Ashton Road, Bristol, BS41 9DQ',
+    latitude: 51.4296,
+    longitude: -2.6493,
+  },
+  'Harbourside Microgreens': {
+    description:
+      'Microgreens and edible flowers grown indoors in a converted warehouse by the harbour, harvested to order.',
+    city: 'Bristol',
+    collectionAddress: 'Unit 4, Wapping Wharf, Bristol, BS1 6WP',
+    latitude: 51.4469,
+    longitude: -2.5973,
+  },
+  'Clevedon Honey Co.': {
+    description:
+      'Raw wildflower honey and beeswax from forty hives along the Clevedon coast.',
+    city: 'Clevedon',
+    collectionAddress: '7 Hill Road, Clevedon, BS21 7NE',
+    latitude: 51.4385,
+    longitude: -2.8546,
+  },
+  'Severn Smokehouse': {
+    description:
+      'Oak-smoked fish, cheese and charcuterie prepared in a traditional smokehouse near the Severn estuary.',
+    city: 'Portishead',
+    collectionAddress: 'Quay Lane, Portishead, BS20 7HL',
+    latitude: 51.4863,
+    longitude: -2.7671,
+  },
+};
 const ID_NAMES = [
   'buyer_one',
   'buyer_two',
@@ -218,11 +274,7 @@ function user(
 function application(farmName: string) {
   return {
     farmName,
-    description: `${farmName} grows and makes food in the local area.`,
-    city: 'Bristol',
-    collectionAddress: '12 Demo Lane, Bristol, BS1 1AA',
-    latitude: 51.4545,
-    longitude: -2.5879,
+    ...FARM_DETAILS[farmName]!,
     submittedAt: now,
   };
 }
@@ -243,7 +295,7 @@ function product(
     _id,
     producerId: approvedProducer,
     name,
-    description: `${name} from Demo Orchard near Bristol.`,
+    description: `${name} from ${CORE_FARM_NAME} near Bristol.`,
     category,
     productionMethod: method,
     seasons,
@@ -318,9 +370,11 @@ function order(
     checkoutId: oid(`checkout_${key.replace('order_', '')}`),
     auctionId: null,
     buyerId,
-    buyerNameSnapshot: buyerId.equals(buyerOne) ? 'Alex Buyer' : 'Morgan Buyer',
+    buyerNameSnapshot: buyerId.equals(buyerOne)
+      ? BUYER_ONE_NAME
+      : BUYER_TWO_NAME,
     producerId: approvedProducer,
-    producerNameSnapshot: 'Demo Orchard',
+    producerNameSnapshot: CORE_FARM_NAME,
     paymentId,
     items: [
       {
@@ -345,9 +399,9 @@ function order(
       fulfilmentMethod === 'delivery'
         ? {
             recipientName: buyerId.equals(buyerOne)
-              ? 'Alex Buyer'
-              : 'Morgan Buyer',
-            street: '42 Demo Street',
+              ? BUYER_ONE_NAME
+              : BUYER_TWO_NAME,
+            street: '42 Whiteladies Road',
             city: 'Bristol',
             postalCode: 'BS1 2AA',
             country: 'United Kingdom',
@@ -395,9 +449,9 @@ function checkout(
       method === 'delivery'
         ? {
             recipientName: buyerId.equals(buyerOne)
-              ? 'Alex Buyer'
-              : 'Morgan Buyer',
-            street: '42 Demo Street',
+              ? BUYER_ONE_NAME
+              : BUYER_TWO_NAME,
+            street: '42 Whiteladies Road',
             city: 'Bristol',
             postalCode: 'BS1 2AA',
             country: 'United Kingdom',
@@ -489,7 +543,7 @@ async function credentials(): Promise<Credentials> {
     'producer_suspended',
   ].map((key) => ({
     email: `${key.replaceAll('_', '.')}@${FIXTURE_EMAIL_DOMAIN}`,
-    name: key,
+    name: ACCOUNT_NAMES[key]!,
     role: key.startsWith('producer') ? 'producer' : 'buyer',
   }));
   await mkdir(dirname(CREDENTIALS_FILE), { recursive: true });
@@ -949,43 +1003,46 @@ async function create(
     storedCredentials.accounts.map((account) => [account.email, account]),
   );
   const userRows = [
-    user('Alex Buyer', 'buyer_one', 'buyer', null, null, passwordHash),
-    user('Morgan Buyer', 'buyer_two', 'buyer', null, null, passwordHash),
+    user(BUYER_ONE_NAME, 'buyer_one', 'buyer', null, null, passwordHash),
+    user(BUYER_TWO_NAME, 'buyer_two', 'buyer', null, null, passwordHash),
     user(
-      'Demo Orchard',
+      CORE_FARM_NAME,
       'producer_approved',
       'producer',
       'approved',
-      application('Demo Orchard'),
+      application(CORE_FARM_NAME),
       passwordHash,
     ),
     user(
-      'Pending Orchard',
+      'Harbourside Microgreens',
       'producer_pending',
       'producer',
       'pending',
-      application('Pending Orchard'),
+      application('Harbourside Microgreens'),
       passwordHash,
       // Submitting an application increments the revision, so a submitted pending application starts at 1.
       { producerDecisionAt: null },
     ),
     user(
-      'Rejected Orchard',
+      'Clevedon Honey Co.',
       'producer_rejected',
       'producer',
       'rejected',
-      application('Rejected Orchard'),
+      application('Clevedon Honey Co.'),
       passwordHash,
       { producerRejectionReason: 'Please add the missing collection details.' },
     ),
     user(
-      'Suspended Orchard',
+      'Severn Smokehouse',
       'producer_suspended',
       'producer',
       'suspended',
-      application('Suspended Orchard'),
+      application('Severn Smokehouse'),
       passwordHash,
-      { producerSuspensionReason: 'Demo suspension example.' },
+      {
+        producerSuspensionReason:
+          'Repeated late deliveries reported by buyers.',
+      },
     ),
   ];
   for (const row of userRows)
@@ -1309,7 +1366,7 @@ async function create(
       quantity: 2,
       currentBidCents: 1500,
       currentBidderId: buyerTwo,
-      currentBidderName: 'Morgan Buyer',
+      currentBidderName: BUYER_TWO_NAME,
       lastBidAt: new Date(now.getTime() - 70 * 60_000),
       revision: 2,
       createdAt: new Date(now.getTime() - 100 * 60_000),
@@ -1366,9 +1423,9 @@ async function create(
     checkoutId: null,
     auctionId: oid('auction_finished'),
     buyerId: buyerTwo,
-    buyerNameSnapshot: 'Morgan Buyer',
+    buyerNameSnapshot: BUYER_TWO_NAME,
     producerId: approvedProducer,
-    producerNameSnapshot: 'Demo Orchard',
+    producerNameSnapshot: CORE_FARM_NAME,
     paymentId: oid('payment_auction'),
     items: [
       {
@@ -1406,7 +1463,7 @@ async function create(
       _id: winningBidId,
       auctionId: oid('auction_finished'),
       buyerId: buyerTwo,
-      bidderName: 'Morgan Buyer',
+      bidderName: BUYER_TWO_NAME,
       paymentMethodId: methodTwo,
       paymentMethodSnapshot: {
         last4: '4242',
