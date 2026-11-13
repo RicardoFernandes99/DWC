@@ -10,7 +10,7 @@ import type {
 } from '@dwc/realtime-contracts';
 import { Link } from '@tanstack/react-router';
 import type { Socket } from 'socket.io-client';
-import { CreditCard, Gavel, Lock } from 'lucide-react';
+import { CreditCard, Gavel, Lock, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -353,14 +353,6 @@ export function AuctionBidForm({
               : 'Your account can still watch the auction.'}
           </p>
         )}
-        {leading && live?.state === 'active' && !pending && (
-          <p
-            role="status"
-            className="mb-4 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm"
-          >
-            You have the highest bid. You can bid again if someone outbids you.
-          </p>
-        )}
         {live?.state === 'finished' && !pending ? (
           <p className="text-sm text-muted-foreground">Bidding has ended.</p>
         ) : (
@@ -488,6 +480,15 @@ export function AuctionBidForm({
                     ? `Place bid ${formatMoney(submitCents)}`
                     : 'Place bid'}
             </Button>
+            {leading && live?.state === 'active' && !pending && (
+              <p
+                role="status"
+                className="flex items-center justify-center gap-1.5 text-sm font-medium text-primary"
+              >
+                <Trophy aria-hidden="true" className="size-4" />
+                You have the highest bid
+              </p>
+            )}
             <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
               <Lock aria-hidden="true" className="size-3.5" /> Your card is only
               charged if you win.
