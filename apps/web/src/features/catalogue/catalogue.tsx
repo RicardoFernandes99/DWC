@@ -594,18 +594,10 @@ function ProductAddToCart({
             {feedback ? (
               <div
                 role="status"
-                className="flex items-center justify-between rounded-md bg-secondary px-3 py-2 text-sm font-medium"
+                className="flex items-center gap-1.5 rounded-md bg-secondary px-3 py-2 text-sm font-medium"
               >
-                <span className="flex items-center gap-1.5">
-                  <Check aria-hidden="true" className="size-4 text-primary" />
-                  Added {quantity} to cart
-                </span>
-                <Link
-                  to="/cart"
-                  className="font-semibold text-primary underline"
-                >
-                  View cart
-                </Link>
+                <Check aria-hidden="true" className="size-4 text-primary" />
+                Added to cart
               </div>
             ) : (
               inCartQty > 0 && (
