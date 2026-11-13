@@ -213,7 +213,7 @@ export function CartPage() {
                 {!user ? (
                   <Button asChild className="w-full rounded-md" size="lg">
                     <Link to="/login" search={{ returnTo: '/checkout' }}>
-                      Sign in as buyer to check out
+                      Sign in to check out
                     </Link>
                   </Button>
                 ) : isBuyer ? (
