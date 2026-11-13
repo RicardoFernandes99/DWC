@@ -696,24 +696,20 @@ export function ProducerOnboarding({
         <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <Card
             role="alert"
-            className="border-destructive/40 bg-destructive/10 p-5 md:p-6"
+            className="gap-0 border-destructive/40 bg-destructive/10 p-4"
           >
-            <h3 className="text-lg font-semibold text-destructive">
+            <h3 className="text-base font-semibold text-destructive">
               Account suspended
             </h3>
-            <p className="mt-2 max-w-[65ch] text-sm font-medium leading-relaxed text-foreground">
+            <p className="mt-1 max-w-[65ch] text-sm font-medium leading-snug text-foreground">
               {SUSPENDED_PRODUCER_BANNER_COPY}
             </p>
             {applicationQuery.data?.suspensionReason && (
-              <p className="mt-3 max-w-[65ch] text-sm leading-relaxed text-foreground">
+              <p className="mt-1 max-w-[65ch] text-sm leading-snug text-foreground">
                 <span className="font-semibold">Reason:</span>{' '}
                 {applicationQuery.data.suspensionReason}
               </p>
             )}
-            <p className="mt-3 max-w-[65ch] text-sm leading-relaxed text-muted-foreground">
-              Existing orders can still be fulfilled while your account is
-              suspended, and active auctions finish normally.
-            </p>
           </Card>
 
           {application ? (

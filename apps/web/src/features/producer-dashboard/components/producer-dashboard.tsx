@@ -160,7 +160,7 @@ const periodName: Record<ProducerMetrics['period'], string> = {
 function SalesCards({ data }: { data: ProducerMetrics }) {
   const { sales, previous } = data;
   return (
-    <dl className="grid gap-4 sm:grid-cols-3">
+    <dl className="grid gap-4 sm:grid-cols-2">
       <div className={card}>
         <dt className="text-sm text-muted-foreground">Orders</dt>
         <dd className="mt-1 font-editorial text-4xl tabular-nums">
@@ -191,15 +191,6 @@ function SalesCards({ data }: { data: ProducerMetrics }) {
         ) : (
           <p className="mt-2 text-xs text-muted-foreground">All time</p>
         )}
-      </div>
-      <div className={card}>
-        <dt className="text-sm text-muted-foreground">Delivery fees</dt>
-        <dd className="mt-1 font-editorial text-4xl tabular-nums">
-          {formatMoney(sales.deliveryFeesCents)}
-        </dd>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Not included in revenue
-        </p>
       </div>
     </dl>
   );

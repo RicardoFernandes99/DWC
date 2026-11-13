@@ -39,7 +39,6 @@
             <x-copy title="Location">
                 <p>{{ $application->application['city'] }}</p>
                 <p>{{ $application->application['collectionAddress'] }}</p>
-                <p class="text-xs">{{ number_format((float) $application->application['latitude'], 4) }}, {{ number_format((float) $application->application['longitude'], 4) }}</p>
             </x-copy>
             <x-copy title="About this farm">{{ $application->application['description'] }}</x-copy>
         </div>

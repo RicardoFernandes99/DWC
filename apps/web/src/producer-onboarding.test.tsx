@@ -296,9 +296,6 @@ describe('producer onboarding and status screens', () => {
       await screen.findByText(SUSPENDED_PRODUCER_BANNER_COPY),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Existing orders can still be fulfilled/i),
-    ).toBeInTheDocument();
-    expect(
       screen.queryByRole('button', { name: /Submit application/i }),
     ).not.toBeInTheDocument();
     expect(
