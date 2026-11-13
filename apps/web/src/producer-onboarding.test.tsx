@@ -184,7 +184,9 @@ describe('producer onboarding and status screens', () => {
         name: 'Submitted application details',
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText('38.8029, -9.3817')).toBeInTheDocument();
+    expect(
+      screen.getByText(sampleApplication.collectionAddress),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
   });
 

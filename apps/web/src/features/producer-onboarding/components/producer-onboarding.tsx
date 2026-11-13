@@ -66,10 +66,6 @@ function formatSubmittedTimestamp(iso: string): string {
   }).format(parsed);
 }
 
-function formatCoordinate(value: number): string {
-  return value.toFixed(4);
-}
-
 type FieldErrors = {
   farmName?: string;
   city?: string;
@@ -220,13 +216,6 @@ function ApplicationSummaryCard({
         <div className="min-w-0 sm:col-span-2">
           <dt className="text-muted-foreground">Address</dt>
           <dd className="mt-1 break-words">{application.collectionAddress}</dd>
-        </div>
-        <div className="min-w-0">
-          <dt className="text-muted-foreground">Coordinates</dt>
-          <dd className="mt-1 tabular-nums">
-            {formatCoordinate(application.latitude)},{' '}
-            {formatCoordinate(application.longitude)}
-          </dd>
         </div>
         <div className="min-w-0 sm:col-span-2">
           <dt className="text-muted-foreground">Description</dt>
