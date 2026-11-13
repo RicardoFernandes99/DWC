@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AddressSearch } from '@/components/shared/address-search';
 import { useForm } from '@tanstack/react-form';
+import { Pencil } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { components } from '@/lib/api-schema';
 import { ApiError, authenticatedRequest, type User } from '@/lib/session';
@@ -134,8 +135,8 @@ function validateApplicationInput(values: {
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
     recordError(
       'latitude',
-      'producer-latitude',
-      'Enter a valid latitude between -90 and 90.',
+      'producer-collection-address',
+      'Pick your address from the search results to place it on the map.',
     );
   }
 
@@ -144,8 +145,8 @@ function validateApplicationInput(values: {
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
     recordError(
       'longitude',
-      'producer-longitude',
-      'Enter a valid longitude between -180 and 180.',
+      'producer-collection-address',
+      'Pick your address from the search results to place it on the map.',
     );
   }
 
@@ -179,10 +180,12 @@ function ApplicationSummaryCard({
   title,
   submittedAt,
   application,
+  onEdit,
 }: {
   title: string;
   submittedAt: string | null;
   application: ProducerApplicationDetails;
+  onEdit?: () => void;
 }) {
   return (
     <Card className="p-5 md:p-6">
@@ -195,6 +198,12 @@ function ApplicationSummaryCard({
               {formatSubmittedTimestamp(submittedAt)} UTC
             </time>
           </p>
+        )}
+        {onEdit && (
+          <Button type="button" variant="outline" size="sm" onClick={onEdit}>
+            <Pencil aria-hidden="true" />
+            Edit
+          </Button>
         )}
       </div>
       <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
@@ -239,6 +248,7 @@ function ProducerApplicationForm({
   onClearSavedMessage,
   onConflictRefresh,
   onSaved,
+  onCancel,
 }: {
   userId: string;
   mode: 'submit' | 'update' | 'resubmit';
@@ -251,6 +261,8 @@ function ProducerApplicationForm({
     updated: ProducerApplicationResponse,
     notice: string,
   ) => Promise<void>;
+  /** Shown as a Cancel button next to the submit button when given. */
+  onCancel?: () => void;
 }) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -312,6 +324,11 @@ function ProducerApplicationForm({
       setFieldErrors((prev) => ({ ...prev, [key]: undefined }));
     }
   };
+
+  const addressError =
+    fieldErrors.collectionAddress ??
+    fieldErrors.latitude ??
+    fieldErrors.longitude;
 
   const heading =
     mode === 'resubmit'
@@ -429,19 +446,20 @@ function ProducerApplicationForm({
             <FormField
               id="producer-collection-address"
               label="Address"
-              error={fieldErrors.collectionAddress}
+              error={addressError}
             >
               <AddressSearch
                 id="producer-collection-address"
                 describedBy={
-                  fieldErrors.collectionAddress
-                    ? 'producer-collection-address-error'
-                    : undefined
+                  addressError ? 'producer-collection-address-error' : undefined
                 }
                 value={address}
                 onValueChange={(next) => {
                   clearFieldError('collectionAddress');
                   form.setFieldValue('collectionAddress', next);
+                  // Edited text no longer matches the pin; pick again.
+                  form.setFieldValue('latitude', '');
+                  form.setFieldValue('longitude', '');
                 }}
                 latitude={
                   latitude.trim() === '' || !Number.isFinite(Number(latitude))
@@ -466,92 +484,11 @@ function ProducerApplicationForm({
           )}
         </form.Subscribe>
 
-        <details
-          className="rounded-lg border px-4 py-3"
-          open={
-            Boolean(fieldErrors.latitude || fieldErrors.longitude) || undefined
-          }
-        >
-          <summary className="cursor-pointer text-sm font-medium">
-            Enter coordinates manually
-          </summary>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <form.Field name="latitude">
-              {(field) => (
-                <FormField
-                  id="producer-latitude"
-                  label="Latitude"
-                  description="Decimal degrees between -90 and 90."
-                  error={fieldErrors.latitude}
-                >
-                  <Input
-                    id="producer-latitude"
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="38.8029"
-                    className="tabular-nums"
-                    value={field.state.value}
-                    aria-invalid={!!fieldErrors.latitude}
-                    aria-describedby={
-                      [
-                        'producer-latitude-description',
-                        fieldErrors.latitude ? 'producer-latitude-error' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ') || undefined
-                    }
-                    onBlur={field.handleBlur}
-                    onChange={(event) => {
-                      clearFieldError('latitude');
-                      field.handleChange(event.target.value);
-                    }}
-                  />
-                </FormField>
-              )}
-            </form.Field>
-
-            <form.Field name="longitude">
-              {(field) => (
-                <FormField
-                  id="producer-longitude"
-                  label="Longitude"
-                  description="Decimal degrees between -180 and 180."
-                  error={fieldErrors.longitude}
-                >
-                  <Input
-                    id="producer-longitude"
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="-9.3817"
-                    className="tabular-nums"
-                    value={field.state.value}
-                    aria-invalid={!!fieldErrors.longitude}
-                    aria-describedby={
-                      [
-                        'producer-longitude-description',
-                        fieldErrors.longitude ? 'producer-longitude-error' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ') || undefined
-                    }
-                    onBlur={field.handleBlur}
-                    onChange={(event) => {
-                      clearFieldError('longitude');
-                      field.handleChange(event.target.value);
-                    }}
-                  />
-                </FormField>
-              )}
-            </form.Field>
-          </div>
-        </details>
-
         <form.Field name="description">
           {(field) => (
             <FormField
               id="producer-description"
               label="Description"
-              description="Describe what you grow, your production methods and collection notes (up to 2,000 characters)."
               error={fieldErrors.description}
             >
               <Textarea
@@ -561,10 +498,7 @@ function ProducerApplicationForm({
                 value={field.state.value}
                 aria-invalid={!!fieldErrors.description}
                 aria-describedby={
-                  [
-                    'producer-description-description',
-                    fieldErrors.description ? 'producer-description-error' : '',
-                  ]
+                  [fieldErrors.description ? 'producer-description-error' : '']
                     .filter(Boolean)
                     .join(' ') || undefined
                 }
@@ -609,13 +543,24 @@ function ProducerApplicationForm({
 
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => (
-            <Button
-              type="submit"
-              disabled={submitting || mutation.isPending}
-              className="w-full sm:w-auto"
-            >
-              {submitting || mutation.isPending ? submittingLabel : submitLabel}
-            </Button>
+            // Reversed so the submit button sits on the right while staying first in tab order.
+            <div className="flex flex-row-reverse flex-wrap justify-start gap-2">
+              <Button type="submit" disabled={submitting || mutation.isPending}>
+                {submitting || mutation.isPending
+                  ? submittingLabel
+                  : submitLabel}
+              </Button>
+              {onCancel && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={submitting || mutation.isPending}
+                  onClick={onCancel}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
           )}
         </form.Subscribe>
       </form>
@@ -634,6 +579,7 @@ export function ProducerOnboarding({
   const appKey = producerApplicationKey(user.id);
   const [conflictNotice, setConflictNotice] = useState('');
   const [savedBanner, setSavedBanner] = useState('');
+  const [editingPending, setEditingPending] = useState(false);
 
   const applicationQuery = useQuery({
     queryKey: appKey,
@@ -862,13 +808,7 @@ export function ProducerOnboarding({
               )}
             </Card>
 
-            {application ? (
-              <ApplicationSummaryCard
-                title="Submitted application details"
-                submittedAt={null}
-                application={application}
-              />
-            ) : (
+            {application ? null : (
               <Card className="p-5 md:p-6">
                 <h3 className="text-lg font-semibold">
                   Verification checklist
@@ -900,21 +840,46 @@ export function ProducerOnboarding({
             )}
           </div>
 
-          <ProducerApplicationForm
-            key={
-              application
-                ? `pending-${submittedAt ?? 'saved'}`
-                : 'pending-initial'
-            }
-            userId={user.id}
-            mode={application ? 'update' : 'submit'}
-            initialApplication={application}
-            conflictMessage={conflictNotice}
-            savedMessage={savedBanner}
-            onClearSavedMessage={() => setSavedBanner('')}
-            onConflictRefresh={handleConflict}
-            onSaved={handleSaved}
-          />
+          {application && !editingPending ? (
+            <div className="space-y-3">
+              <ApplicationSummaryCard
+                title="Submitted application details"
+                submittedAt={null}
+                application={application}
+                onEdit={() => {
+                  setSavedBanner('');
+                  setEditingPending(true);
+                }}
+              />
+              {savedBanner && (
+                <p role="status" className="text-sm font-medium text-primary">
+                  {savedBanner}
+                </p>
+              )}
+            </div>
+          ) : (
+            <ProducerApplicationForm
+              key={
+                application
+                  ? `pending-${submittedAt ?? 'saved'}`
+                  : 'pending-initial'
+              }
+              userId={user.id}
+              mode={application ? 'update' : 'submit'}
+              initialApplication={application}
+              conflictMessage={conflictNotice}
+              savedMessage={savedBanner}
+              onClearSavedMessage={() => setSavedBanner('')}
+              onConflictRefresh={handleConflict}
+              onSaved={async (updated, notice) => {
+                await handleSaved(updated, notice);
+                setEditingPending(false);
+              }}
+              onCancel={
+                application ? () => setEditingPending(false) : undefined
+              }
+            />
+          )}
         </div>
       )}
 
