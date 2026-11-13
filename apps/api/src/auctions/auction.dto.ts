@@ -271,6 +271,12 @@ export class AuctionLiveStateDto {
     number | null;
   @ApiProperty({ type: String, nullable: true, maxLength: 100 })
   currentBidderName!: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Leading buyer id, so a viewer can tell they are winning.',
+  })
+  currentBidderId!: string | null;
   @ApiProperty({ type: String, format: 'date-time' }) serverTime!: string;
   @ApiProperty({ type: String, format: 'date-time' }) endsAt!: string;
   @ApiProperty() revision!: number;

@@ -2444,6 +2444,8 @@ export interface components {
             minimumIncrementCents: number;
             currentBidCents: number | null;
             currentBidderName: string | null;
+            /** @description Leading buyer id, so a viewer can tell they are winning. */
+            currentBidderId: string | null;
             /** Format: date-time */
             serverTime: string;
             /** Format: date-time */

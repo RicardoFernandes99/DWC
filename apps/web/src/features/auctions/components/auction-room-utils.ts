@@ -24,6 +24,8 @@ export function isAuctionLiveStatePayload(
       Number.isSafeInteger(value.currentBidCents)) &&
     (value.currentBidderName === null ||
       typeof value.currentBidderName === 'string') &&
+    (value.currentBidderId === null ||
+      typeof value.currentBidderId === 'string') &&
     typeof value.serverTime === 'string' &&
     Number.isFinite(Date.parse(value.serverTime)) &&
     typeof value.endsAt === 'string' &&
@@ -45,6 +47,7 @@ export function toAuctionLiveState(
     minimumIncrementCents: value.minimumIncrementCents,
     currentBidCents: value.currentBidCents,
     currentBidderName: value.currentBidderName,
+    currentBidderId: value.currentBidderId,
     serverTime: value.serverTime,
     endsAt: value.endsAt,
     revision: value.revision,

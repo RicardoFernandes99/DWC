@@ -7169,6 +7169,11 @@
             "nullable": true,
             "maxLength": 100
           },
+          "currentBidderId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Leading buyer id, so a viewer can tell they are winning."
+          },
           "serverTime": {
             "type": "string",
             "format": "date-time"
@@ -7192,6 +7197,7 @@
           "minimumIncrementCents",
           "currentBidCents",
           "currentBidderName",
+          "currentBidderId",
           "serverTime",
           "endsAt",
           "revision",

@@ -108,18 +108,22 @@ export function AuctionBidForm({
     (method) => !method.expired,
   );
   const [selectedMethodId, setSelectedMethodId] = useState('');
-  const [amount, setAmount] = useState('');
+  // null follows the live minimum; a string is what the buyer typed or picked.
+  const [amount, setAmount] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [pending, setPending] = useState<PendingBid | null>(() =>
     readPendingBid(user?.id, auctionId),
   );
   const [submitting, setSubmitting] = useState(false);
   const currentMinimum = minimumBid(live);
+  const amountText = amount ?? (currentMinimum / 100).toFixed(2);
   const selectedMethod = eligibleMethods.find(
     (method) => method.id === (selectedMethodId || eligibleMethods[0]?.id),
   );
+  const leading = Boolean(user && live?.currentBidderId === user.id);
   const canBid =
     live?.state === 'active' &&
+    !leading &&
     Boolean(selectedMethod) &&
     user?.buyerStatus !== 'suspended';
 
@@ -202,7 +206,7 @@ export function AuctionBidForm({
       return;
     }
     const amountCents =
-      pending?.amountCents ?? Math.round(Number(amount) * 100);
+      pending?.amountCents ?? Math.round(Number(amountText) * 100);
     if (
       !Number.isSafeInteger(amountCents) ||
       (!pending && amountCents < currentMinimum)
@@ -256,7 +260,7 @@ export function AuctionBidForm({
         if (acknowledgement.ok) {
           setPending(null);
           storePendingBid(user.id, auctionId, null);
-          setAmount('');
+          setAmount(null);
           setError('Bid accepted. The server confirmed your bid.');
           onAcknowledged(acknowledgement.state);
           return;
@@ -298,7 +302,7 @@ export function AuctionBidForm({
         currentMinimum + increment * 5,
       ]
     : [];
-  const typedCents = Math.round(Number(amount) * 100);
+  const typedCents = Math.round(Number(amountText) * 100);
   const submitCents = pending
     ? pending.amountCents
     : Number.isSafeInteger(typedCents) && typedCents > 0
@@ -347,6 +351,14 @@ export function AuctionBidForm({
             {user.buyerSuspensionReason
               ? `Reason: ${user.buyerSuspensionReason}`
               : 'Your account can still watch the auction.'}
+          </p>
+        )}
+        {leading && live?.state === 'active' && !pending && (
+          <p
+            role="status"
+            className="mb-4 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm"
+          >
+            You have the highest bid. You can bid again if someone outbids you.
           </p>
         )}
         {live?.state === 'finished' && !pending ? (
@@ -411,7 +423,9 @@ export function AuctionBidForm({
                   required
                   placeholder={(currentMinimum / 100).toFixed(2)}
                   value={
-                    pending ? (pending.amountCents / 100).toFixed(2) : amount
+                    pending
+                      ? (pending.amountCents / 100).toFixed(2)
+                      : amountText
                   }
                   disabled={Boolean(pending) || submitting || !canBid}
                   onChange={(event) => setAmount(event.target.value)}
