@@ -243,7 +243,15 @@ function MobileDrawer({ user }: { user: User | null | undefined }) {
                 src={user.avatarUrl}
                 className="size-11 text-sm"
               />
-              <p className="min-w-0 truncate font-semibold">{user.name}</p>
+              <div className="min-w-0">
+                <p className="truncate font-semibold">{user.name}</p>
+                <p
+                  className="truncate text-xs text-muted-foreground"
+                  title={user.email}
+                >
+                  {user.email}
+                </p>
+              </div>
             </div>
           )}
 
