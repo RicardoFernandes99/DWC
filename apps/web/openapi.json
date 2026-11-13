@@ -1916,6 +1916,20 @@
                 "cancelled"
               ]
             }
+          },
+          {
+            "name": "stage",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status group: open (pending, confirmed, shipped, ready_for_collection), completed (delivered, collected) or cancelled. Combined with status, only orders matching both are returned.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "completed",
+                "cancelled"
+              ]
+            }
           }
         ],
         "responses": {
@@ -3992,6 +4006,172 @@
           "Admin buyers"
         ]
       }
+    },
+    "/api/account/details": {
+      "put": {
+        "operationId": "AccountController_updateDetails",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccountDetailsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Name, phone and default delivery address saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid name, phone or address."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/api/account/avatar": {
+      "put": {
+        "operationId": "AccountController_uploadAvatar",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Raster image (JPEG, PNG or WebP; SVG rejected; max 5 MB; 1..4096 px per side). Replaces any existing picture.",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadAvatarSwaggerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile picture stored privately; the signed URL is returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing file, unsupported or spoofed format, or invalid dimensions."
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "413": {
+            "description": "File exceeds 5 MB."
+          },
+          "503": {
+            "description": "Image storage unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      },
+      "delete": {
+        "operationId": "AccountController_removeAvatar",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Profile picture removed; initials are shown instead.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/api/geocode/search": {
+      "get": {
+        "operationId": "GeocodingController_search",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "description": "Free-text address to look up.",
+            "schema": {
+              "minLength": 3,
+              "maxLength": 200,
+              "example": "12 Demo Lane, Bristol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Up to five address matches with coordinates, from OpenStreetMap Nominatim.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeocodeSearchResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked access JWT."
+          },
+          "403": {
+            "description": "Only producers set collection addresses."
+          },
+          "503": {
+            "description": "The address search provider is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "geocoding"
+        ]
+      }
     }
   },
   "info": {
@@ -4033,6 +4213,28 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "SavedAddressDto": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "example": "Rua das Flores 123"
+          },
+          "city": {
+            "type": "string",
+            "example": "Porto"
+          },
+          "postalCode": {
+            "type": "string",
+            "example": "4000-001"
+          }
+        },
+        "required": [
+          "street",
+          "city",
+          "postalCode"
         ]
       },
       "UserResponseDto": {
@@ -4088,6 +4290,26 @@
             "type": "string",
             "nullable": true,
             "example": null
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Short-lived signed URL of the profile picture, or null when none is set."
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+351 912 345 678"
+          },
+          "deliveryAddress": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SavedAddressDto"
+              }
+            ]
           }
         },
         "required": [
@@ -4098,7 +4320,10 @@
           "producerStatus",
           "producerRejectionReason",
           "buyerStatus",
-          "buyerSuspensionReason"
+          "buyerSuspensionReason",
+          "avatarUrl",
+          "phone",
+          "deliveryAddress"
         ]
       },
       "AuthResponseDto": {
@@ -6944,6 +7169,11 @@
             "nullable": true,
             "maxLength": 100
           },
+          "currentBidderId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Leading buyer id, so a viewer can tell they are winning."
+          },
           "serverTime": {
             "type": "string",
             "format": "date-time"
@@ -6967,6 +7197,7 @@
           "minimumIncrementCents",
           "currentBidCents",
           "currentBidderName",
+          "currentBidderId",
           "serverTime",
           "endsAt",
           "revision",
@@ -8986,6 +9217,89 @@
         },
         "required": [
           "revision"
+        ]
+      },
+      "UpdateAccountDetailsDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Ana Silva"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+351 912 345 678",
+            "description": "Digits with optional +, spaces, dashes or brackets; null or empty clears it."
+          },
+          "deliveryAddress": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SavedAddressDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "deliveryAddress"
+        ]
+      },
+      "UploadAvatarSwaggerDto": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary"
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "GeocodeResultDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "12 Demo Lane, Bristol, BS1 1AA, United Kingdom"
+          },
+          "latitude": {
+            "type": "number",
+            "example": 51.4545
+          },
+          "longitude": {
+            "type": "number",
+            "example": -2.5879
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "example": "Bristol"
+          }
+        },
+        "required": [
+          "label",
+          "latitude",
+          "longitude",
+          "city"
+        ]
+      },
+      "GeocodeSearchResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeocodeResultDto"
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       }
     }

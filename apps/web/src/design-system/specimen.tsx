@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -78,7 +79,7 @@ export function Specimen() {
         <div className="border-t border-border pt-8 md:grid md:grid-cols-[12rem_minmax(0,1fr)] md:gap-10 xl:grid-cols-[16rem_minmax(0,1fr)]">
           <div className="mb-8 md:hidden">
             <Label htmlFor="specimen-section">Choose a section</Label>
-            <select
+            <NativeSelect
               id="specimen-section"
               value={selected}
               onChange={(event) => {
@@ -87,14 +88,14 @@ export function Specimen() {
                 );
                 if (section) setSelected(section.name);
               }}
-              className="mt-2 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              wrapperClassName="mt-2 flex w-full"
             >
               {sections.map((section) => (
                 <option key={section.name} value={section.name}>
                   {section.name}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <nav aria-label="Style guide sections" className="hidden md:block">
             {(['Foundations', 'Components'] as const).map((group) => (

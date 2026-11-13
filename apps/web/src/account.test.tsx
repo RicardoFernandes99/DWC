@@ -37,6 +37,9 @@ const person = {
   buyerStatus: 'active' as const,
   buyerSuspensionReason: null,
   producerRejectionReason: null,
+  avatarUrl: null,
+  phone: null,
+  deliveryAddress: null,
 };
 function showAccount() {
   const client = new QueryClient({

@@ -228,6 +228,29 @@ published, unarchived, unmoderated products belonging to currently approved
 producers with a producer application. Responses expose allowlisted profile and
 product fields; stored product images receive short-lived signed URLs.
 
+## Profile pictures and address search
+
+`PUT /api/account/avatar` (multipart `file`) sets the signed-in user's profile
+picture and `DELETE /api/account/avatar` removes it. Uploads use the same checks
+as product photos (JPEG, PNG or WebP bytes, no SVG, max 5 MB, 1..4096 px) and are
+stored privately in S3 under `avatars/<userId>/`. User responses include a
+short-lived signed `avatarUrl`, or `null` to show initials.
+
+`GET /api/geocode/search?q=` lets producers look up a collection address and get
+up to five matches with coordinates. The API calls OpenStreetMap Nominatim
+(override with `GEOCODER_URL`) with a generic client name, at most one request per
+second and a small in-memory cache; the browser never contacts the provider.
+Searched addresses are sent to that provider.
+
+## Order lists
+
+`GET /api/orders` lists the signed-in buyer's or producer's own orders, newest
+first, with `page` and `limit`. `status` filters by one fulfilment status;
+`stage` filters by group: `open` (pending, confirmed, shipped,
+ready_for_collection), `completed` (delivered, collected) or `cancelled`. With
+both, only orders matching both are returned. The web orders pages use `stage`
+for their Open / Completed / Cancelled tabs.
+
 ## Purchase receipts
 
 `GET /api/orders/:orderId/receipt.pdf` downloads a PDF receipt for a catalogue

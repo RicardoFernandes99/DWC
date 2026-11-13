@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/shared/error-state';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { ArrowLeft, ArrowRight, CalendarClock } from 'lucide-react';
@@ -99,20 +100,20 @@ export function AuctionList({ producerId }: { producerId?: string }) {
           </div>
         )}
         {query.isError && !query.data && (
-          <div role="alert" className="p-4">
-            <p className="text-destructive">
-              {query.error instanceof ApiError && query.error.status === 400
-                ? 'The auction filter is invalid.'
-                : 'Auctions could not load. Check your connection and try again.'}
-            </p>
-            <Button
-              className="mt-3"
-              variant="outline"
-              onClick={() => void query.refetch()}
-            >
-              Try again
-            </Button>
-          </div>
+          <ErrorState
+            title={
+              query.error instanceof ApiError && query.error.status === 400
+                ? 'This auction filter is invalid'
+                : 'Auctions could not load'
+            }
+            description={
+              query.error instanceof ApiError && query.error.status === 400
+                ? 'Clear the filter and try again.'
+                : undefined
+            }
+            retrying={query.isFetching}
+            onRetry={() => void query.refetch()}
+          />
         )}
         {query.isError && query.data && (
           <p role="status" className="mb-3 text-sm text-destructive">

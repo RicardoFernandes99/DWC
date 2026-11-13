@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { UserAvatar } from '@/components/shared/user-avatar';
 import {
   ArrowUpRight,
   ChevronDown,
@@ -47,7 +48,8 @@ export function SiteHeader({
               <Sprout aria-hidden="true" />
             </span>
             <span>
-              From Farm <span className="brand-connector">to</span> Table
+              <span className="font-normal">From</span> Farm{' '}
+              <span className="brand-connector">to</span> Table
             </span>
           </Link>
         </div>
@@ -60,16 +62,13 @@ export function SiteHeader({
           >
             Home
           </Link>
-          {isProducer && (
-            <Link
-              to="/"
-              className="hidden md:inline"
-              activeOptions={{ exact: true }}
-              activeProps={activeLink}
-            >
-              Market
-            </Link>
-          )}
+          <Link
+            to="/products"
+            className="hidden md:inline"
+            activeProps={activeLink}
+          >
+            {isProducer ? 'Market' : 'Shop'}
+          </Link>
           {isProducer && (
             <Link
               to="/producer/products"
@@ -159,7 +158,7 @@ interface DrawerItem {
 
 function itemsFor(user: User | null | undefined): DrawerItem[] {
   const marketplace: DrawerItem[] = [
-    { label: 'Shop', to: '/' },
+    { label: 'Shop', to: '/products' },
     { label: 'Auctions', to: '/auctions', search: { page: 1 }, prefix: true },
   ];
   if (user?.role === 'producer')
@@ -173,7 +172,7 @@ function itemsFor(user: User | null | undefined): DrawerItem[] {
       },
       { label: 'Products', to: '/producer/products', prefix: true },
       { label: 'Auctions', to: '/producer/auctions', prefix: true },
-      { label: 'Market', to: '/' },
+      { label: 'Market', to: '/products' },
       { label: 'Account', to: '/account' },
     ];
   if (user?.role === 'buyer')
@@ -185,15 +184,6 @@ function itemsFor(user: User | null | undefined): DrawerItem[] {
     ];
   if (user) return [...marketplace, { label: 'Account', to: '/account' }];
   return marketplace;
-}
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]!.toUpperCase())
-    .join('');
 }
 
 function MobileDrawer({ user }: { user: User | null | undefined }) {
@@ -232,7 +222,8 @@ function MobileDrawer({ user }: { user: User | null | undefined }) {
         <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-[85vw] max-w-80 flex-col bg-background shadow-xl outline-none drawer-panel md:hidden">
           <div className="flex items-center justify-between px-4 pt-4 pb-3">
             <Dialog.Title className="text-base font-semibold tracking-tight">
-              From Farm <span className="brand-connector">to</span> Table
+              <span className="font-normal">From</span> Farm{' '}
+              <span className="brand-connector">to</span> Table
             </Dialog.Title>
             <Dialog.Close
               className="-mr-2 inline-flex size-10 items-center justify-center rounded-md hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
@@ -247,13 +238,20 @@ function MobileDrawer({ user }: { user: User | null | undefined }) {
 
           {user && (
             <div className="mx-3 mb-2 flex items-center gap-3 rounded-lg border bg-card p-3">
-              <span
-                aria-hidden="true"
-                className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary"
-              >
-                {initials(user.name)}
-              </span>
-              <p className="min-w-0 truncate font-semibold">{user.name}</p>
+              <UserAvatar
+                name={user.name}
+                src={user.avatarUrl}
+                className="size-11 text-sm"
+              />
+              <div className="min-w-0">
+                <p className="truncate font-semibold">{user.name}</p>
+                <p
+                  className="truncate text-xs text-muted-foreground"
+                  title={user.email}
+                >
+                  {user.email}
+                </p>
+              </div>
             </div>
           )}
 
@@ -312,12 +310,11 @@ function UserMenu({ user }: { user: User }) {
           type="button"
           className="hidden items-center gap-2 rounded-lg py-1 pr-2 pl-1 text-[13px] font-medium hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:bg-accent md:inline-flex"
         >
-          <span
-            aria-hidden="true"
-            className="grid size-8 place-items-center rounded-full bg-secondary text-xs font-semibold text-primary"
-          >
-            {initials(user.name)}
-          </span>
+          <UserAvatar
+            name={user.name}
+            src={user.avatarUrl}
+            className="size-8 text-xs"
+          />
           <span className="max-w-40 truncate">{user.name}</span>
           <ChevronDown aria-hidden="true" className="size-4 opacity-60" />
         </button>

@@ -98,13 +98,11 @@ export function AuctionCountdown({
       >
         {text}
       </p>
-      <p className="mt-1 text-xs opacity-75">
-        {remaining === null
-          ? 'Syncing with the server clock…'
-          : hours > 0
-            ? 'hrs : mins : secs'
-            : 'mins : secs'}
-      </p>
+      {remaining === null && (
+        <p className="mt-1 text-xs opacity-75">
+          Syncing with the server clock…
+        </p>
+      )}
       {progress !== null && (
         <div
           className="mt-4 h-1.5 overflow-hidden rounded-full bg-primary-foreground/20"
@@ -181,16 +179,14 @@ function bidderInitials(name: string) {
   );
 }
 
-function timeAgo(value: string) {
-  const seconds = Math.max(
-    0,
-    Math.round((Date.now() - Date.parse(value)) / 1000),
-  );
+function timeAgo(value: string, now: number) {
+  const seconds = Math.max(0, Math.floor((now - Date.parse(value)) / 1000));
   if (Number.isNaN(seconds)) return '';
+  if (seconds < 5) return 'Just now';
   if (seconds < 60) return `${seconds}s ago`;
-  const minutes = Math.round(seconds / 60);
+  const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.round(minutes / 60);
+  const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} h ago`;
   return localDate(value);
 }
@@ -203,6 +199,12 @@ export function AuctionHistory({
   className?: string;
 }) {
   const [page, setPage] = useState(1);
+  // Ticks so "12s ago" keeps counting between history refreshes.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   const history = useQuery({
     queryKey: auctionHistoryKey(auctionId, page),
     queryFn: () => fetchAuctionHistory(auctionId, page),
@@ -298,7 +300,7 @@ export function AuctionHistory({
                       dateTime={bid.acceptedAt}
                       title={localDate(bid.acceptedAt)}
                     >
-                      {timeAgo(bid.acceptedAt)}
+                      {timeAgo(bid.acceptedAt, now)}
                     </time>
                   </div>
                   <div className="text-right">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { NativeSelect } from '@/components/ui/native-select';
 import type { FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type {
@@ -9,7 +10,7 @@ import type {
 } from '@dwc/realtime-contracts';
 import { Link } from '@tanstack/react-router';
 import type { Socket } from 'socket.io-client';
-import { CreditCard, Gavel, Lock } from 'lucide-react';
+import { CreditCard, Gavel, Lock, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -107,18 +108,22 @@ export function AuctionBidForm({
     (method) => !method.expired,
   );
   const [selectedMethodId, setSelectedMethodId] = useState('');
-  const [amount, setAmount] = useState('');
+  // null follows the live minimum; a string is what the buyer typed or picked.
+  const [amount, setAmount] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [pending, setPending] = useState<PendingBid | null>(() =>
     readPendingBid(user?.id, auctionId),
   );
   const [submitting, setSubmitting] = useState(false);
   const currentMinimum = minimumBid(live);
+  const amountText = amount ?? (currentMinimum / 100).toFixed(2);
   const selectedMethod = eligibleMethods.find(
     (method) => method.id === (selectedMethodId || eligibleMethods[0]?.id),
   );
+  const leading = Boolean(user && live?.currentBidderId === user.id);
   const canBid =
     live?.state === 'active' &&
+    !leading &&
     Boolean(selectedMethod) &&
     user?.buyerStatus !== 'suspended';
 
@@ -201,7 +206,7 @@ export function AuctionBidForm({
       return;
     }
     const amountCents =
-      pending?.amountCents ?? Math.round(Number(amount) * 100);
+      pending?.amountCents ?? Math.round(Number(amountText) * 100);
     if (
       !Number.isSafeInteger(amountCents) ||
       (!pending && amountCents < currentMinimum)
@@ -255,7 +260,7 @@ export function AuctionBidForm({
         if (acknowledgement.ok) {
           setPending(null);
           storePendingBid(user.id, auctionId, null);
-          setAmount('');
+          setAmount(null);
           setError('Bid accepted. The server confirmed your bid.');
           onAcknowledged(acknowledgement.state);
           return;
@@ -297,7 +302,7 @@ export function AuctionBidForm({
         currentMinimum + increment * 5,
       ]
     : [];
-  const typedCents = Math.round(Number(amount) * 100);
+  const typedCents = Math.round(Number(amountText) * 100);
   const submitCents = pending
     ? pending.amountCents
     : Number.isSafeInteger(typedCents) && typedCents > 0
@@ -410,7 +415,9 @@ export function AuctionBidForm({
                   required
                   placeholder={(currentMinimum / 100).toFixed(2)}
                   value={
-                    pending ? (pending.amountCents / 100).toFixed(2) : amount
+                    pending
+                      ? (pending.amountCents / 100).toFixed(2)
+                      : amountText
                   }
                   disabled={Boolean(pending) || submitting || !canBid}
                   onChange={(event) => setAmount(event.target.value)}
@@ -433,12 +440,13 @@ export function AuctionBidForm({
               >
                 Pay with
               </label>
-              <select
+              <NativeSelect
                 id="auction-payment-method"
                 value={pending?.paymentMethodId ?? selectedMethod?.id ?? ''}
                 disabled={Boolean(pending) || submitting}
                 onChange={(event) => setSelectedMethodId(event.target.value)}
-                className="mt-1 block h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                wrapperClassName="mt-1 flex w-full"
+                className="bg-card"
               >
                 {pending &&
                   !eligibleMethods.some(
@@ -455,7 +463,7 @@ export function AuctionBidForm({
                     {method.expiryYear}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <Button
               type="submit"
@@ -472,6 +480,15 @@ export function AuctionBidForm({
                     ? `Place bid ${formatMoney(submitCents)}`
                     : 'Place bid'}
             </Button>
+            {leading && live?.state === 'active' && !pending && (
+              <p
+                role="status"
+                className="flex items-center justify-center gap-1.5 text-sm font-medium text-primary"
+              >
+                <Trophy aria-hidden="true" className="size-4" />
+                You have the highest bid
+              </p>
+            )}
             <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
               <Lock aria-hidden="true" className="size-3.5" /> Your card is only
               charged if you win.

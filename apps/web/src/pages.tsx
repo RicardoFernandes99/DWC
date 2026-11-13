@@ -1,4 +1,5 @@
 import { safeReturn } from './safe-return';
+import { ProducerStatusBadge } from '@/features/producer-onboarding/components/producer-status-badge';
 import { routeAccess } from './route-access';
 import { useState } from 'react';
 import { ArrowRight, Leaf, LogOut, ShoppingBasket, Sprout } from 'lucide-react';
@@ -15,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/form-field';
+import { PersonalDetails } from '@/features/account/components/personal-details';
 import { PaymentMethods } from '@/features/payment-methods/components/payment-methods';
 import { ProducerOnboarding } from '@/features/producer-onboarding/components/producer-onboarding';
 import { ProducerProfileEditor } from '@/features/producer-products/components/producer-products';
@@ -29,6 +31,8 @@ import {
 import { sessionOptions } from './lib/session-query';
 import { useCart } from '@/features/cart/use-cart';
 import { SiteHeader } from '@/components/shared/site-header';
+import { SiteFooter } from '@/components/shared/site-footer';
+import { AvatarPicker } from '@/components/shared/avatar-picker';
 import './pages.css';
 
 const sessionKey = ['session'] as const;
@@ -36,14 +40,17 @@ export function Shell() {
   const { totalItemCount } = useCart();
   const query = useQuery(sessionOptions);
   const location = useLocation();
+  // A failed session lookup counts as signed out, so protected routes redirect
+  // to sign-in rather than leaving a "could not restore" placeholder.
   const access =
-    query.data === undefined
+    query.data === undefined && !query.isError
       ? 'allow'
-      : routeAccess(location.pathname, query.data);
+      : routeAccess(location.pathname, query.data ?? null);
   const changingAuth =
     location.pathname === '/login' || location.pathname === '/register';
   return (
-    <>
+    // Column layout keeps the footer at the bottom on short pages.
+    <div className="flex min-h-svh flex-col">
       <SiteHeader user={query.data} cartCount={totalItemCount} />
       {query.data?.role === 'buyer' &&
         query.data.buyerStatus === 'suspended' && (
@@ -66,14 +73,17 @@ export function Shell() {
             </div>
           </section>
         )}
-      {!changingAuth && access === 'home' ? (
-        <Navigate to="/" replace />
-      ) : access === 'login' ? (
-        <Navigate to="/login" search={{ returnTo: location.href }} replace />
-      ) : (
-        <Outlet />
-      )}
-    </>
+      <div className="flex-1">
+        {!changingAuth && access === 'home' ? (
+          <Navigate to="/" replace />
+        ) : access === 'login' ? (
+          <Navigate to="/login" search={{ returnTo: location.href }} replace />
+        ) : (
+          <Outlet />
+        )}
+      </div>
+      {!changingAuth && <SiteFooter />}
+    </div>
   );
 }
 export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
@@ -171,10 +181,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             A place for local produce and the people
             <br className="hidden xl:block" /> who make it possible.
           </p>
-          <div className="auth-story-footer">
-            <span>From the land. To your table.</span>
-            <Sprout aria-hidden="true" />
-          </div>
+          <div className="auth-story-footer" aria-hidden="true" />
         </div>
       </aside>
       <section className="auth-form-side" aria-labelledby="auth-title">
@@ -372,10 +379,10 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
               </>
             )}
           </p>
+          <p className="auth-form-footer">
+            <Sprout aria-hidden="true" /> Rooted in community.
+          </p>
         </div>
-        <p className="auth-form-footer">
-          <Sprout aria-hidden="true" /> Rooted in community.
-        </p>
       </section>
     </main>
   );
@@ -452,19 +459,16 @@ export function Account() {
     <main className="mx-auto max-w-3xl px-4 py-8 md:px-8 md:py-12">
       <div className="rounded-2xl border bg-card p-4 sm:p-5 md:p-8">
         <header className="flex flex-wrap items-center gap-4 border-b pb-6">
-          <span
-            aria-hidden="true"
-            className="grid size-14 shrink-0 place-items-center rounded-full bg-secondary text-lg font-semibold text-primary"
-          >
-            {current.name
-              .split(/\s+/)
-              .filter(Boolean)
-              .slice(0, 2)
-              .map((part) => part[0]!.toUpperCase())
-              .join('')}
-          </span>
+          <AvatarPicker user={current} />
           <div className="min-w-0 flex-1">
-            <p className="text-sm text-muted-foreground">Your account</p>
+            {current.role === 'producer' ? (
+              <ProducerStatusBadge
+                status={current.producerStatus ?? 'pending'}
+                className="mb-1"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">Your account</p>
+            )}
             <h1 className="text-2xl leading-tight break-words md:text-3xl">
               {current.name}
             </h1>
@@ -476,15 +480,6 @@ export function Account() {
             </p>
           </div>
           <div className="-ml-2.5 flex basis-full items-center gap-1 sm:ml-0 sm:basis-auto">
-            {current.role === 'producer' && (
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/producer/auctions">
-                  {current.producerStatus === 'suspended'
-                    ? 'View auctions'
-                    : 'Manage auctions'}
-                </Link>
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="sm"
@@ -532,7 +527,10 @@ export function Account() {
           </>
         )}
         {current.role === 'buyer' && (
-          <PaymentMethods key={current.id} buyerId={current.id} />
+          <>
+            <PersonalDetails key={`details-${current.id}`} user={current} />
+            <PaymentMethods key={current.id} buyerId={current.id} />
+          </>
         )}
       </div>
     </main>

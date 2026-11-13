@@ -41,6 +41,9 @@ import { AdminInspectionController } from './admin-inspection/admin-inspection.c
 import { AdminInspectionService } from './admin-inspection/admin-inspection.service.js';
 import { AdminBuyersController } from './users/admin-buyers.controller.js';
 import { BuyerStandingService } from './users/buyer-standing.service.js';
+import { AccountController } from './account/account.controller.js';
+import { GeocodingController } from './geocoding/geocoding.controller.js';
+import { GeocodingService } from './geocoding/geocoding.service.js';
 
 // Contract-only module: controllers and DTO metadata are real; no service is called.
 @Module({
@@ -64,6 +67,8 @@ import { BuyerStandingService } from './users/buyer-standing.service.js';
     ProducerMetricsController,
     AdminInspectionController,
     AdminBuyersController,
+    AccountController,
+    GeocodingController,
   ],
   providers: [
     { provide: AuthService, useValue: {} },
@@ -82,6 +87,7 @@ import { BuyerStandingService } from './users/buyer-standing.service.js';
     { provide: ProducerMetricsService, useValue: {} },
     { provide: AdminInspectionService, useValue: {} },
     { provide: BuyerStandingService, useValue: {} },
+    { provide: GeocodingService, useValue: {} },
     {
       provide: ConfigService,
       useValue: { getOrThrow: () => 'http://localhost' },

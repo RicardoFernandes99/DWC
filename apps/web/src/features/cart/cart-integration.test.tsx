@@ -71,6 +71,9 @@ function renderCart(userRole?: 'buyer' | 'producer' | null) {
         buyerStatus: 'active' as const,
         buyerSuspensionReason: null,
         producerRejectionReason: null,
+        avatarUrl: null,
+        phone: null,
+        deliveryAddress: null,
       }
     : null;
 
@@ -155,7 +158,7 @@ describe('Cart page interactions and multi-producer behavior', () => {
 
     // Sign in prompt for guest
     expect(
-      screen.getByRole('link', { name: /Sign in as buyer to check out/i }),
+      screen.getByRole('link', { name: /Sign in to check out/i }),
     ).toBeInTheDocument();
   });
 

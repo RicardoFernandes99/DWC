@@ -959,6 +959,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/account/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AccountController_updateDetails"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/account/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AccountController_uploadAvatar"];
+        post?: never;
+        delete: operations["AccountController_removeAvatar"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/geocode/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GeocodingController_search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -967,6 +1015,14 @@ export interface components {
             /** @example ana@example.com */
             email: string;
             password: string;
+        };
+        SavedAddressDto: {
+            /** @example Rua das Flores 123 */
+            street: string;
+            /** @example Porto */
+            city: string;
+            /** @example 4000-001 */
+            postalCode: string;
         };
         UserResponseDto: {
             /** @example 671f0f98ac53ba58e26c4789 */
@@ -994,6 +1050,14 @@ export interface components {
             buyerStatus: "active" | "suspended";
             /** @example null */
             buyerSuspensionReason: string | null;
+            /**
+             * @description Short-lived signed URL of the profile picture, or null when none is set.
+             * @example null
+             */
+            avatarUrl: string | null;
+            /** @example +351 912 345 678 */
+            phone: string | null;
+            deliveryAddress: components["schemas"]["SavedAddressDto"] | null;
         };
         AuthResponseDto: {
             accessToken: string;
@@ -2380,6 +2444,8 @@ export interface components {
             minimumIncrementCents: number;
             currentBidCents: number | null;
             currentBidderName: string | null;
+            /** @description Leading buyer id, so a viewer can tell they are winning. */
+            currentBidderId: string | null;
             /** Format: date-time */
             serverTime: string;
             /** Format: date-time */
@@ -2902,6 +2968,33 @@ export interface components {
         };
         ReinstateBuyerDto: {
             revision: number;
+        };
+        UpdateAccountDetailsDto: {
+            /** @example Ana Silva */
+            name: string;
+            /**
+             * @description Digits with optional +, spaces, dashes or brackets; null or empty clears it.
+             * @example +351 912 345 678
+             */
+            phone: string | null;
+            deliveryAddress: components["schemas"]["SavedAddressDto"] | null;
+        };
+        UploadAvatarSwaggerDto: {
+            /** Format: binary */
+            file: string;
+        };
+        GeocodeResultDto: {
+            /** @example 12 Demo Lane, Bristol, BS1 1AA, United Kingdom */
+            label: string;
+            /** @example 51.4545 */
+            latitude: number;
+            /** @example -2.5879 */
+            longitude: number;
+            /** @example Bristol */
+            city: string | null;
+        };
+        GeocodeSearchResponseDto: {
+            items: components["schemas"]["GeocodeResultDto"][];
         };
     };
     responses: never;
@@ -4554,6 +4647,8 @@ export interface operations {
                 limit?: number;
                 /** @description Filter orders by fulfilment status. */
                 status?: "pending" | "confirmed" | "shipped" | "delivered" | "ready_for_collection" | "collected" | "cancelled";
+                /** @description Filter by status group: open (pending, confirmed, shipped, ready_for_collection), completed (delivered, collected) or cancelled. Combined with status, only orders matching both are returned. */
+                stage?: "open" | "completed" | "cancelled";
             };
             header?: never;
             path?: never;
@@ -6388,6 +6483,168 @@ export interface operations {
                 content?: never;
             };
             /** @description Authentication storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AccountController_updateDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAccountDetailsDto"];
+            };
+        };
+        responses: {
+            /** @description Name, phone and default delivery address saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponseDto"];
+                };
+            };
+            /** @description Invalid name, phone or address. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AccountController_uploadAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Raster image (JPEG, PNG or WebP; SVG rejected; max 5 MB; 1..4096 px per side). Replaces any existing picture. */
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["UploadAvatarSwaggerDto"];
+            };
+        };
+        responses: {
+            /** @description Profile picture stored privately; the signed URL is returned. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponseDto"];
+                };
+            };
+            /** @description Missing file, unsupported or spoofed format, or invalid dimensions. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description File exceeds 5 MB. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Image storage unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AccountController_removeAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Profile picture removed; initials are shown instead. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GeocodingController_search: {
+        parameters: {
+            query: {
+                /** @description Free-text address to look up. */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Up to five address matches with coordinates, from OpenStreetMap Nominatim. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeocodeSearchResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, expired or revoked access JWT. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only producers set collection addresses. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The address search provider is unavailable. */
             503: {
                 headers: {
                     [name: string]: unknown;

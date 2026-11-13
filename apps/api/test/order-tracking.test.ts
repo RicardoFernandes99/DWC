@@ -261,6 +261,7 @@ const buyerUser: UserResponseDto = {
   producerRejectionReason: null,
   buyerStatus: BuyerStatus.Active,
   buyerSuspensionReason: null,
+  avatarUrl: null,
 };
 
 const producerUser: UserResponseDto = {
@@ -272,6 +273,7 @@ const producerUser: UserResponseDto = {
   producerRejectionReason: null,
   buyerStatus: BuyerStatus.Active,
   buyerSuspensionReason: null,
+  avatarUrl: null,
 };
 
 const otherProducerUser: UserResponseDto = {
@@ -283,6 +285,7 @@ const otherProducerUser: UserResponseDto = {
   producerRejectionReason: null,
   buyerStatus: BuyerStatus.Active,
   buyerSuspensionReason: null,
+  avatarUrl: null,
 };
 
 const suspendedProducerUser: UserResponseDto = {
@@ -294,6 +297,7 @@ const suspendedProducerUser: UserResponseDto = {
   producerRejectionReason: null,
   buyerStatus: BuyerStatus.Active,
   buyerSuspensionReason: null,
+  avatarUrl: null,
 };
 
 function createSampleOrder(

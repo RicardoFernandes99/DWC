@@ -22,7 +22,7 @@ function displayDate(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.valueOf())
     ? 'Recently'
-    : new Intl.DateTimeFormat(undefined, {
+    : new Intl.DateTimeFormat('en-GB', {
         dateStyle: 'medium',
         timeStyle: 'short',
       }).format(date);

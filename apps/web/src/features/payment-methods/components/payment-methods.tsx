@@ -129,19 +129,7 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
       <div className="space-y-4">
         {showForm && (
           <div className="rounded-lg border p-4 md:p-5">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="font-medium">Add a card</h3>
-              {Boolean(methods.data?.length) && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setFormOpen(false)}
-                >
-                  Cancel
-                </Button>
-              )}
-            </div>
+            <h3 className="font-medium">Add a card</h3>
             <form
               className="mt-5 space-y-4"
               onSubmit={(event) => {
@@ -268,13 +256,28 @@ export function PaymentMethods({ buyerId }: { buyerId: string }) {
               )}
               <form.Subscribe selector={(state) => state.isSubmitting}>
                 {(submitting) => (
-                  <Button
-                    type="submit"
-                    disabled={submitting || mutation.isPending}
-                    className="w-full sm:w-auto"
-                  >
-                    {submitting || mutation.isPending ? 'Saving…' : 'Save card'}
-                  </Button>
+                  // Reversed so Save sits on the right while staying first in tab order.
+                  <div className="flex flex-row-reverse flex-wrap justify-start gap-2">
+                    <Button
+                      type="submit"
+                      disabled={submitting || mutation.isPending}
+                    >
+                      {submitting || mutation.isPending
+                        ? 'Saving…'
+                        : 'Save card'}
+                    </Button>
+                    {/* Only once a card exists: otherwise the form is the empty state. */}
+                    {Boolean(methods.data?.length) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={submitting || mutation.isPending}
+                        onClick={() => setFormOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
                 )}
               </form.Subscribe>
             </form>

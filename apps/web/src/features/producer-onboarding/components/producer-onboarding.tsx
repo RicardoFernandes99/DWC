@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { AddressSearch } from '@/components/shared/address-search';
 import { useForm } from '@tanstack/react-form';
+import { Pencil } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { components } from '@/lib/api-schema';
 import { ApiError, authenticatedRequest, type User } from '@/lib/session';
@@ -62,10 +64,6 @@ function formatSubmittedTimestamp(iso: string): string {
     timeStyle: 'short',
     timeZone: 'UTC',
   }).format(parsed);
-}
-
-function formatCoordinate(value: number): string {
-  return value.toFixed(4);
 }
 
 type FieldErrors = {
@@ -133,8 +131,8 @@ function validateApplicationInput(values: {
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
     recordError(
       'latitude',
-      'producer-latitude',
-      'Enter a valid latitude between -90 and 90.',
+      'producer-collection-address',
+      'Pick your address from the search results to place it on the map.',
     );
   }
 
@@ -143,8 +141,8 @@ function validateApplicationInput(values: {
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
     recordError(
       'longitude',
-      'producer-longitude',
-      'Enter a valid longitude between -180 and 180.',
+      'producer-collection-address',
+      'Pick your address from the search results to place it on the map.',
     );
   }
 
@@ -178,10 +176,12 @@ function ApplicationSummaryCard({
   title,
   submittedAt,
   application,
+  onEdit,
 }: {
   title: string;
   submittedAt: string | null;
   application: ProducerApplicationDetails;
+  onEdit?: () => void;
 }) {
   return (
     <Card className="p-5 md:p-6">
@@ -195,10 +195,16 @@ function ApplicationSummaryCard({
             </time>
           </p>
         )}
+        {onEdit && (
+          <Button type="button" variant="outline" size="sm" onClick={onEdit}>
+            <Pencil aria-hidden="true" />
+            Edit
+          </Button>
+        )}
       </div>
       <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
         <div className="min-w-0">
-          <dt className="text-muted-foreground">Farm name</dt>
+          <dt className="text-muted-foreground">Name</dt>
           <dd className="mt-1 font-medium break-words">
             {application.farmName}
           </dd>
@@ -208,18 +214,11 @@ function ApplicationSummaryCard({
           <dd className="mt-1 break-words">{application.city}</dd>
         </div>
         <div className="min-w-0 sm:col-span-2">
-          <dt className="text-muted-foreground">Collection address</dt>
+          <dt className="text-muted-foreground">Address</dt>
           <dd className="mt-1 break-words">{application.collectionAddress}</dd>
         </div>
-        <div className="min-w-0">
-          <dt className="text-muted-foreground">Coordinates</dt>
-          <dd className="mt-1 tabular-nums">
-            {formatCoordinate(application.latitude)},{' '}
-            {formatCoordinate(application.longitude)}
-          </dd>
-        </div>
         <div className="min-w-0 sm:col-span-2">
-          <dt className="text-muted-foreground">Farming practices and story</dt>
+          <dt className="text-muted-foreground">Description</dt>
           <dd className="mt-1 max-w-[70ch] leading-relaxed whitespace-pre-line break-words">
             {application.description}
           </dd>
@@ -238,6 +237,7 @@ function ProducerApplicationForm({
   onClearSavedMessage,
   onConflictRefresh,
   onSaved,
+  onCancel,
 }: {
   userId: string;
   mode: 'submit' | 'update' | 'resubmit';
@@ -250,6 +250,8 @@ function ProducerApplicationForm({
     updated: ProducerApplicationResponse,
     notice: string,
   ) => Promise<void>;
+  /** Shown as a Cancel button next to the submit button when given. */
+  onCancel?: () => void;
 }) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -312,6 +314,11 @@ function ProducerApplicationForm({
     }
   };
 
+  const addressError =
+    fieldErrors.collectionAddress ??
+    fieldErrors.latitude ??
+    fieldErrors.longitude;
+
   const heading =
     mode === 'resubmit'
       ? 'Correct and resubmit application'
@@ -360,8 +367,7 @@ function ProducerApplicationForm({
             {(field) => (
               <FormField
                 id="producer-farm-name"
-                label="Farm or enterprise name"
-                description="Shown on your public producer profile and products."
+                label="Name"
                 error={fieldErrors.farmName}
               >
                 <Input
@@ -372,10 +378,7 @@ function ProducerApplicationForm({
                   value={field.state.value}
                   aria-invalid={!!fieldErrors.farmName}
                   aria-describedby={
-                    [
-                      'producer-farm-name-description',
-                      fieldErrors.farmName ? 'producer-farm-name-error' : '',
-                    ]
+                    [fieldErrors.farmName ? 'producer-farm-name-error' : '']
                       .filter(Boolean)
                       .join(' ') || undefined
                   }
@@ -394,7 +397,6 @@ function ProducerApplicationForm({
               <FormField
                 id="producer-city"
                 label="City"
-                description="City or municipality used for local discovery."
                 error={fieldErrors.city}
               >
                 <Input
@@ -405,10 +407,7 @@ function ProducerApplicationForm({
                   value={field.state.value}
                   aria-invalid={!!fieldErrors.city}
                   aria-describedby={
-                    [
-                      'producer-city-description',
-                      fieldErrors.city ? 'producer-city-error' : '',
-                    ]
+                    [fieldErrors.city ? 'producer-city-error' : '']
                       .filter(Boolean)
                       .join(' ') || undefined
                   }
@@ -423,117 +422,62 @@ function ProducerApplicationForm({
           </form.Field>
         </div>
 
-        <form.Field name="collectionAddress">
-          {(field) => (
+        <form.Subscribe
+          selector={(state) =>
+            [
+              state.values.latitude,
+              state.values.longitude,
+              state.values.collectionAddress,
+            ] as const
+          }
+        >
+          {([latitude, longitude, address]) => (
             <FormField
               id="producer-collection-address"
-              label="Collection address"
-              description="Physical address where buyers collect orders."
-              error={fieldErrors.collectionAddress}
+              label="Address"
+              error={addressError}
             >
-              <Input
+              <AddressSearch
                 id="producer-collection-address"
-                type="text"
-                autoComplete="street-address"
-                maxLength={240}
-                value={field.state.value}
-                aria-invalid={!!fieldErrors.collectionAddress}
-                aria-describedby={
-                  [
-                    'producer-collection-address-description',
-                    fieldErrors.collectionAddress
-                      ? 'producer-collection-address-error'
-                      : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ') || undefined
+                describedBy={
+                  addressError ? 'producer-collection-address-error' : undefined
                 }
-                onBlur={field.handleBlur}
-                onChange={(event) => {
+                value={address}
+                onValueChange={(next) => {
                   clearFieldError('collectionAddress');
-                  field.handleChange(event.target.value);
+                  form.setFieldValue('collectionAddress', next);
+                  // Edited text no longer matches the pin; pick again.
+                  form.setFieldValue('latitude', '');
+                  form.setFieldValue('longitude', '');
+                }}
+                latitude={
+                  latitude.trim() === '' || !Number.isFinite(Number(latitude))
+                    ? null
+                    : Number(latitude)
+                }
+                longitude={
+                  longitude.trim() === '' || !Number.isFinite(Number(longitude))
+                    ? null
+                    : Number(longitude)
+                }
+                onPick={(match) => {
+                  form.setFieldValue('latitude', String(match.latitude));
+                  form.setFieldValue('longitude', String(match.longitude));
+                  if (!form.getFieldValue('city').trim() && match.city)
+                    form.setFieldValue('city', match.city);
+                  clearFieldError('latitude');
+                  clearFieldError('longitude');
                 }}
               />
             </FormField>
           )}
-        </form.Field>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <form.Field name="latitude">
-            {(field) => (
-              <FormField
-                id="producer-latitude"
-                label="Latitude"
-                description="Decimal degrees between -90 and 90."
-                error={fieldErrors.latitude}
-              >
-                <Input
-                  id="producer-latitude"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="38.8029"
-                  className="tabular-nums"
-                  value={field.state.value}
-                  aria-invalid={!!fieldErrors.latitude}
-                  aria-describedby={
-                    [
-                      'producer-latitude-description',
-                      fieldErrors.latitude ? 'producer-latitude-error' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ') || undefined
-                  }
-                  onBlur={field.handleBlur}
-                  onChange={(event) => {
-                    clearFieldError('latitude');
-                    field.handleChange(event.target.value);
-                  }}
-                />
-              </FormField>
-            )}
-          </form.Field>
-
-          <form.Field name="longitude">
-            {(field) => (
-              <FormField
-                id="producer-longitude"
-                label="Longitude"
-                description="Decimal degrees between -180 and 180."
-                error={fieldErrors.longitude}
-              >
-                <Input
-                  id="producer-longitude"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="-9.3817"
-                  className="tabular-nums"
-                  value={field.state.value}
-                  aria-invalid={!!fieldErrors.longitude}
-                  aria-describedby={
-                    [
-                      'producer-longitude-description',
-                      fieldErrors.longitude ? 'producer-longitude-error' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ') || undefined
-                  }
-                  onBlur={field.handleBlur}
-                  onChange={(event) => {
-                    clearFieldError('longitude');
-                    field.handleChange(event.target.value);
-                  }}
-                />
-              </FormField>
-            )}
-          </form.Field>
-        </div>
+        </form.Subscribe>
 
         <form.Field name="description">
           {(field) => (
             <FormField
               id="producer-description"
-              label="Farming practices and story"
-              description="Describe what you grow, your production methods and collection notes (up to 2,000 characters)."
+              label="Description"
               error={fieldErrors.description}
             >
               <Textarea
@@ -543,10 +487,7 @@ function ProducerApplicationForm({
                 value={field.state.value}
                 aria-invalid={!!fieldErrors.description}
                 aria-describedby={
-                  [
-                    'producer-description-description',
-                    fieldErrors.description ? 'producer-description-error' : '',
-                  ]
+                  [fieldErrors.description ? 'producer-description-error' : '']
                     .filter(Boolean)
                     .join(' ') || undefined
                 }
@@ -591,13 +532,24 @@ function ProducerApplicationForm({
 
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => (
-            <Button
-              type="submit"
-              disabled={submitting || mutation.isPending}
-              className="w-full sm:w-auto"
-            >
-              {submitting || mutation.isPending ? submittingLabel : submitLabel}
-            </Button>
+            // Reversed so the submit button sits on the right while staying first in tab order.
+            <div className="flex flex-row-reverse flex-wrap justify-start gap-2">
+              <Button type="submit" disabled={submitting || mutation.isPending}>
+                {submitting || mutation.isPending
+                  ? submittingLabel
+                  : submitLabel}
+              </Button>
+              {onCancel && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={submitting || mutation.isPending}
+                  onClick={onCancel}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
           )}
         </form.Subscribe>
       </form>
@@ -616,6 +568,7 @@ export function ProducerOnboarding({
   const appKey = producerApplicationKey(user.id);
   const [conflictNotice, setConflictNotice] = useState('');
   const [savedBanner, setSavedBanner] = useState('');
+  const [editingPending, setEditingPending] = useState(false);
 
   const applicationQuery = useQuery({
     queryKey: appKey,
@@ -677,37 +630,23 @@ export function ProducerOnboarding({
           ? 'Application rejected'
           : 'Suspended';
 
-  const statusBadgeClass =
-    status === 'approved'
-      ? 'border-primary/30 bg-primary/10 text-primary'
-      : status === 'rejected' || status === 'suspended'
-        ? 'border-destructive/30 bg-destructive/10 text-destructive'
-        : 'border-warning/40 bg-warning/20 text-foreground';
-
   return (
     <section
-      className="mt-8 space-y-6"
-      aria-labelledby="producer-onboarding-title"
+      className="mt-8 space-y-6 empty:hidden"
+      aria-label="Producer status"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Approved and suspended accounts show their status as the header badge. */}
+      {(status === 'pending' || status === 'rejected') && (
         <div>
           <h2 id="producer-onboarding-title" className="text-2xl font-semibold">
-            Producer onboarding &amp; status
+            Producer onboarding
           </h2>
           <p className="mt-1 max-w-[68ch] text-sm text-muted-foreground">
-            {status === 'approved'
-              ? 'Your producer account is verified for selling on From Farm to Table.'
-              : status === 'suspended'
-                ? 'New selling actions are paused on your producer account.'
-                : 'Selling tools remain locked until an administrator approves your producer application.'}
+            Selling tools remain locked until an administrator approves your
+            producer application.
           </p>
         </div>
-        <span
-          className={`inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass}`}
-        >
-          {statusLabel}
-        </span>
-      </div>
+      )}
 
       {requestedSellingPath && status !== 'approved' && (
         <div
@@ -765,6 +704,12 @@ export function ProducerOnboarding({
             <p className="mt-2 max-w-[65ch] text-sm font-medium leading-relaxed text-foreground">
               {SUSPENDED_PRODUCER_BANNER_COPY}
             </p>
+            {applicationQuery.data?.suspensionReason && (
+              <p className="mt-3 max-w-[65ch] text-sm leading-relaxed text-foreground">
+                <span className="font-semibold">Reason:</span>{' '}
+                {applicationQuery.data.suspensionReason}
+              </p>
+            )}
             <p className="mt-3 max-w-[65ch] text-sm leading-relaxed text-muted-foreground">
               Existing orders can still be fulfilled while your account is
               suspended, and active auctions finish normally.
@@ -852,13 +797,7 @@ export function ProducerOnboarding({
               )}
             </Card>
 
-            {application ? (
-              <ApplicationSummaryCard
-                title="Submitted application details"
-                submittedAt={null}
-                application={application}
-              />
-            ) : (
+            {application ? null : (
               <Card className="p-5 md:p-6">
                 <h3 className="text-lg font-semibold">
                   Verification checklist
@@ -890,21 +829,46 @@ export function ProducerOnboarding({
             )}
           </div>
 
-          <ProducerApplicationForm
-            key={
-              application
-                ? `pending-${submittedAt ?? 'saved'}`
-                : 'pending-initial'
-            }
-            userId={user.id}
-            mode={application ? 'update' : 'submit'}
-            initialApplication={application}
-            conflictMessage={conflictNotice}
-            savedMessage={savedBanner}
-            onClearSavedMessage={() => setSavedBanner('')}
-            onConflictRefresh={handleConflict}
-            onSaved={handleSaved}
-          />
+          {application && !editingPending ? (
+            <div className="space-y-3">
+              <ApplicationSummaryCard
+                title="Submitted application details"
+                submittedAt={null}
+                application={application}
+                onEdit={() => {
+                  setSavedBanner('');
+                  setEditingPending(true);
+                }}
+              />
+              {savedBanner && (
+                <p role="status" className="text-sm font-medium text-primary">
+                  {savedBanner}
+                </p>
+              )}
+            </div>
+          ) : (
+            <ProducerApplicationForm
+              key={
+                application
+                  ? `pending-${submittedAt ?? 'saved'}`
+                  : 'pending-initial'
+              }
+              userId={user.id}
+              mode={application ? 'update' : 'submit'}
+              initialApplication={application}
+              conflictMessage={conflictNotice}
+              savedMessage={savedBanner}
+              onClearSavedMessage={() => setSavedBanner('')}
+              onConflictRefresh={handleConflict}
+              onSaved={async (updated, notice) => {
+                await handleSaved(updated, notice);
+                setEditingPending(false);
+              }}
+              onCancel={
+                application ? () => setEditingPending(false) : undefined
+              }
+            />
+          )}
         </div>
       )}
 
@@ -953,27 +917,6 @@ export function ProducerOnboarding({
             onConflictRefresh={handleConflict}
             onSaved={handleSaved}
           />
-        </div>
-      )}
-
-      {status === 'approved' && applicationQuery.data && (
-        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <Card className="border-primary/30 bg-primary/5 p-5 md:p-6">
-            <h3 className="text-lg font-semibold text-primary">Approved</h3>
-            <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-foreground">
-              Your producer application is approved. Selling routes for product
-              catalogue management, order fulfilment and live auctions are
-              enabled for your account as those workspace tools arrive.
-            </p>
-          </Card>
-
-          {application && (
-            <ApplicationSummaryCard
-              title="Approved farm profile"
-              submittedAt={submittedAt}
-              application={application}
-            />
-          )}
         </div>
       )}
     </section>

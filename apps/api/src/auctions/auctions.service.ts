@@ -725,12 +725,18 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
           .findOne({ _id: auctionId })
           .session(session);
         if (!current) throw new NotFoundException('Auction not found.');
+        if (current.currentBidderId?.equals(buyerId))
+          throw new ConflictException(
+            'You already have the highest bid. Wait until someone outbids you.',
+          );
 
         const updated = await this.auctions.findOneAndUpdate(
           {
             _id: auctionId,
             revision: current.revision,
             status: AuctionStatus.Active,
+            // Never let the leading bidder raise their own bid.
+            currentBidderId: { $ne: buyerId },
             $expr: {
               $and: [
                 { $lte: ['$startsAt', '$$NOW'] },
@@ -870,6 +876,7 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
         minimumIncrementCents: bid.minimumIncrementCents,
         currentBidCents: bid.amountCents,
         currentBidderName: bid.bidderName,
+        currentBidderId: bid.buyerId.toString(),
         serverTime: bid.acceptedAt.toISOString(),
         endsAt: bid.endsAt.toISOString(),
         revision: bid.revision,
@@ -896,6 +903,7 @@ export class AuctionsService implements OnModuleInit, OnModuleDestroy {
       minimumIncrementCents: auction.minimumIncrementCents,
       currentBidCents: auction.currentBidCents,
       currentBidderName: auction.currentBidderName,
+      currentBidderId: auction.currentBidderId?.toString() ?? null,
       serverTime: now.toISOString(),
       endsAt: auction.endsAt.toISOString(),
       revision: auction.revision,

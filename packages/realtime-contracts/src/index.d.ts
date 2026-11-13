@@ -43,6 +43,8 @@ export interface AuctionLiveStatePayload {
   minimumIncrementCents: number;
   currentBidCents: number | null;
   currentBidderName: string | null;
+  /** Leading buyer id, so a viewer can tell they are winning. */
+  currentBidderId: string | null;
   serverTime: string;
   endsAt: string;
   revision: number;

@@ -11,10 +11,13 @@ export function OrderRow({
   order,
   audience,
   page,
+  stage,
 }: {
   order: Order;
   audience: Audience;
   page: number;
+  /** List tab to return to; omitted for the default "open" tab. */
+  stage?: 'completed' | 'cancelled';
 }) {
   const name = audience === 'buyer' ? order.producerName : order.buyerName;
   return (
@@ -27,7 +30,7 @@ export function OrderRow({
             : '/producer/orders/$orderId'
         }
         params={{ orderId: order.id }}
-        search={{ page }}
+        search={{ page, ...(stage ? { stage } : {}) }}
       >
         <div className="order-row-identity">
           <span className="order-reference">

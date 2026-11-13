@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { SavedAddressDto } from './saved-address.dto.js';
 import { BuyerStatus, ProducerStatus, UserRole } from './user.schema.js';
 
 export class UserResponseDto {
@@ -33,4 +34,19 @@ export class UserResponseDto {
 
   @ApiProperty({ type: String, nullable: true, example: null })
   buyerSuspensionReason!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description:
+      'Short-lived signed URL of the profile picture, or null when none is set.',
+  })
+  avatarUrl!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '+351 912 345 678' })
+  phone!: string | null;
+
+  @ApiProperty({ type: SavedAddressDto, nullable: true })
+  deliveryAddress!: SavedAddressDto | null;
 }

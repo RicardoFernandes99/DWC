@@ -13,7 +13,7 @@
 :root {
   --background: #f7f5ee;
   --foreground: #253329;
-  --card: oklch(1 0 0);
+  --card: #faf8f2;
   --card-foreground: var(--foreground);
   --primary: #24563d;
   --primary-foreground: #f7f5ee;
@@ -284,19 +284,9 @@
   margin-top: 26px;
 }
 .auth-story-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
   margin-top: 65px;
   border-top: 1px solid
     color-mix(in oklch, var(--primary-foreground) 30%, transparent);
-  padding-top: 22px;
-  font-size: 11px;
-}
-.auth-story-footer svg {
-  width: 20px;
-  height: 20px;
 }
 .auth-form-side {
   display: flex;
@@ -382,6 +372,7 @@
   text-underline-offset: 4px;
 }
 .auth-form-footer {
+  margin-top: 40px;
   display: flex;
   justify-content: center;
   align-items: center;

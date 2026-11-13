@@ -40,6 +40,47 @@ vi.mock('@tanstack/react-router', async (original) => ({
   ),
 }));
 
+// The real search calls the geocoder; the stub lets a test pick a match.
+vi.mock('@/components/shared/address-search', () => ({
+  AddressSearch: ({
+    id,
+    value,
+    onValueChange,
+    onPick,
+  }: {
+    id: string;
+    value: string;
+    onValueChange: (value: string) => void;
+    onPick: (match: {
+      label: string;
+      latitude: number;
+      longitude: number;
+      city: string | null;
+    }) => void;
+  }) => (
+    <>
+      <input
+        id={id}
+        value={value}
+        onChange={(event) => onValueChange(event.target.value)}
+      />
+      <button
+        type="button"
+        onClick={() =>
+          onPick({
+            label: value,
+            latitude: 38.8029,
+            longitude: -9.3817,
+            city: null,
+          })
+        }
+      >
+        Pick match
+      </button>
+    </>
+  ),
+}));
+
 const baseProducer: User = {
   id: 'prod-1',
   name: 'Maria Costa',
@@ -49,6 +90,9 @@ const baseProducer: User = {
   buyerStatus: 'active' as const,
   buyerSuspensionReason: null,
   producerRejectionReason: null,
+  avatarUrl: null,
+  phone: null,
+  deliveryAddress: null,
 };
 
 const sampleApplication = {
@@ -109,22 +153,17 @@ describe('producer onboarding and status screens', () => {
       screen.getByText(/Application details are for producer verification/i),
     ).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Farm or enterprise name'), {
+    fireEvent.change(screen.getByLabelText('Name'), {
       target: { value: '  Quinta do Sol  ' },
     });
     fireEvent.change(screen.getByLabelText('City'), {
       target: { value: 'Sintra' },
     });
-    fireEvent.change(screen.getByLabelText('Collection address'), {
+    fireEvent.change(screen.getByLabelText('Address'), {
       target: { value: 'Rua Principal 12, 2710-001 Sintra' },
     });
-    fireEvent.change(screen.getByLabelText('Latitude'), {
-      target: { value: '38.8029' },
-    });
-    fireEvent.change(screen.getByLabelText('Longitude'), {
-      target: { value: '-9.3817' },
-    });
-    fireEvent.change(screen.getByLabelText('Farming practices and story'), {
+    fireEvent.click(screen.getByRole('button', { name: 'Pick match' }));
+    fireEvent.change(screen.getByLabelText('Description'), {
       target: {
         value: 'Organic heirloom vegetables and citrus orchard in Sintra.',
       },
@@ -147,10 +186,10 @@ describe('producer onboarding and status screens', () => {
         name: 'Submitted application details',
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText('38.8029, -9.3817')).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: 'Update pending application' }),
+      screen.getByText(sampleApplication.collectionAddress),
     ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
   });
 
   it('displays rejection reason and resubmits via POST /resubmit to transition back to pending', async () => {
@@ -187,6 +226,9 @@ describe('producer onboarding and status screens', () => {
         buyerStatus: 'active' as const,
         buyerSuspensionReason: null,
         producerRejectionReason: null,
+        avatarUrl: null,
+        phone: null,
+        deliveryAddress: null,
       });
     vi.mocked(authenticatedRequest)
       .mockResolvedValueOnce(rejectedResponse)
@@ -204,14 +246,13 @@ describe('producer onboarding and status screens', () => {
       ),
     ).toBeInTheDocument();
 
-    const addressInput = screen.getByLabelText(
-      'Collection address',
-    ) as HTMLInputElement;
+    const addressInput = screen.getByLabelText('Address') as HTMLInputElement;
     expect(addressInput.value).toBe('Rua Principal, Sintra');
 
     fireEvent.change(addressInput, {
       target: { value: sampleApplication.collectionAddress },
     });
+    fireEvent.click(screen.getByRole('button', { name: 'Pick match' }));
     fireEvent.click(
       screen.getByRole('button', { name: 'Resubmit application' }),
     );
@@ -299,30 +340,32 @@ describe('producer onboarding and status screens', () => {
 
     renderAccount(baseProducer);
 
-    const farmInput = (await screen.findByLabelText(
-      'Farm or enterprise name',
-    )) as HTMLInputElement;
-    const latInput = screen.getByLabelText('Latitude') as HTMLInputElement;
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }));
+    const farmInput = screen.getByLabelText('Name') as HTMLInputElement;
+    const addressInput = screen.getByLabelText('Address') as HTMLInputElement;
 
-    // 1. Client validation error preserves input and focuses invalid field
+    // 1. Client validation error preserves input and focuses invalid field:
+    // editing the address text drops the pin until a match is picked.
     fireEvent.change(farmInput, {
       target: { value: 'Quinta da Serra Nova' },
     });
-    fireEvent.change(latInput, {
-      target: { value: '125' },
+    fireEvent.change(addressInput, {
+      target: { value: 'Rua Nova 3, Sintra' },
     });
     fireEvent.click(
       screen.getByRole('button', { name: 'Save application changes' }),
     );
 
     expect(
-      await screen.findByText('Enter a valid latitude between -90 and 90.'),
+      await screen.findByText(
+        'Pick your address from the search results to place it on the map.',
+      ),
     ).toBeInTheDocument();
     expect(farmInput.value).toBe('Quinta da Serra Nova');
-    expect(document.activeElement).toBe(latInput);
+    expect(document.activeElement).toBe(addressInput);
 
     // 2. Network error preserves user input
-    fireEvent.change(latInput, { target: { value: '38.8100' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Pick match' }));
     fireEvent.click(
       screen.getByRole('button', { name: 'Save application changes' }),
     );
@@ -388,6 +431,9 @@ describe('producer onboarding and status screens', () => {
       buyerStatus: 'active' as const,
       buyerSuspensionReason: null,
       producerRejectionReason: null,
+      avatarUrl: null,
+      phone: null,
+      deliveryAddress: null,
     };
     vi.mocked(currentUser).mockResolvedValue(buyer);
     vi.mocked(authenticatedRequest).mockResolvedValue([]);

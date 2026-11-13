@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react';
+import { NativeSelect } from '@/components/ui/native-select';
+import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useBlocker, useNavigate } from '@tanstack/react-router';
@@ -495,7 +497,8 @@ export function AuctionForm({
             <div className="absolute inset-x-0 top-0 p-3 md:p-4">
               <form.Field name="productId">
                 {(field) => (
-                  <select
+                  <NativeSelect
+                    variant="pill"
                     id="auction-product"
                     name={field.name}
                     aria-label="Product"
@@ -507,7 +510,6 @@ export function AuctionForm({
                       field.handleChange(event.target.value);
                       setChosenProductId(event.target.value);
                     }}
-                    className="h-9 max-w-full cursor-pointer rounded-full border-0 bg-white/90 px-3 text-sm font-medium text-foreground shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                   >
                     <option value="">Choose a product</option>
                     {publishedProducts.map((item) => (
@@ -515,7 +517,7 @@ export function AuctionForm({
                         {item.name}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 )}
               </form.Field>
             </div>
@@ -668,20 +670,17 @@ export function AuctionForm({
                   description="Your local time."
                   error={fieldErrors.startsAt}
                 >
-                  <Input
+                  <DateTimePicker
                     id="auction-starts-at"
-                    name={field.name}
-                    type="datetime-local"
-                    required
                     value={field.state.value}
-                    aria-invalid={Boolean(fieldErrors.startsAt)}
-                    aria-describedby={fieldDescriptionIds(
+                    invalid={Boolean(fieldErrors.startsAt)}
+                    describedBy={fieldDescriptionIds(
                       'auction-starts-at',
                       Boolean(fieldErrors.startsAt),
                     )}
-                    onChange={(event) => {
+                    onChange={(next) => {
                       clearFieldError('startsAt');
-                      field.handleChange(event.target.value);
+                      field.handleChange(next);
                     }}
                   />
                 </FormField>
@@ -695,20 +694,17 @@ export function AuctionForm({
                   description="Must be after the start."
                   error={fieldErrors.endsAt}
                 >
-                  <Input
+                  <DateTimePicker
                     id="auction-ends-at"
-                    name={field.name}
-                    type="datetime-local"
-                    required
                     value={field.state.value}
-                    aria-invalid={Boolean(fieldErrors.endsAt)}
-                    aria-describedby={fieldDescriptionIds(
+                    invalid={Boolean(fieldErrors.endsAt)}
+                    describedBy={fieldDescriptionIds(
                       'auction-ends-at',
                       Boolean(fieldErrors.endsAt),
                     )}
-                    onChange={(event) => {
+                    onChange={(next) => {
                       clearFieldError('endsAt');
-                      field.handleChange(event.target.value);
+                      field.handleChange(next);
                     }}
                   />
                 </FormField>

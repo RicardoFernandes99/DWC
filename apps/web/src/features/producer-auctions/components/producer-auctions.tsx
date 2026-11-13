@@ -41,7 +41,7 @@ function fetchAuctions(page: number): Promise<AuctionList> {
 
 function localDateTime(value: string) {
   const date = new Date(value);
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat('en-GB', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date);

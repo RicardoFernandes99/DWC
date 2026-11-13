@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/shared/error-state';
 import { useState } from 'react';
 import {
   useMutation,
@@ -18,7 +19,6 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 
 import {
   ApiError,
@@ -33,11 +33,43 @@ import { orderSteps } from './order-format';
 import { OrderDetail } from './order-detail';
 import './orders.css';
 import { EmptyState } from '@/components/shared/empty-state';
+import { SegmentedTabs } from '@/components/shared/segmented-tabs';
 import { ReceiptText } from 'lucide-react';
 type Audience = 'buyer' | 'producer';
 type Order = components['schemas']['OrderResponseDto'];
 type OrderList = components['schemas']['OrderListResponseDto'];
 type OrderStatus = Order['status'];
+
+type OrderStage = 'open' | 'completed' | 'cancelled';
+
+const STAGE_TABS = [
+  { value: 'open', label: 'Open' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+] as const satisfies readonly { value: OrderStage; label: string }[];
+
+function emptyCopy(stage: OrderStage, audience: Audience) {
+  if (stage === 'completed')
+    return {
+      title: 'No completed orders',
+      description:
+        audience === 'buyer'
+          ? 'Delivered and collected orders will appear here.'
+          : 'Orders you have delivered or handed over will appear here.',
+    };
+  if (stage === 'cancelled')
+    return {
+      title: 'No cancelled orders',
+      description: 'Cancelled orders and refunds will appear here.',
+    };
+  return {
+    title: 'No open orders',
+    description:
+      audience === 'buyer'
+        ? 'Orders in progress will appear here after checkout.'
+        : 'New customer orders will appear here, ready to prepare and fulfil.',
+  };
+}
 
 function isOrderList(value: Order | OrderList): value is OrderList {
   return 'totalPages' in value;
@@ -115,18 +147,23 @@ function OrderTrackingContent({
     typeof search.page === 'number' && Number.isInteger(search.page)
       ? search.page
       : 1;
+  const stage: OrderStage =
+    search.stage === 'completed' || search.stage === 'cancelled'
+      ? search.stage
+      : 'open';
+  const stageSearch = stage === 'open' ? {} : { stage };
   const [reason, setReason] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const userId = session.data?.id ?? 'anonymous';
   const orders = useQuery({
     queryKey: id
       ? [...queryRoot, audience, userId, id]
-      : [...queryRoot, audience, userId, 'list', page],
+      : [...queryRoot, audience, userId, 'list', stage, page],
     queryFn: async (): Promise<Order | OrderList> => {
       if (id)
         return authenticatedRequest<Order>(`orders/${encodeURIComponent(id)}`);
       return authenticatedRequest<OrderList>(
-        `orders?page=${page}&limit=${pageSize}`,
+        `orders?page=${page}&limit=${pageSize}&stage=${stage}`,
       );
     },
     enabled: Boolean(
@@ -224,7 +261,7 @@ function OrderTrackingContent({
           onClick={() =>
             void navigate({
               to: audience === 'buyer' ? '/orders' : '/producer/orders',
-              search: { page },
+              search: { page, ...stageSearch },
             })
           }
         >
@@ -237,7 +274,7 @@ function OrderTrackingContent({
   const backToList = () => {
     void navigate({
       to: audience === 'buyer' ? '/orders' : '/producer/orders',
-      search: { page },
+      search: { page, ...stageSearch },
     });
   };
   const next = order && nextStatus(order);
@@ -261,12 +298,6 @@ function OrderTrackingContent({
                 : 'From your farm to their table.'}
           </p>
         </div>
-        {!id && orders.data && isOrderList(orders.data) && (
-          <span className="orders-count">
-            <strong>{orders.data.total}</strong>{' '}
-            {orders.data.total === 1 ? 'order' : 'orders'}
-          </span>
-        )}
       </header>
       {audience === 'producer' && user.producerStatus === 'suspended' && (
         <div className="order-account-notice" role="status">
@@ -299,105 +330,121 @@ function OrderTrackingContent({
         </div>
       )}
       {orders.isError && (
-        <Card className="mt-6 p-6 shadow-none" role="alert">
-          <p className="text-sm text-destructive">
-            Could not load orders. Please try again.
-          </p>
-          <Button
-            className="mt-4"
-            variant="outline"
-            disabled={orders.isFetching}
-            onClick={() => void orders.refetch()}
-          >
-            Retry
-          </Button>
-        </Card>
+        <ErrorState
+          className="mt-6"
+          title="Orders could not load"
+          retrying={orders.isFetching}
+          onRetry={() => void orders.refetch()}
+        />
       )}
       {!id && orders.data && isOrderList(orders.data) && (
-        <section className="orders-ledger" aria-label="Order history">
-          <div className="orders-list-heading">
-            <h2>Order history</h2>
-            <span>Most recent first</span>
-          </div>
-          {orders.data.items.length === 0 ? (
-            <EmptyState
-              icon={<ReceiptText />}
-              title="No orders yet"
-              description={
-                audience === 'buyer'
-                  ? 'Orders from local producers will appear here after checkout.'
-                  : 'Your customer orders will appear here, ready to prepare and fulfil.'
-              }
-              action={
-                audience === 'buyer' ? (
-                  <Button asChild variant="outline">
-                    <Link to="/">Explore the market</Link>
-                  </Button>
-                ) : undefined
+        <>
+          <div className="orders-tabs-row">
+            <SegmentedTabs
+              label="Order status"
+              value={stage}
+              options={STAGE_TABS}
+              onChange={(value) =>
+                void navigate({
+                  to: audience === 'buyer' ? '/orders' : '/producer/orders',
+                  search:
+                    value === 'open' ? { page: 1 } : { page: 1, stage: value },
+                })
               }
             />
-          ) : (
-            <>
-              <div className="orders-column-labels" aria-hidden="true">
-                <span>
-                  {audience === 'buyer'
-                    ? 'Order / producer'
-                    : 'Order / customer'}
-                </span>
-                <span>Placed / fulfilment</span>
-                <span>Status</span>
-                <span>Total</span>
-                <span />
-              </div>
-              <ul className="orders-list" aria-label="Orders">
-                {orders.data.items.map((item) => (
-                  <OrderRow
-                    key={item.id}
-                    order={item}
-                    audience={audience}
-                    page={page}
-                  />
-                ))}
-              </ul>
-            </>
-          )}
-          {orders.data.totalPages > 1 && (
-            <nav className="orders-pagination" aria-label="Order pages">
-              <p>
-                Page <strong>{orders.data.page}</strong> of{' '}
-                {orders.data.totalPages}
-              </p>
-              <div>
-                <Button
-                  variant="ghost"
-                  disabled={page <= 1 || orders.isFetching}
-                  onClick={() =>
-                    void navigate({
-                      to: audience === 'buyer' ? '/orders' : '/producer/orders',
-                      search: { page: Math.max(1, page - 1) },
-                    })
-                  }
-                >
-                  <ChevronLeft aria-hidden="true" />
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={page >= orders.data.totalPages || orders.isFetching}
-                  onClick={() =>
-                    void navigate({
-                      to: audience === 'buyer' ? '/orders' : '/producer/orders',
-                      search: { page: page + 1 },
-                    })
-                  }
-                >
-                  Next
-                  <ChevronRight aria-hidden="true" />
-                </Button>
-              </div>
-            </nav>
-          )}
-        </section>
+            <p className="orders-count">
+              <strong>{orders.data.total}</strong> {stage}{' '}
+              {orders.data.total === 1 ? 'order' : 'orders'}
+            </p>
+          </div>
+          <section
+            className="orders-ledger"
+            aria-labelledby="orders-history-heading"
+          >
+            <h2 id="orders-history-heading" className="sr-only">
+              Order history
+            </h2>
+            {orders.data.items.length === 0 ? (
+              <EmptyState
+                icon={<ReceiptText />}
+                title={emptyCopy(stage, audience).title}
+                description={emptyCopy(stage, audience).description}
+                action={
+                  audience === 'buyer' && stage === 'open' ? (
+                    <Button asChild variant="outline">
+                      <Link to="/products">Explore the market</Link>
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : (
+              <>
+                <div className="orders-column-labels" aria-hidden="true">
+                  <span>
+                    {audience === 'buyer'
+                      ? 'Order / producer'
+                      : 'Order / customer'}
+                  </span>
+                  <span>Placed / fulfilment</span>
+                  <span>Status</span>
+                  <span>Total</span>
+                  <span />
+                </div>
+                <ul className="orders-list" aria-label="Orders">
+                  {orders.data.items.map((item) => (
+                    <OrderRow
+                      key={item.id}
+                      order={item}
+                      audience={audience}
+                      page={page}
+                      stage={stage === 'open' ? undefined : stage}
+                    />
+                  ))}
+                </ul>
+              </>
+            )}
+            {orders.data.totalPages > 1 && (
+              <nav className="orders-pagination" aria-label="Order pages">
+                <p>
+                  Page <strong>{orders.data.page}</strong> of{' '}
+                  {orders.data.totalPages}
+                </p>
+                <div>
+                  <Button
+                    variant="ghost"
+                    disabled={page <= 1 || orders.isFetching}
+                    onClick={() =>
+                      void navigate({
+                        to:
+                          audience === 'buyer' ? '/orders' : '/producer/orders',
+                        search: { page: Math.max(1, page - 1), ...stageSearch },
+                      })
+                    }
+                  >
+                    <ChevronLeft aria-hidden="true" />
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={
+                      page >= orders.data.totalPages || orders.isFetching
+                    }
+                    onClick={() =>
+                      void navigate({
+                        to:
+                          audience === 'buyer' ? '/orders' : '/producer/orders',
+                        search: { page: page + 1, ...stageSearch },
+                      })
+                    }
+                  >
+                    Next
+                    <ChevronRight aria-hidden="true" />
+                  </Button>
+                </div>
+              </nav>
+            )}
+          </section>
+        </>
       )}
       {id && order && (
         <OrderDetail
