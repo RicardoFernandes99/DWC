@@ -137,7 +137,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
         await navigate({
           href:
             safeReturn(search.returnTo, signedIn) ??
-            (signedIn.role === 'producer' ? '/producer' : '/account'),
+            (signedIn.role === 'producer' ? '/producer' : '/'),
         });
       } catch (err) {
         if (accountCreated) {
