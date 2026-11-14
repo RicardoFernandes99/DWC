@@ -1,0 +1,112 @@
+# React web app (static files on nginx) and the Laravel backoffice.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  selector:
+    app.kubernetes.io/name: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: web
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      containers:
+        - name: web
+          image: ghcr.io/ricardofernandes99/dwc-web:latest
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 20m, memory: 32Mi }
+            limits: { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backoffice
+spec:
+  selector:
+    app.kubernetes.io/name: backoffice
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backoffice
+spec:
+  # File-based sessions live in the pod, so the backoffice runs one replica.
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: backoffice
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: backoffice
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      containers:
+        - name: backoffice
+          image: ghcr.io/ricardofernandes99/dwc-backoffice:latest
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: APP_URL
+              valueFrom:
+                configMapKeyRef: { name: dwc-config, key: BACKOFFICE_ORIGIN }
+            - name: BACKOFFICE_ORIGIN
+              valueFrom:
+                configMapKeyRef: { name: dwc-config, key: BACKOFFICE_ORIGIN }
+            - name: NEST_API_URL
+              value: http://api:3000/api
+            - name: SESSION_SECURE_COOKIE
+              valueFrom:
+                configMapKeyRef: { name: dwc-config, key: AUTH_COOKIE_SECURE }
+            - name: SESSION_HTTP_ONLY
+              value: 'true'
+            - name: SESSION_SAME_SITE
+              value: lax
+            - name: CACHE_STORE
+              value: file
+            - name: APP_KEY
+              valueFrom:
+                secretKeyRef: { name: dwc-secrets, key: BACKOFFICE_APP_KEY }
+          readinessProbe:
+            httpGet: { path: /up, port: http }
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 384Mi }
+          volumeMounts:
+            - name: storage
+              mountPath: /var/lib/backoffice
+      volumes:
+        - name: storage
+          emptyDir: {}

@@ -1,0 +1,38 @@
+# Production backoffice image (the plain Dockerfile is the local dev image).
+# Build from the repository root:
+#   docker build -f apps/backoffice/Dockerfile.prod -t dwc-backoffice .
+FROM node:24.19.0-bookworm-slim AS assets
+WORKDIR /workspace
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY apps/backoffice/package.json apps/backoffice/
+RUN pnpm install --frozen-lockfile --filter @dwc/backoffice
+COPY apps/backoffice apps/backoffice
+RUN pnpm --filter @dwc/backoffice build
+
+FROM dunglas/frankenphp:1-php8.4-bookworm
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN install-php-extensions pcntl mbstring opcache zip
+WORKDIR /var/www/html
+COPY apps/backoffice/composer.json apps/backoffice/composer.lock ./
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader
+COPY apps/backoffice ./
+COPY --from=assets /workspace/apps/backoffice/public/build public/build
+COPY apps/backoffice/docker/opcache.ini /usr/local/etc/php/conf.d/zz-opcache.ini
+RUN rm -rf storage/logs/* bootstrap/cache/*.php \
+  && mkdir -p storage/logs storage/framework/views storage/framework/sessions storage/framework/cache/data \
+  && composer dump-autoload --no-dev --optimize --classmap-authoritative \
+  && cp vendor/laravel/octane/src/Commands/stubs/frankenphp-worker.php public/frankenphp-worker.php \
+  && mkdir -p /var/lib/backoffice/storage /var/lib/backoffice/caddy/config /var/lib/backoffice/caddy/data \
+  && chown -R www-data:www-data /var/lib/backoffice bootstrap/cache
+ENV APP_ENV=production \
+  APP_DEBUG=false \
+  LOG_CHANNEL=stderr \
+  SERVER_NAME=:8080 \
+  XDG_CONFIG_HOME=/var/lib/backoffice/caddy/config \
+  XDG_DATA_HOME=/var/lib/backoffice/caddy/data \
+  LARAVEL_STORAGE_PATH=/var/lib/backoffice/storage \
+  VIEW_COMPILED_PATH=/var/lib/backoffice/storage/framework/views
+USER www-data
+EXPOSE 8080
+CMD ["sh", "-c", "mkdir -p \"$LARAVEL_STORAGE_PATH/logs\" \"$LARAVEL_STORAGE_PATH/framework/sessions\" \"$LARAVEL_STORAGE_PATH/framework/views\" \"$LARAVEL_STORAGE_PATH/framework/cache/data\" && exec php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8080 --workers=2 --max-requests=500"]

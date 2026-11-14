@@ -1,0 +1,46 @@
+# Argo CD keeps the `dwc` namespace in sync with deploy/k8s on main.
+# The bootstrap script replaces __DOMAIN__ (for example 20.1.2.3.nip.io) and
+# applies this file; it is not synced from Git itself.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dwc
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RicardoFernandes99/DWC.git
+    targetRevision: main
+    path: deploy/k8s
+    kustomize:
+      patches:
+        - target:
+            kind: Ingress
+            name: dwc
+          patch: |-
+            - op: replace
+              path: /spec/rules/0/host
+              value: dwc.__DOMAIN__
+            - op: replace
+              path: /spec/rules/1/host
+              value: admin.__DOMAIN__
+            - op: replace
+              path: /spec/rules/2/host
+              value: s3.__DOMAIN__
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dwc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  ignoreDifferences:
+    # The HPA sets the API replica count.
+    - group: apps
+      kind: Deployment
+      name: api
+      jsonPointers:
+        - /spec/replicas

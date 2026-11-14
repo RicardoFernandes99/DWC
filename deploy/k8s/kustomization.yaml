@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: dwc
+resources:
+  - namespace.yaml
+  - data.yaml
+  - api.yaml
+  - web.yaml
+  - ingress.yaml
+  - seed.yaml
+# CI replaces these tags with the commit SHA it built, so Argo CD rolls out
+# exactly the images that match the manifests in Git.
+images:
+  - name: ghcr.io/ricardofernandes99/dwc-api
+    newTag: latest
+  - name: ghcr.io/ricardofernandes99/dwc-web
+    newTag: latest
+  - name: ghcr.io/ricardofernandes99/dwc-backoffice
+    newTag: latest
