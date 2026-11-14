@@ -8,6 +8,7 @@
   },
   "scripts": {
     "setup:local": "node scripts/setup-local.ts",
+    "seed": "node scripts/seed.ts",
     "backoffice:setup": "node scripts/backoffice.ts setup",
     "backoffice:dev": "node scripts/backoffice.ts dev",
     "backoffice:check": "node scripts/backoffice.ts check",

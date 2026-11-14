@@ -76,6 +76,38 @@ services:
       - backoffice-node-modules:/workspace/apps/backoffice/node_modules
       - pnpm-store:/pnpm-store
 
+  # Loads the demo data (farms, products, orders, auctions) before the API starts,
+  # because the loader refuses to run while an API is up. Idempotent: when the data
+  # already exists it changes nothing. A failure is logged but does not block the
+  # stack. The demo accounts share FIXTURE_PASSWORD (a fixed local-only default).
+  seed:
+    profiles: [app]
+    image: *node-image
+    working_dir: /workspace
+    command:
+      [
+        'sh',
+        '-c',
+        'corepack enable && pnpm --filter @dwc/api storage:init && pnpm --filter @dwc/api build && cd apps/api && node --env-file=../../.env dist/local-demo-fixtures.js --create || echo "Demo data was not loaded; see the output above."',
+      ]
+    environment:
+      <<: *node-env
+      MONGODB_URI: mongodb://mongodb:27017/dwc?replicaSet=rs0&directConnection=true
+      S3_ENDPOINT: http://storage:4566
+      FIXTURE_ALLOWED_MONGODB_HOST: mongodb
+      FIXTURE_MAINTENANCE_ACK: stopped
+      FIXTURE_PASSWORD: ${FIXTURE_PASSWORD:-DwcDemo-Local-2026}
+    volumes: *node-volumes
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+
   api:
     profiles: [app]
     image: *node-image
@@ -111,6 +143,8 @@ services:
       storage:
         condition: service_healthy
       init:
+        condition: service_completed_successfully
+      seed:
         condition: service_completed_successfully
     healthcheck:
       test:

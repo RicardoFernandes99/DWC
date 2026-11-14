@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 400" width="1040" height="400" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Application architecture</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#5b6770"/>
+    </marker>
+  </defs>
+  <rect width="1040" height="400" rx="16" fill="#fafaf7"/>
+
+  <g fill="#fff" stroke="#c9ced3" stroke-width="1.5">
+    <rect x="40" y="87" width="150" height="56" rx="10"/>
+    <rect x="40" y="257" width="150" height="56" rx="10"/>
+  </g>
+  <g font-size="15" font-weight="600" fill="#2b3137" text-anchor="middle">
+    <text x="115" y="120">Browser</text>
+    <text x="115" y="290">Administrator</text>
+  </g>
+
+  <g fill="#e8f3e9" stroke="#3b7a47" stroke-width="1.5">
+    <rect x="260" y="80" width="190" height="70" rx="12"/>
+    <rect x="260" y="250" width="190" height="70" rx="12"/>
+    <rect x="540" y="165" width="190" height="80" rx="12"/>
+  </g>
+  <g text-anchor="middle" fill="#1f4d29">
+    <g font-size="16" font-weight="700">
+      <text x="355" y="111">Web</text>
+      <text x="355" y="281">Backoffice</text>
+      <text x="635" y="200">API</text>
+    </g>
+    <g font-size="12" fill="#3f6c49">
+      <text x="355" y="130">React · Vite · Tailwind</text>
+      <text x="355" y="300">Laravel · Blade</text>
+      <text x="635" y="220">NestJS · Socket.IO</text>
+    </g>
+  </g>
+
+  <g fill="#e6f0fb" stroke="#2b6cb0" stroke-width="1.5">
+    <rect x="820" y="60" width="180" height="56" rx="10"/>
+    <rect x="820" y="177" width="180" height="56" rx="10"/>
+    <rect x="820" y="294" width="180" height="56" rx="10"/>
+  </g>
+  <g text-anchor="middle" fill="#1d4577">
+    <g font-size="15" font-weight="700">
+      <text x="910" y="86">MongoDB</text>
+      <text x="910" y="203">Redis</text>
+      <text x="910" y="320">S3 storage</text>
+    </g>
+    <g font-size="12" fill="#3d6aa0">
+      <text x="910" y="104">users · orders · auctions</text>
+      <text x="910" y="221">sessions</text>
+      <text x="910" y="338">product images</text>
+    </g>
+  </g>
+
+  <g fill="none" stroke="#5b6770" stroke-width="1.8" marker-end="url(#a)">
+    <path d="M190 115H260"/>
+    <path d="M190 285H260"/>
+    <path d="M450 115H520V185H540"/>
+    <path d="M450 285H520V225H540"/>
+    <path d="M730 205H775V88H820"/>
+    <path d="M730 205H820"/>
+    <path d="M730 205H775V322H820"/>
+  </g>
+
+  <g font-size="12" fill="#5b6770">
+    <text x="458" y="106">HTTP + WebSocket</text>
+    <text x="458" y="312">HTTP</text>
+  </g>
+  <text x="355" y="345" font-size="12" fill="#5b6770" text-anchor="middle">No database of its own; signs in through the API</text>
+</svg>
