@@ -126,7 +126,10 @@ function assertLocalMongo(uri: string): void {
     fail('MONGODB_URI is invalid.');
   }
   const host = parsed.hostname.toLowerCase();
-  if (!['localhost', '127.0.0.1', '::1'].includes(host)) {
+  // A deployed cluster can opt in to one named in-cluster database host.
+  const allowed =
+    process.env.FIXTURE_ALLOWED_MONGODB_HOST?.trim().toLowerCase();
+  if (!['localhost', '127.0.0.1', '::1'].includes(host) && host !== allowed) {
     fail('MONGODB_URI must point to a local MongoDB host.');
   }
   const dbName = parsed.pathname.replace(/^\//, '');
@@ -462,6 +465,28 @@ function auction(
 }
 
 async function credentials(): Promise<Credentials> {
+  // In a cluster the password comes from a Secret and no local file is written.
+  const provided = process.env.FIXTURE_PASSWORD;
+  if (provided !== undefined) {
+    if (provided.length < 16)
+      fail('FIXTURE_PASSWORD must be at least 16 characters.');
+    return {
+      namespace: NAMESPACE,
+      password: provided,
+      accounts: [
+        'buyer_one',
+        'buyer_two',
+        'producer_approved',
+        'producer_pending',
+        'producer_rejected',
+        'producer_suspended',
+      ].map((key) => ({
+        email: `${key.replaceAll('_', '.')}@${FIXTURE_EMAIL_DOMAIN}`,
+        name: key,
+        role: key.startsWith('producer') ? 'producer' : 'buyer',
+      })),
+    };
+  }
   try {
     const stored = JSON.parse(
       await readFile(CREDENTIALS_FILE, 'utf8'),

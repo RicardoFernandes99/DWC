@@ -1,0 +1,24 @@
+# Keep build contexts small and free of local secrets and state.
+**/node_modules
+**/dist
+**/.vite
+**/coverage
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.claude
+.agents
+.pnpm-store
+demos
+video
+docs
+apps/backoffice/vendor
+apps/backoffice/storage/logs
+apps/backoffice/storage/framework/cache/data
+apps/backoffice/storage/framework/sessions
+apps/backoffice/storage/framework/views
+apps/backoffice/public/build
+apps/backoffice/public/hot
+apps/backoffice/bootstrap/cache/*.php

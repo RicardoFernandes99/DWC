@@ -11,7 +11,9 @@ import { SocketIoAdapter } from './realtime/socket-io.adapter.js';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
-  app.useWebSocketAdapter(new SocketIoAdapter(app, config));
+  const socketAdapter = new SocketIoAdapter(app, config);
+  await socketAdapter.connectToRedis();
+  app.useWebSocketAdapter(socketAdapter);
   app.setGlobalPrefix('api');
   app.enableCors({
     origin: config.getOrThrow<string>('WEB_ORIGIN'),

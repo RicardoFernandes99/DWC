@@ -1,0 +1,19 @@
+# Exposes the Argo CD UI at argocd.__DOMAIN__ (HTTP; the server runs with
+# server.insecure=true behind Traefik). Applied by the bootstrap script.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  rules:
+    - host: argocd.__DOMAIN__
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80

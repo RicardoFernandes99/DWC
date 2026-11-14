@@ -1,0 +1,40 @@
+# Routed by Traefik (bundled with k3s). The example.test host names are
+# replaced per cluster by the Argo CD Application (see deploy/argocd).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dwc
+spec:
+  rules:
+    - host: dwc.example.test
+      http:
+        paths:
+          # API and socket.io go straight to the API pods (sticky cookie on the
+          # Service), so load is spread across HPA replicas per client.
+          - path: /api
+            pathType: Prefix
+            backend:
+              service: { name: api, port: { number: 3000 } }
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service: { name: api, port: { number: 3000 } }
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: web, port: { number: 80 } }
+    - host: admin.example.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: backoffice, port: { number: 80 } }
+    # Signed product-image URLs point here, so browsers can load private images.
+    - host: s3.example.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: storage, port: { number: 4566 } }
