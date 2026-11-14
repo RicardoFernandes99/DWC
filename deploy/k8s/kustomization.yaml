@@ -12,8 +12,8 @@ resources:
 # exactly the images that match the manifests in Git.
 images:
   - name: ghcr.io/ricardofernandes99/dwc-api
-    newTag: latest
+    newTag: 849e8e3b87fc1d7d628050888ebc7b2b823377e2
   - name: ghcr.io/ricardofernandes99/dwc-web
-    newTag: latest
+    newTag: 849e8e3b87fc1d7d628050888ebc7b2b823377e2
   - name: ghcr.io/ricardofernandes99/dwc-backoffice
-    newTag: latest
+    newTag: 849e8e3b87fc1d7d628050888ebc7b2b823377e2
